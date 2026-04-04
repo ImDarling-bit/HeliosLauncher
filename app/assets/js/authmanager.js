@@ -16,6 +16,10 @@ const { MojangRestAPI, MojangErrorCode } = require('helios-core/mojang')
 const { MicrosoftAuth, MicrosoftErrorCode } = require('helios-core/microsoft')
 const { AZURE_CLIENT_ID }    = require('./ipcconstants')
 const Lang = require('./langloader')
+const { AuthClient }         = require('azuriom-auth')
+
+// Client Azuriom — URL du site sans slash final
+const azuriomClient = new AuthClient('https://azuriom.ap-bts.wstr.fr')
 
 const log = LoggerUtil.getLogger('AuthManager')
 
@@ -408,8 +412,110 @@ async function validateSelectedMicrosoftAccount(){
 }
 
 /**
+ * Add an Azuriom account. Authenticates with the Azuriom API and stores
+ * the result in the configuration database.
+ *
+ * @param {string} email    The user's email address on the Azuriom site.
+ * @param {string} password The user's password.
+ * @returns {Promise.<Object>} Resolves with the stored account object.
+ */
+exports.addAzuriomAccount = async function(email, password) {
+    try {
+        const response = await azuriomClient.login(email, password)
+
+        if(response.status !== 'success') {
+            return Promise.reject({
+                title: Lang.queryJS('auth.azuriom.error.invalidCredentialsTitle'),
+                desc:  Lang.queryJS('auth.azuriom.error.invalidCredentialsDesc')
+            })
+        }
+
+        const ret = ConfigManager.addAzuriomAuthAccount(
+            response.uuid,
+            response.accessToken,
+            email,
+            response.username
+        )
+        ConfigManager.save()
+        return ret
+
+    } catch(err) {
+        log.error('Azuriom login error', err)
+
+        // HTTP 401 / 422 = mauvais identifiants
+        if(err.response && (err.response.status === 401 || err.response.status === 422)) {
+            return Promise.reject({
+                title: Lang.queryJS('auth.azuriom.error.invalidCredentialsTitle'),
+                desc:  Lang.queryJS('auth.azuriom.error.invalidCredentialsDesc')
+            })
+        }
+        // Pas de réponse = serveur injoignable
+        if(err.code === 'ECONNREFUSED' || err.code === 'ENOTFOUND' || !err.response) {
+            return Promise.reject({
+                title: Lang.queryJS('auth.azuriom.error.unreachableTitle'),
+                desc:  Lang.queryJS('auth.azuriom.error.unreachableDesc')
+            })
+        }
+        return Promise.reject({
+            title: Lang.queryJS('auth.azuriom.error.unknownTitle'),
+            desc:  Lang.queryJS('auth.azuriom.error.unknownDesc')
+        })
+    }
+}
+
+/**
+ * Remove an Azuriom account. Invalidates the token server-side then
+ * removes the account from the local configuration database.
+ *
+ * @param {string} uuid The UUID of the account to remove.
+ * @returns {Promise.<void>}
+ */
+exports.removeAzuriomAccount = async function(uuid) {
+    try {
+        const authAcc = ConfigManager.getAuthAccount(uuid)
+        if(authAcc) {
+            await azuriomClient.logout(authAcc.accessToken)
+        }
+    } catch(err) {
+        // Token peut déjà être expiré — on ignore l'erreur de logout
+        log.warn('Azuriom logout failed (token may already be invalid):', err.message)
+    }
+    ConfigManager.removeAuthAccount(uuid)
+    ConfigManager.save()
+    return Promise.resolve()
+}
+
+/**
+ * Validate the selected Azuriom account by verifying the access token
+ * against the Azuriom API.
+ *
+ * @returns {Promise.<boolean>} True si le token est valide, false sinon.
+ */
+async function validateSelectedAzuriomAccount() {
+    const current = ConfigManager.getSelectedAccount()
+    try {
+        await azuriomClient.verify(current.accessToken)
+        log.info('Azuriom account token validated.')
+        return true
+    } catch(err) {
+        // Network error → auth server unreachable → allow offline play with stored token
+        const isNetworkError = err.code === 'ECONNREFUSED'
+            || err.code === 'ENOTFOUND'
+            || err.code === 'ETIMEDOUT'
+            || err.code === 'ECONNRESET'
+            || err.type === 'system'
+        if(isNetworkError) {
+            log.warn('Azuriom auth server unreachable, proceeding offline:', err.message)
+            return true
+        }
+        log.warn('Azuriom token validation failed:', err.message)
+        return false
+    }
+}
+
+/**
  * Validate the selected auth account.
- * 
+ *
  * @returns {Promise.<boolean>} Promise which resolves to true if the access token is valid,
  * otherwise false.
  */
@@ -418,8 +524,10 @@ exports.validateSelected = async function(){
 
     if(current.type === 'microsoft') {
         return await validateSelectedMicrosoftAccount()
+    } else if(current.type === 'azuriom') {
+        return await validateSelectedAzuriomAccount()
     } else {
         return await validateSelectedMojangAccount()
     }
-    
+
 }

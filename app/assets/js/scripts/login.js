@@ -179,56 +179,13 @@ loginCancelButton.onclick = (e) => {
 // Disable default form behavior.
 loginForm.onsubmit = () => { return false }
 
-// Bind login button behavior.
+// Bind login button behavior — redirect to Azuriom login.
 loginButton.addEventListener('click', () => {
-    // Disable form.
-    formDisabled(true)
-
-    // Show loading stuff.
-    loginLoading(true)
-
-    AuthManager.addMojangAccount(loginUsername.value, loginPassword.value).then((value) => {
-        updateSelectedAccount(value)
-        loginButton.innerHTML = loginButton.innerHTML.replace(Lang.queryJS('login.loggingIn'), Lang.queryJS('login.success'))
-        $('.circle-loader').toggleClass('load-complete')
-        $('.checkmark').toggle()
-        setTimeout(() => {
-            switchView(VIEWS.login, loginViewOnSuccess, 500, 500, async () => {
-                // Temporary workaround
-                if(loginViewOnSuccess === VIEWS.settings){
-                    await prepareSettings()
-                }
-                loginViewOnSuccess = VIEWS.landing // Reset this for good measure.
-                loginCancelEnabled(false) // Reset this for good measure.
-                loginViewCancelHandler = null // Reset this for good measure.
-                loginUsername.value = ''
-                loginPassword.value = ''
-                $('.circle-loader').toggleClass('load-complete')
-                $('.checkmark').toggle()
-                loginLoading(false)
-                loginButton.innerHTML = loginButton.innerHTML.replace(Lang.queryJS('login.success'), Lang.queryJS('login.login'))
-                formDisabled(false)
-            })
-        }, 1000)
-    }).catch((displayableError) => {
-        loginLoading(false)
-
-        let actualDisplayableError
-        if(isDisplayableError(displayableError)) {
-            msftLoginLogger.error('Error while logging in.', displayableError)
-            actualDisplayableError = displayableError
-        } else {
-            // Uh oh.
-            msftLoginLogger.error('Unhandled error during login.', displayableError)
-            actualDisplayableError = Lang.queryJS('login.error.unknown')
-        }
-
-        setOverlayContent(actualDisplayableError.title, actualDisplayableError.desc, Lang.queryJS('login.tryAgain'))
-        setOverlayHandler(() => {
-            formDisabled(false)
-            toggleOverlay(false)
-        })
-        toggleOverlay(true)
+    switchView(VIEWS.login, VIEWS.loginOptions, 500, 500, () => {
+        loginOptionsCancelEnabled(loginViewOnCancel != null)
+        loginOptionsViewOnLoginSuccess = loginViewOnSuccess
+        loginOptionsViewOnCancel = loginViewOnCancel
+        loginUsername.value = ''
+        loginPassword.value = ''
     })
-
 })

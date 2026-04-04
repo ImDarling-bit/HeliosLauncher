@@ -1,0 +1,822 @@
+/*******************************************************************************
+ *                                                                             *
+ * DistrictLife — Thème "Noir sur Blanc"                                       *
+ * Fichier : dl-theme.css                                                      *
+ *                                                                             *
+ * Chargé APRÈS launcher.css dans app.ejs.                                     *
+ * Fond blanc global, carte hero sombre, cartes basses blanches.               *
+ *                                                                             *
+ ******************************************************************************/
+
+
+/* =============================================================================
+   FOND GLOBAL
+   ============================================================================= */
+
+body {
+    background: #f0f0f0 !important;
+    background-image: none !important;
+    color: #111111 !important;
+}
+
+
+/* =============================================================================
+   BARRE DE TITRE (frame)
+   ============================================================================= */
+
+#frameBar {
+    background-color: #f0f0f0 !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+#frameTitleText {
+    color: #444444 !important;
+}
+
+/* Icônes SVG du frame — hardcodées blanc dans frame.ejs, on les passe en sombre */
+#frameButton_minimize svg rect,
+#frameButton_restoredown svg rect,
+#frameButton_close svg polygon {
+    stroke: #444444 !important;
+    fill: #444444 !important;
+}
+
+
+/* =============================================================================
+   LANDING — dégradé barre inférieure
+   ============================================================================= */
+
+#landingContainer > #lower {
+    background: linear-gradient(to top, rgba(240, 240, 240, 0.98), rgba(240, 240, 240, 0.0)) !important;
+}
+
+
+/* =============================================================================
+   TOPBAR (#dl-topbar)
+   ============================================================================= */
+
+#dl-topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 24px;
+    height: 44px;
+    background: transparent;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+    flex-shrink: 0;
+}
+
+#dl-logo {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 5px;
+    text-transform: uppercase;
+    color: #111111;
+}
+
+#dl-topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+#user_text {
+    font-size: 10px !important;
+    letter-spacing: 2px !important;
+    text-transform: uppercase;
+    text-shadow: none !important;
+    color: #666666 !important;
+}
+
+#avatarContainer {
+    border: 1px solid rgba(0, 0, 0, 0.12) !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: rgba(0, 0, 0, 0.04) !important;
+}
+
+#avatarOverlay {
+    color: #333333 !important;
+}
+
+#settingsSVG {
+    fill: #666666 !important;
+}
+
+#settingsTooltip {
+    color: #111111 !important;
+    background: #ffffff !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+}
+
+
+/* =============================================================================
+   UPPER — colonnes gauche et droite (cachées visuellement, conservées pour JS)
+   ============================================================================= */
+
+#upper > #left {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 12px;
+    visibility: hidden; /* présent pour JS, invisible */
+}
+
+#image_seal_container {
+    margin-top: 12px !important;
+    height: 36px !important;
+    width: 36px !important;
+    border-radius: 0 !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    background: transparent !important;
+}
+
+#image_seal {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    height: 100%;
+    font-family: 'Avenir Medium', sans-serif;
+    font-size: 9px;
+    font-weight: bold;
+    letter-spacing: 2px;
+    color: #444444 !important;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+/* Update glow : version sombre sur fond clair */
+#image_seal_container[update]:before,
+#image_seal_container[update]:after {
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.25) !important;
+}
+
+#upper > #right {
+    visibility: hidden; /* présent pour JS, invisible */
+}
+
+#upper > #content {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+
+/* =============================================================================
+   HERO CARD (#dl-hero)
+   ============================================================================= */
+
+#dl-hero {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    padding: 0 28px;
+    overflow: hidden;
+}
+
+#dl-hero-inner {
+    width: 100%;
+    max-width: 580px;
+    background: #141414;
+    padding: 28px 32px;
+    color: #ffffff;
+    position: relative;
+}
+
+/* Badge joueurs */
+#server_status_wrapper {
+    margin-bottom: 14px;
+}
+
+#dl-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 4px 10px;
+    font-size: 9px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.dl-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #5cb85c;
+    display: inline-block;
+    flex-shrink: 0;
+}
+
+#player_count {
+    color: rgba(255, 255, 255, 0.45) !important;
+    text-shadow: none !important;
+}
+
+/* Titre */
+#dl-hero-title {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: #ffffff;
+    line-height: 1.15;
+    margin: 0 0 10px 0;
+}
+
+/* Description */
+#dl-hero-desc {
+    font-size: 10px;
+    color: rgba(255, 255, 255, 0.45);
+    letter-spacing: 1px;
+    margin: 0 0 22px 0;
+    line-height: 1.7;
+}
+
+/* Actions */
+#dl-hero-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#launch_content {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+#launch_button {
+    background: #ffffff !important;
+    color: #111111 !important;
+    border: none !important;
+    padding: 9px 22px !important;
+    font-size: 10px !important;
+    font-weight: 700 !important;
+    letter-spacing: 4px !important;
+    text-transform: uppercase !important;
+    cursor: pointer !important;
+    text-shadow: none !important;
+    transition: opacity 0.2s ease !important;
+    box-shadow: none !important;
+}
+
+#launch_button:hover,
+#launch_button:focus {
+    opacity: 0.82 !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+}
+
+.dl-server-btn {
+    background: transparent !important;
+    color: rgba(255, 255, 255, 0.45) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    padding: 7px 14px !important;
+    font-size: 9px !important;
+    letter-spacing: 2px !important;
+    text-transform: uppercase !important;
+    cursor: pointer !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    transition: border-color 0.2s ease, color 0.2s ease !important;
+}
+
+.dl-server-btn:hover {
+    border-color: rgba(255, 255, 255, 0.35) !important;
+    color: rgba(255, 255, 255, 0.75) !important;
+}
+
+/* Barre de progression dans le hero */
+#launch_details {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+#launch_details_left {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+#launch_details_right {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex: 1;
+}
+
+#launch_progress_label {
+    font-size: 9px;
+    color: rgba(255, 255, 255, 0.45);
+    letter-spacing: 1px;
+    min-width: 28px;
+}
+
+#launch_progress {
+    accent-color: #ffffff;
+    flex: 1;
+    height: 2px;
+}
+
+.bot_label {
+    font-size: 8px !important;
+    letter-spacing: 2px !important;
+    color: rgba(255, 255, 255, 0.35) !important;
+    text-transform: uppercase !important;
+    text-shadow: none !important;
+}
+
+.bot_divider {
+    background: rgba(255, 255, 255, 0.18) !important;
+    width: 1px;
+    height: 10px;
+    display: inline-block;
+}
+
+
+/* =============================================================================
+   LOWER — 3 cartes (Discord / News / Statut)
+   ============================================================================= */
+
+#lower > #center {
+    border-left: 1px solid rgba(0, 0, 0, 0.06);
+    border-right: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.bot_wrapper {
+    height: 100%;
+    display: flex;
+    align-items: stretch;
+}
+
+.bot_wrapper > #content {
+    flex: 1;
+    display: flex;
+}
+
+.dl-card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    background: #ffffff !important;
+    border: none !important;
+    border-top: 1px solid rgba(0, 0, 0, 0.06) !important;
+    cursor: pointer;
+    transition: background 0.15s ease;
+    text-decoration: none;
+    color: #444444 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+    border-radius: 0 !important;
+    font-family: inherit;
+}
+
+.dl-card:hover,
+.dl-card:focus {
+    background: #f5f5f5 !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+    border-top-color: rgba(0, 0, 0, 0.12) !important;
+}
+
+.dl-card-link {
+    text-decoration: none !important;
+}
+
+.dl-card-icon {
+    width: 20px;
+    height: 20px;
+    fill: #777777;
+    stroke: none;
+}
+
+.dl-card-label {
+    font-size: 8px !important;
+    letter-spacing: 3px !important;
+    text-transform: uppercase !important;
+    color: #777777 !important;
+    text-shadow: none !important;
+}
+
+/* Icône news (flèche SVG — contour, pas fill) */
+#newsButtonSVG {
+    fill: none !important;
+    stroke: #777777 !important;
+}
+
+/* Alerte news */
+#newsButtonAlert {
+    background: #111111 !important;
+}
+
+/* Point statut Mojang */
+.dl-status-dot-large {
+    font-size: 20px;
+    line-height: 1;
+    color: #5cb85c;
+}
+
+/* Bouton news : réinitialiser l'apparence de <button> */
+#newsButton {
+    background: #ffffff !important;
+    border: none !important;
+    outline: none !important;
+}
+
+#newsButton:hover,
+#newsButton:focus {
+    background: #f5f5f5 !important;
+}
+
+/* Séparateurs landing barre */
+.mediaDivider {
+    background: rgba(0, 0, 0, 0.1) !important;
+}
+
+
+/* =============================================================================
+   NEWS — panneau coulissant
+   ============================================================================= */
+
+#newsContainer {
+    background: #f8f8f8 !important;
+    border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
+    color: #111111 !important;
+}
+
+#newsArticleTitle {
+    color: #111111 !important;
+    font-size: 15px !important;
+    text-decoration: none;
+}
+
+#newsArticleTitle:hover {
+    text-decoration: underline;
+}
+
+#newsArticleAuthor {
+    background: #e8e8e8 !important;
+    color: #333333 !important;
+}
+
+#newsArticleDate {
+    color: #555555 !important;
+}
+
+#newsNavigationStatus {
+    color: #555555 !important;
+}
+
+#newsNavigateLeft svg .arrowLine,
+#newsNavigateRight svg .arrowLine {
+    stroke: #555555 !important;
+}
+
+
+/* =============================================================================
+   BOUTON NEWS — texte
+   ============================================================================= */
+
+#newsButtonText {
+    font-size: 8px !important;
+    letter-spacing: 3px !important;
+    text-transform: uppercase !important;
+    text-shadow: none !important;
+    color: #777777 !important;
+}
+
+
+/* =============================================================================
+   VUES AVEC FOND (login, welcome, waiting, options)
+   ============================================================================= */
+
+#loginContainer,
+#welcomeContainer,
+#waitingContainer,
+#loginOptionsContainer {
+    background: rgba(255, 255, 255, 0.93) !important;
+    color: #111111 !important;
+}
+
+#settingsContainer {
+    background-color: #f4f4f4 !important;
+    color: #111111 !important;
+}
+
+
+/* =============================================================================
+   WELCOME
+   ============================================================================= */
+
+#welcomeContent {
+    top: 0 !important;
+    gap: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+#welcomeHeader {
+    font-size: 22px !important;
+    letter-spacing: 4px !important;
+    text-transform: uppercase;
+    margin-bottom: 8px !important;
+    color: #111111 !important;
+    text-shadow: none !important;
+}
+
+#welcomeDescription {
+    max-width: 340px;
+    text-align: center;
+    font-size: 12px !important;
+    color: rgba(0, 0, 0, 0.55) !important;
+    text-shadow: none !important;
+    line-height: 1.6;
+}
+
+#welcomeDescCTA {
+    font-size: 11px !important;
+    color: rgba(0, 0, 0, 0.38) !important;
+    text-shadow: none !important;
+}
+
+
+/* =============================================================================
+   LOGIN
+   ============================================================================= */
+
+#loginSubheader {
+    font-size: 18px !important;
+    letter-spacing: 4px !important;
+    text-transform: uppercase;
+    margin-bottom: 30px !important;
+    color: #111111 !important;
+    text-shadow: none !important;
+}
+
+/* SVGs décoratifs cachés */
+.loginSVG {
+    display: none !important;
+}
+
+#loginForm {
+    gap: 0;
+}
+
+.loginField {
+    border-width: 0 0 1px 0 !important;
+    border-color: rgba(0, 0, 0, 0.18) !important;
+    width: 260px !important;
+    padding: 10px 5px !important;
+    font-size: 12px !important;
+    letter-spacing: 1px !important;
+    color: #111111 !important;
+    background: transparent !important;
+}
+
+.loginField:focus {
+    border-color: rgba(0, 0, 0, 0.45) !important;
+}
+
+.loginField::-webkit-input-placeholder {
+    color: rgba(0, 0, 0, 0.28) !important;
+    font-size: 11px !important;
+}
+
+#loginCancelIcon {
+    border: none !important;
+    font-size: 16px !important;
+    line-height: 1 !important;
+    margin-bottom: 2px !important;
+    color: #444444 !important;
+}
+
+
+/* =============================================================================
+   LOGIN OPTIONS
+   ============================================================================= */
+
+#loginOptionsContent {
+    top: 0 !important;
+}
+
+#loginOptionsContent h2 {
+    font-size: 14px !important;
+    letter-spacing: 3px !important;
+    text-transform: uppercase;
+    font-weight: normal !important;
+    margin-bottom: 24px !important;
+    color: rgba(0, 0, 0, 0.55) !important;
+    text-shadow: none !important;
+}
+
+.loginOptionButton {
+    background: transparent !important;
+    border: 1px solid rgba(0, 0, 0, 0.14) !important;
+    height: 44px !important;
+    color: #111111 !important;
+    font-size: 12px !important;
+    letter-spacing: 1px !important;
+    transition: border-color 0.2s ease, background 0.2s ease !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+}
+
+.loginOptionButton:hover,
+.loginOptionButton:focus {
+    background: rgba(0, 0, 0, 0.04) !important;
+    border-color: rgba(0, 0, 0, 0.28) !important;
+    text-shadow: none !important;
+    box-shadow: none !important;
+}
+
+/* Logo Microsoft — nuances de gris foncé sur fond blanc */
+#loginOptionMicrosoft svg path:nth-child(1) { fill: #333333 !important; }
+#loginOptionMicrosoft svg path:nth-child(2) { fill: #555555 !important; }
+#loginOptionMicrosoft svg path:nth-child(3) { fill: #777777 !important; }
+#loginOptionMicrosoft svg path:nth-child(4) { fill: #999999 !important; }
+
+
+/* =============================================================================
+   WAITING
+   ============================================================================= */
+
+#waitingTextContainer {
+    position: relative !important;
+    top: 0 !important;
+    margin-top: 20px;
+    font-size: 11px !important;
+    letter-spacing: 3px !important;
+    text-transform: uppercase;
+    color: rgba(0, 0, 0, 0.4) !important;
+    text-shadow: none !important;
+}
+
+#waitingTextContainer span {
+    font-size: 11px;
+    letter-spacing: 3px;
+    color: rgba(0, 0, 0, 0.4) !important;
+}
+
+
+/* =============================================================================
+   TOGGLE SWITCH
+   ============================================================================= */
+
+input:checked + .toggleSwitchSlider {
+    background-color: #111111 !important;
+    border: 1px solid rgba(0, 0, 0, 0.45) !important;
+}
+
+input:checked + .toggleSwitchSlider:before {
+    background-color: #ffffff !important;
+}
+
+
+/* =============================================================================
+   SLIDER RAM
+   ============================================================================= */
+
+.rangeSliderBar {
+    background: #111111 !important;
+}
+
+
+/* =============================================================================
+   POINTS STATUT MODS
+   ============================================================================= */
+
+.settingsModStatus {
+    background-color: #cccccc !important;
+}
+
+.settingsBaseMod[enabled] > .settingsModContent > .settingsModMainWrapper > .settingsModStatus {
+    background-color: #111111 !important;
+}
+
+
+/* =============================================================================
+   BADGE VERSION SERVEUR
+   ============================================================================= */
+
+.serverListingVersion {
+    background: rgba(0, 0, 0, 0.07) !important;
+    color: #666666 !important;
+}
+
+
+/* =============================================================================
+   ONGLET À PROPOS — VERSION
+   ============================================================================= */
+
+#settingsAboutCurrentVersionCheck {
+    background: #111111 !important;
+    color: #ffffff !important;
+}
+
+#settingsAboutCurrentVersionTitle {
+    color: #111111 !important;
+}
+
+#settingsAboutLogo {
+    display: none !important;
+}
+
+
+/* =============================================================================
+   ONGLET MISES À JOUR — VERSION
+   ============================================================================= */
+
+#settingsUpdateVersionCheck {
+    background: #111111 !important;
+    color: #ffffff !important;
+}
+
+#settingsUpdateVersionTitle {
+    color: #111111 !important;
+}
+
+
+/* =============================================================================
+   BOUTON DÉCONNEXION
+   ============================================================================= */
+
+.settingsAuthAccountLogOut {
+    border: 1px solid rgba(0, 0, 0, 0.25) !important;
+    color: rgba(0, 0, 0, 0.55) !important;
+}
+
+.settingsAuthAccountLogOut:hover,
+.settingsAuthAccountLogOut:focus {
+    box-shadow: 0px 0px 18px rgba(0, 0, 0, 0.10) !important;
+    background: rgba(0, 0, 0, 0.04) !important;
+}
+
+.settingsAuthAccountLogOut:active {
+    box-shadow: 0px 0px 18px rgba(0, 0, 0, 0.07) !important;
+    background: rgba(0, 0, 0, 0.07) !important;
+    border: 1px solid rgba(0, 0, 0, 0.18) !important;
+    color: rgba(0, 0, 0, 0.38) !important;
+}
+
+
+/* =============================================================================
+   BOUTON SUPPRIMER MOD DROP-IN
+   ============================================================================= */
+
+.settingsDropinRemoveButton {
+    color: #888888 !important;
+}
+
+.settingsDropinRemoveButton:hover,
+.settingsDropinRemoveButton:focus {
+    text-shadow: 0px 0px 20px #888888, 0px 0px 20px #888888 !important;
+}
+
+.settingsDropinRemoveButton:active {
+    color: #555555 !important;
+    text-shadow: 0px 0px 20px #555555, 0px 0px 20px #555555 !important;
+}
+
+
+/* =============================================================================
+   SÉLECTION SERVEUR
+   ============================================================================= */
+
+.serverListing {
+    background: rgba(0, 0, 0, 0.02) !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.serverListing:hover,
+.serverListing:focus,
+.serverListing[selected] {
+    background: rgba(0, 0, 0, 0.06) !important;
+}
+
+
+/* =============================================================================
+   SCROLLBAR GLOBALE
+   ============================================================================= */
+
+::-webkit-scrollbar {
+    width: 2px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(0, 0, 0, 0.18);
+    border-radius: 10px;
+}

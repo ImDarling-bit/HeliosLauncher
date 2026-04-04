@@ -13,7 +13,21 @@ const { DistroAPI } = require('./assets/js/distromanager')
 let rscShouldLoad = false
 let fatalStartupError = false
 
-// Mapping of each view to their container IDs.
+/**
+ * Mapping of each view to their container IDs in the DOM (app.ejs).
+ *
+ * GUIDE UI/UX — Chaque entrée correspond à :
+ *   landing      → landing.ejs      | Page principale (news, PLAY, statut serveur)
+ *   loginOptions → loginOptions.ejs | Choix Microsoft vs Mojang
+ *   login        → login.ejs        | Formulaire Mojang (email + password)
+ *   settings     → settings.ejs     | Panneau paramètres 7 onglets
+ *   welcome      → welcome.ejs      | Écran de bienvenue (1er lancement)
+ *   waiting      → waiting.ejs      | Spinner OAuth Microsoft
+ *
+ * La navigation se fait via switchView(VIEWS.from, VIEWS.to) — fadeOut/fadeIn jQuery.
+ * Toutes les vues sont rendues dans le DOM en même temps (display: none par défaut).
+ * @type {Object.<string, string>}
+ */
 const VIEWS = {
     landing: '#landingContainer',
     loginOptions: '#loginOptionsContainer',
@@ -57,6 +71,22 @@ function getCurrentView(){
     return currentView
 }
 
+/**
+ * Affiche l'interface principale après que le preloader a chargé la distribution.
+ * Appelé par l'événement IPC 'distributionIndexDone' depuis preloader.js.
+ *
+ * GUIDE UI/UX — Points de personnalisation dans cette fonction :
+ *   1. Fond d'écran  : modifier la ligne document.body.style.backgroundImage
+ *      → Pour désactiver les fonds rotatifs, commenter cette ligne et définir
+ *        background dans dl-theme.css sur body.
+ *   2. Couleur frameBar : modifier 'rgba(0, 0, 0, 0.5)' (barre de titre en jeu)
+ *   3. Vue initiale : la logique if/else choisit entre welcome / landing / loginOptions
+ *      selon l'état d'authentification — ne pas supprimer cette logique.
+ *   4. Spinner de démarrage : #loadingContainer est masqué ici via fadeOut(500).
+ *      Pour changer la durée, modifier ce paramètre (ms).
+ *
+ * @param {Object} data L'objet DistributionIndex retourné par DistroAPI.
+ */
 async function showMainUI(data){
 
     if(!isDev){
@@ -68,7 +98,11 @@ async function showMainUI(data){
     updateSelectedServer(data.getServerById(ConfigManager.getSelectedServer()))
     refreshServerStatus()
     setTimeout(() => {
+        // UI — couleur de la barre de titre une fois la page principale visible.
+        // Pour dl-theme.css : surcharger #frameBar { background-color: ... !important }
         document.getElementById('frameBar').style.backgroundColor = 'rgba(0, 0, 0, 0.5)'
+        // UI — injection du fond d'écran rotatif (bkid généré dans index.js).
+        // Pour désactiver : commenter cette ligne et définir background dans dl-theme.css
         document.body.style.backgroundImage = `url('assets/images/backgrounds/${document.body.getAttribute('bkid')}.jpg')`
         $('#main').show()
 
@@ -96,6 +130,10 @@ async function showMainUI(data){
             }
         }
 
+        // UI — Masquage du spinner de démarrage (#loadingContainer dans app.ejs).
+        // Délai de 250ms pour laisser la vue principale apparaître d'abord.
+        // Pour changer l'animation du spinner : voir .rotating dans launcher.css
+        // Pour changer les images : LoadingSeal.png et LoadingText.png dans assets/images/
         setTimeout(() => {
             $('#loadingContainer').fadeOut(500, () => {
                 $('#loadSpinnerImage').removeClass('rotating')

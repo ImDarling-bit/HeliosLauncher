@@ -3,6 +3,8 @@
  */
 // Requirements
 const { URL }                 = require('url')
+const fsExtra                 = require('fs-extra')
+const StreamZip               = require('node-stream-zip')
 const {
     MojangRestAPI,
     getServerStatus
@@ -42,12 +44,31 @@ const user_text               = document.getElementById('user_text')
 
 const loggerLanding = LoggerUtil.getLogger('Landing')
 
-/* Launch Progress Wrapper Functions */
+/* =============================================================================
+   GUIDE UI/UX — Barre de progression du lancement (landing.ejs #lower #right)
+   =============================================================================
+   Deux états visuels distincts dans landing.ejs :
+   ┌─────────────────────────────────────────────────────────────────────────┐
+   │  État normal (loading=false) : #launch_content  (display: inline-flex) │
+   │    → Affiche : [PLAY button] | [divider] | [server selection button]   │
+   │                                                                         │
+   │  État lancement (loading=true) : #launch_details (display: flex)        │
+   │    → Affiche : [X%] | [divider] | [progress bar] | [details text]      │
+   └─────────────────────────────────────────────────────────────────────────┘
+   Pour styler ces zones : sélecteurs dans launcher.css
+     #launch_content, #launch_button, #server_selection_button
+     #launch_details, #launch_progress, #launch_progress_label, #launch_details_text
+   ============================================================================= */
 
 /**
- * Show/hide the loading area.
- * 
- * @param {boolean} loading True if the loading area should be shown, otherwise false.
+ * Bascule entre l'affichage du bouton PLAY et la barre de progression.
+ *
+ * GUIDE UI/UX — Appelé au début du lancement (loading=true) puis quand
+ * le jeu est lancé ou en cas d'erreur (loading=false).
+ * Les transitions sont instantanées (display). Pour ajouter un fade,
+ * remplacer par $('#launch_details').fadeIn() etc.
+ *
+ * @param {boolean} loading True = montre la barre de progression, False = montre le bouton PLAY.
  */
 function toggleLaunchArea(loading){
     if(loading){
@@ -98,6 +119,20 @@ function setLaunchEnabled(val){
     document.getElementById('launch_button').disabled = !val
 }
 
+// =============================================================================
+// GUIDE UI/UX — Bouton PLAY (#launch_button dans landing.ejs)
+// =============================================================================
+// Ce listener gère toute la logique de lancement :
+//   1. Récupère le serveur sélectionné depuis DistroAPI
+//   2. Vérifie/télécharge Java si besoin (asyncSystemScan)
+//   3. Lance dlAsync() → valide et télécharge les mods
+//   4. Lance ProcessBuilder.launch() → spawn du processus Java/Minecraft
+//
+// IMPORTANT : Ne PAS supprimer ou modifier la logique interne de ce listener.
+// Pour des changements visuels (style du bouton, texte) :
+//   → Modifier #launch_button dans landing.ejs et dl-theme.css
+//   → Pour changer le texte "JOUER" : app/assets/lang/_custom.toml → [landing] launchButton
+// =============================================================================
 // Bind launch button
 document.getElementById('launch_button').addEventListener('click', async e => {
     loggerLanding.info('Launching game..')
@@ -127,6 +162,10 @@ document.getElementById('launch_button').addEventListener('click', async e => {
     }
 })
 
+// GUIDE UI/UX — Bouton Settings (icône ⚙️ dans landing.ejs #internalMedia)
+// Sélecteur CSS : #settingsMediaButton, #settingsSVG
+// Pour changer l'icône : remplacer le SVG inline dans landing.ejs (lignes 22-26)
+// Pour changer la position : modifier #internalMedia dans launcher.css / dl-theme.css
 // Bind settings button
 document.getElementById('settingsMediaButton').onclick = async e => {
     await prepareSettings()
@@ -141,6 +180,12 @@ document.getElementById('avatarOverlay').onclick = async e => {
     })
 }
 
+// GUIDE UI/UX — Affichage du compte sélectionné (landing.ejs #user_content)
+// updateSelectedAccount() met à jour :
+//   - #user_text          → nom d'utilisateur affiché (span dans landing.ejs)
+//   - #avatarContainer    → background-image avec l'avatar Minecraft (mc-heads.net)
+// Pour modifier le style : surcharger #user_text et #avatarContainer dans dl-theme.css
+// Pour changer la source des avatars : modifier l'URL mc-heads.net ci-dessous
 // Bind selected account
 function updateSelectedAccount(authUser){
     let username = Lang.queryJS('landing.selectedAccount.noAccountSelected')
@@ -445,6 +490,161 @@ const GAME_JOINED_REGEX = /\[.+\]: Sound engine started/
 const GAME_LAUNCH_REGEX = /^\[.+\]: (?:MinecraftForge .+ Initialized|ModLauncher .+ starting: .+|Loading Minecraft .+ with Fabric Loader .+)$/
 const MIN_LINGER = 5000
 
+const loggerForgeLibs = LoggerUtil.getLogger('ForgeLibraries')
+
+/**
+ * Download Forge runtime libraries listed in the version manifest (non-empty URLs),
+ * then extract ALL maven-bundled JARs from the Forge installer (slim JAR, universal
+ * JAR, and any other embedded artifacts). Must run after the main validation/download
+ * cycle but before ProcessBuilder.
+ */
+async function ensureForgeLibraries(commonDir, serv, modManifest) {
+    if (!modManifest || !modManifest.libraries) return
+
+    const libDir = path.join(commonDir, 'libraries')
+    const forgeModule = serv.modules.find(m => m.rawModule.type === 'ForgeHosted')
+    const installerPath = forgeModule ? forgeModule.getPath() : null
+
+    // Step 1 — download libraries from Maven URLs listed in the version manifest
+    for (const lib of modManifest.libraries) {
+        const artifact = lib.downloads && lib.downloads.artifact
+        if (!artifact || !artifact.path || !artifact.url) continue
+
+        const localPath = path.join(libDir, artifact.path)
+        try {
+            const stats = await fsExtra.stat(localPath)
+            if (!artifact.size || stats.size === artifact.size) continue
+            await fsExtra.remove(localPath)
+        } catch (_e) { /* file absent — will be downloaded */ }
+
+        loggerForgeLibs.info(`Downloading Forge library: ${lib.name}`)
+        await downloadFile(artifact.url, localPath)
+    }
+
+    // Step 2 — extract ALL JARs bundled inside the Forge installer's maven/ directory.
+    // This covers the slim JAR (forge-X.jar) and the universal JAR (forge-X-universal.jar),
+    // neither of which is downloadable directly from Maven.
+    if (installerPath && await fsExtra.pathExists(installerPath)) {
+        const zip = new StreamZip.async({ file: installerPath })
+        try {
+            const entries = await zip.entries()
+            for (const entryName of Object.keys(entries)) {
+                if (!entryName.startsWith('maven/') || entryName.endsWith('/')) continue
+                const relativePath = entryName.slice('maven/'.length)
+                const localPath = path.join(libDir, relativePath)
+                if (await fsExtra.pathExists(localPath)) continue
+                const data = await zip.entryData(entryName)
+                await fsExtra.ensureDir(path.dirname(localPath))
+                await fsExtra.writeFile(localPath, data)
+                loggerForgeLibs.info(`Extracted from installer: ${relativePath}`)
+            }
+        } finally {
+            await zip.close()
+        }
+
+        // Step 3 — run the Forge installer to patch the Minecraft client and produce
+        // forge-X-client.jar (binary-patched Minecraft). This file is not bundled in the
+        // installer ZIP and cannot be downloaded; it must be generated at runtime.
+        const mcVersion = modManifest.inheritsFrom || modManifest.id.split('-')[0]
+        const forgeVersion = modManifest.id  // e.g. "1.16.5-forge-36.2.39"
+        const clientJar = path.join(libDir,
+            `net/minecraftforge/forge/${forgeVersion.replace('-forge-', '-')}/forge-${forgeVersion.replace('-forge-', '-')}-client.jar`)
+        if (!await fsExtra.pathExists(clientJar)) {
+            loggerForgeLibs.info('Generating Forge client JAR by running installer…')
+            const { execFile } = require('child_process')
+            const javaExec = ConfigManager.getJavaExecutable(serv.rawServer.id) || 'java'
+            // Create a minimal launcher_profiles.json so the installer accepts the target dir
+            const profilesFile = path.join(commonDir, 'launcher_profiles.json')
+            if (!await fsExtra.pathExists(profilesFile)) {
+                await fsExtra.writeJson(profilesFile, { profiles: {} })
+            }
+            await new Promise((resolve, reject) => {
+                execFile(javaExec, [
+                    '-Djava.awt.headless=true',
+                    '-jar', installerPath,
+                    '--installClient', commonDir
+                ], { cwd: commonDir }, (err, stdout, stderr) => {
+                    if (err) {
+                        loggerForgeLibs.error('Forge installer failed:', stderr || err.message)
+                        reject(err)
+                    } else {
+                        loggerForgeLibs.info('Forge installer completed successfully.')
+                        resolve()
+                    }
+                })
+            })
+        }
+    }
+}
+
+const AUTHLIB_INJECTOR_VERSION = '1.2.5'
+const AUTHLIB_INJECTOR_URL = `https://github.com/yushijinhun/authlib-injector/releases/download/v${AUTHLIB_INJECTOR_VERSION}/authlib-injector-${AUTHLIB_INJECTOR_VERSION}.jar`
+
+async function ensureAuthlibInjector(commonDir) {
+    const injectorPath = path.join(commonDir, 'authlib-injector', `authlib-injector-${AUTHLIB_INJECTOR_VERSION}.jar`)
+    if (!await fsExtra.pathExists(injectorPath)) {
+        loggerForgeLibs.info('Downloading authlib-injector…')
+        await fsExtra.ensureDir(path.dirname(injectorPath))
+        await downloadFile(AUTHLIB_INJECTOR_URL, injectorPath)
+        loggerForgeLibs.info('authlib-injector downloaded.')
+    }
+    return injectorPath
+}
+
+// Local Yggdrasil server — handles authlib-injector requests so multiplayer is enabled
+// without requiring a remote AzAuth/authlib-injector compatible server.
+let _yggServer = null
+
+async function startYggdrasilServer(authUser) {
+    const http = require('http')
+    const uuidNoDash = authUser.uuid.replace(/-/g, '')
+    const username = authUser.displayName
+
+    const metadata = JSON.stringify({
+        meta: {
+            serverName: 'DistrictLife',
+            implementationName: 'DistrictLife-Launcher',
+            implementationVersion: '1.0.0',
+            'feature.non_email_login': false
+        },
+        skinDomains: []
+    })
+
+    const profile = JSON.stringify({ id: uuidNoDash, name: username, properties: [] })
+
+    const server = http.createServer((req, res) => {
+        const url = req.url.split('?')[0]
+        res.setHeader('Content-Type', 'application/json')
+        if (req.method === 'GET' && url === '/') {
+            res.writeHead(200); res.end(metadata)
+        } else if (req.method === 'GET' && url === '/minecraft/profile') {
+            res.writeHead(200); res.end(profile)
+        } else if (req.method === 'POST' && url === '/sessionserver/session/minecraft/join') {
+            res.writeHead(204); res.end()
+        } else if (req.method === 'GET' && url.startsWith('/sessionserver/session/minecraft/hasJoined')) {
+            res.writeHead(200); res.end(profile)
+        } else if (req.method === 'GET' && url.startsWith('/sessionserver/session/minecraft/profile/')) {
+            res.writeHead(200); res.end(profile)
+        } else {
+            res.writeHead(204); res.end()
+        }
+    })
+
+    return new Promise((resolve, reject) => {
+        server.listen(0, '127.0.0.1', () => {
+            _yggServer = server
+            const port = server.address().port
+            loggerForgeLibs.info(`Local Yggdrasil server listening on port ${port}`)
+            resolve(port)
+        })
+        server.on('error', reject)
+    })
+}
+
+function stopYggdrasilServer() {
+    if (_yggServer) { _yggServer.close(); _yggServer = null }
+}
+
 async function dlAsync(login = true) {
 
     // Login parameter is temporary for debug purposes. Allows testing the validation/downloads without
@@ -551,10 +751,17 @@ async function dlAsync(login = true) {
     const modLoaderData = await distributionIndexProcessor.loadModLoaderVersionJson(serv)
     const versionData = await mojangIndexProcessor.getVersionJson()
 
+    // Download / extract Forge runtime libraries (modlauncher, asm, fmlloader, etc.)
+    await ensureForgeLibraries(ConfigManager.getCommonDirectory(), serv, modLoaderData)
+
+    // Download authlib-injector for Azuriom session authentication (multiplayer)
+    await ensureAuthlibInjector(ConfigManager.getCommonDirectory())
+
     if(login) {
         const authUser = ConfigManager.getSelectedAccount()
         loggerLaunchSuite.info(`Sending selected account (${authUser.displayName}) to ProcessBuilder.`)
-        let pb = new ProcessBuilder(serv, versionData, modLoaderData, authUser, remote.app.getVersion())
+        const yggPort = await startYggdrasilServer(authUser)
+        let pb = new ProcessBuilder(serv, versionData, modLoaderData, authUser, remote.app.getVersion(), yggPort)
         setLaunchDetails(Lang.queryJS('landing.dlAsync.launchingGame'))
 
         // const SERVER_JOINED_REGEX = /\[.+\]: \[CHAT\] [a-zA-Z0-9_]{1,16} joined the game/
@@ -562,6 +769,7 @@ async function dlAsync(login = true) {
 
         const onLoadComplete = () => {
             toggleLaunchArea(false)
+            if(proc == null) return
             if(hasRPC){
                 DiscordWrapper.updateDetails(Lang.queryJS('landing.discord.loading'))
                 proc.stdout.on('data', gameStateChange)
@@ -623,6 +831,7 @@ async function dlAsync(login = true) {
                     DiscordWrapper.shutdownRPC()
                     hasRPC = false
                     proc = null
+                    stopYggdrasilServer()
                 })
             }
 

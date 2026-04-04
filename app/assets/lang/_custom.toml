@@ -1,7 +1,7 @@
-# Custom Language File for Launcher Customizer
+# Custom Language File — DistrictLife
 
 [ejs.app]
-title = "Helios Launcher"
+title = "DistrictLife Launcher"
 
 [ejs.landing]
 mediaGitHubURL = "https://github.com/dscalzi/HeliosLauncher"
@@ -11,10 +11,50 @@ mediaYouTubeURL = "#"
 mediaDiscordURL = "https://discord.gg/zNWUXdt"
 
 [ejs.settings]
-sourceGithubLink = "https://github.com/dscalZi/HeliosLauncher"
-supportLink = "https://github.com/dscalZi/HeliosLauncher/issues"
+sourceGithubLink  = "https://github.com/dscalZi/HeliosLauncher"
+supportLink       = "https://github.com/dscalZi/HeliosLauncher/issues"
+azuriomAccount    = "Compte DistrictLife (Azuriom)"
+addAzuriomAccount = "Ajouter un compte"
 
 [ejs.welcome]
-welcomeHeader = "WELCOME TO WESTEROSCRAFT"
-welcomeDescription = "Our mission is to recreate the universe imagined by author George RR Martin in his fantasy series, A Song of Ice and Fire.  Through the collaborative effort of thousands of community members, we have sought to create Westeros as accurately and precisely as possible within Minecraft.  The world we are creating is yours to explore.  Journey from Dorne to Castle Black, and if you aren’t afraid, beyond the Wall itself, but best not delay.  As the words of House Stark ominously warn: Winter is Coming."
-welcomeDescCTA = "You are just a few clicks away from Westeros."
+welcomeHeader = "BIENVENUE SUR DISTRICTLIFE"
+welcomeDescription = "DistrictLife est un serveur Minecraft Forge 1.16.5 communautaire. Connectez-vous avec votre compte du site pour accéder au serveur."
+welcomeDescCTA = "Vous êtes à quelques clics du serveur."
+
+# ─── Formulaire de connexion Azuriom ──────────────────────────────────────────
+[ejs.loginOptions]
+azuriomSubheader   = "CONNEXION DISTRICTLIFE"
+emailPlaceholder   = "ADRESSE E-MAIL"
+passwordPlaceholder = "MOT DE PASSE"
+emailError         = "* Valeur invalide"
+passwordError      = "* Requis"
+loginButton        = "SE CONNECTER"
+forgotPasswordLink = "https://azuriom.ap-bts.wstr.fr/password/reset"
+forgotPasswordText = "Mot de passe oublié ?"
+cancelButton       = "Annuler"
+
+# ─── Strings JS pour le formulaire Azuriom ────────────────────────────────────
+[js.loginOptions]
+login     = "SE CONNECTER"
+loggingIn = "CONNEXION..."
+success   = "CONNECTÉ !"
+tryAgain  = "Réessayer"
+
+[js.loginOptions.error]
+requiredValue  = "* Ce champ est requis"
+unknownTitle   = "Erreur inattendue"
+unknownDesc    = "Une erreur est survenue. Veuillez réessayer."
+
+# ─── Erreurs Azuriom (messages affichés dans la modale d’erreur) ──────────────
+[js.auth.azuriom.error]
+invalidCredentialsTitle = "Identifiants incorrects"
+invalidCredentialsDesc  = "L’adresse e-mail ou le mot de passe est incorrect. Vérifiez vos identifiants sur le site DistrictLife."
+unreachableTitle        = "Serveur inaccessible"
+unreachableDesc         = "Impossible de contacter le serveur d’authentification. Vérifiez votre connexion internet."
+unknownTitle            = "Erreur d’authentification"
+unknownDesc             = "Une erreur inattendue s’est produite lors de la connexion. Veuillez réessayer."
+
+# ─── Onglet Compte (Settings) — section Azuriom ───────────────────────────────
+[js.settings]
+azuriomAccount    = "Compte DistrictLife (Azuriom)"
+addAzuriomAccount = "Ajouter un compte"

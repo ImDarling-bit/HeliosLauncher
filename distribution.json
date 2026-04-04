@@ -1,0 +1,60 @@
+{
+    "version": "1.0.0",
+    "discord": {
+        "clientId": "1488427560298876968",
+        "smallImageText": "DistrictLife",
+        "smallImageKey": "seal-circle"
+    },
+    "rss": "https://azuriom.ap-bts.wstr.fr/api/rss",
+    "servers": [
+        {
+            "id": "DistrictLife",
+            "name": "DistrictLife",
+            "description": "Serveur Minecraft DistrictLife - Forge 1.16.5",
+            "icon": "https://distribution.ap-bts.wstr.fr/icon.png",
+            "version": "1.0.0",
+            "address": "play.noah-sagot.dev:25567",
+            "minecraftVersion": "1.16.5",
+            "discord": {
+                "shortId": "DistrictLife",
+                "largeImageText": "DistrictLife - Forge 1.16.5",
+                "largeImageKey": "server-districtlife"
+            },
+            "mainServer": true,
+            "autoconnect": false,
+            "javaOptions": {
+                "supported": ">=8.x",
+                "suggestedMajor": 8,
+                "ram": {
+                    "recommended": 3072,
+                    "minimum": 2048
+                }
+            },
+            "modules": [
+                {
+                    "id": "net.minecraftforge:forge:1.16.5-36.2.39",
+                    "name": "Minecraft Forge 36.2.39",
+                    "type": "ForgeHosted",
+                    "artifact": {
+                        "size": 7481495,
+                        "MD5": "16654cc79a75b696b8c1c177072dae7e",
+                        "path": "net/minecraftforge/forge/1.16.5-36.2.39/forge-1.16.5-36.2.39-installer.jar",
+                        "url": "https://maven.minecraftforge.net/net/minecraftforge/forge/1.16.5-36.2.39/forge-1.16.5-36.2.39-installer.jar"
+                    },
+                    "subModules": [
+                        {
+                            "id": "1.16.5-forge-36.2.39",
+                            "name": "Forge Version Manifest",
+                            "type": "VersionManifest",
+                            "artifact": {
+                                "size": 13577,
+                                "MD5": "2090bfafdec72f885ddf95300bd96714",
+                                "url": "https://distribution.ap-bts.wstr.fr/forge-1.16.5-36.2.39-version.json"
+                            }
+                        }
+                    ]
+                }
+            ]
+        }
+    ]
+}

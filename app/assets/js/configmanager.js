@@ -7,7 +7,7 @@ const logger = LoggerUtil.getLogger('ConfigManager')
 
 const sysRoot = process.env.APPDATA || (process.platform == 'darwin' ? process.env.HOME + '/Library/Application Support' : process.env.HOME)
 
-const dataPath = path.join(sysRoot, '.helioslauncher')
+const dataPath = path.join(sysRoot, '.DistrictLife-launcheur')
 
 const launcherDir = require('@electron/remote').app.getPath('userData')
 
@@ -18,7 +18,7 @@ const launcherDir = require('@electron/remote').app.getPath('userData')
  */
 exports.getLauncherDirectory = function(){
     return launcherDir
-}
+} 
 
 /**
  * Get the launcher's data directory. This is where all files related
@@ -343,6 +343,27 @@ exports.addMojangAuthAccount = function(uuid, accessToken, username, displayName
         type: 'mojang',
         accessToken,
         username: username.trim(),
+        uuid: uuid.trim(),
+        displayName: displayName.trim()
+    }
+    return config.authenticationDatabase[uuid]
+}
+
+/**
+ * Adds an authenticated Azuriom account to the database.
+ *
+ * @param {string} uuid        The Minecraft UUID returned by Azuriom.
+ * @param {string} accessToken The access token returned by Azuriom.
+ * @param {string} email       The email used to log in (stored as username).
+ * @param {string} displayName The in-game name returned by Azuriom.
+ * @returns {Object} The authenticated account object created by this action.
+ */
+exports.addAzuriomAuthAccount = function(uuid, accessToken, email, displayName){
+    config.selectedAccount = uuid
+    config.authenticationDatabase[uuid] = {
+        type: 'azuriom',
+        accessToken,
+        username: email.trim(),
         uuid: uuid.trim(),
         displayName: displayName.trim()
     }

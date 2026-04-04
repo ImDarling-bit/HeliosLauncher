@@ -614,11 +614,10 @@ body, button {
     font-weight: bold;
     letter-spacing: 2px;
     border: none;
-    padding: 15px 5px;
-    margin: 10px 0px;
+    padding: 8px 5px;
+    margin: 10px auto;
     cursor: pointer;
-    position: relative;
-    right: -20px;
+    display: block;
     transition: 0.5s ease;
 }
 #loginButton:disabled {
@@ -1039,6 +1038,77 @@ body, button {
 #loginOptionCancelButton:disabled {
     color: rgba(211, 211, 211, 0.75);
     pointer-events: none;
+}
+
+#loginOptionsButton {
+    background: none;
+    color: #fff;
+    font-weight: bold;
+    letter-spacing: 2px;
+    border: none;
+    padding: 8px 5px;
+    margin: 10px auto;
+    cursor: pointer;
+    display: block;
+    transition: 0.5s ease;
+}
+#loginOptionsButton:disabled {
+    color: rgba(255, 255, 255, 0.75);
+    pointer-events: none;
+}
+#loginOptionsButton[loading] {
+    color: #fff;
+}
+#loginOptionsButton:hover,
+#loginOptionsButton:focus {
+    text-shadow: 0px 0px 20px #fff;
+    outline: none;
+}
+#loginOptionsButton:active {
+    color: #c7c7c7;
+    text-shadow: 0px 0px 20px #c7c7c7;
+}
+#loginOptionsButtonContent {
+    display: flex;
+    align-items: center;
+}
+#loginOptionsSVG {
+    overflow: visible;
+    transform: rotate(90deg);
+    margin-left: 20px;
+    transition: 0.25s ease;
+    width: 20px;
+    height: 20px;
+}
+#loginOptionsButton:hover #loginOptionsSVG,
+#loginOptionsButton:focus #loginOptionsSVG {
+    -webkit-filter: drop-shadow(0px 0px 2px #fff);
+}
+#loginOptionsButton:disabled #loginOptionsSVG .arrowLine {
+    stroke: rgba(255, 255, 255, 0.75);
+}
+#loginOptionsButton .circle-loader,
+#loginOptionsButton[loading] #loginOptionsSVG {
+    display: none;
+}
+#loginOptionsButton[loading] .circle-loader,
+#loginOptionsButton #loginOptionsSVG {
+    display: initial;
+}
+
+#loginOptionsDisclaimer {
+    margin-top: 8px;
+    text-align: center;
+}
+#loginOptionsDisclaimer a {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.4);
+    text-decoration: none;
+    letter-spacing: 0.5px;
+    transition: color 0.2s ease;
+}
+#loginOptionsDisclaimer a:hover {
+    color: rgba(255, 255, 255, 0.7);
 }
 
 
@@ -3966,3 +4036,4 @@ input:checked + .toggleSwitchSlider:before {
 .rotating {
     animation: rotating 10s linear infinite;
 }
+

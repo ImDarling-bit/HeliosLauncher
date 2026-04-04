@@ -23,7 +23,7 @@ const logger = LoggerUtil.getLogger('ProcessBuilder')
  */
 class ProcessBuilder {
 
-    constructor(distroServer, vanillaManifest, modManifest, authUser, launcherVersion){
+    constructor(distroServer, vanillaManifest, modManifest, authUser, launcherVersion, yggdrasilPort = null){
         this.gameDir = path.join(ConfigManager.getInstanceDirectory(), distroServer.rawServer.id)
         this.commonDir = ConfigManager.getCommonDirectory()
         this.server = distroServer
@@ -36,6 +36,7 @@ class ProcessBuilder {
         this.llDir = path.join(this.gameDir, 'liteloaderModList.json')
         this.libPath = path.join(this.commonDir, 'libraries')
 
+        this.yggdrasilPort = yggdrasilPort
         this.usingLiteLoader = false
         this.usingFabricLoader = false
         this.llPath = null
@@ -430,6 +431,12 @@ class ProcessBuilder {
         args.push('-Xms' + ConfigManager.getMinRAM(this.server.rawServer.id))
         args = args.concat(ConfigManager.getJVMOptions(this.server.rawServer.id))
 
+        // authlib-injector → local Yggdrasil server (enables multiplayer button, handles session)
+        const authlibInjectorJar = path.join(this.commonDir, 'authlib-injector', 'authlib-injector-1.2.5.jar')
+        if(this.yggdrasilPort && fs.existsSync(authlibInjectorJar)) {
+            args.push(`-javaagent:${authlibInjectorJar}=http://127.0.0.1:${this.yggdrasilPort}`)
+        }
+
         // Main Java Class
         args.push(this.modManifest.mainClass)
 
@@ -693,10 +700,13 @@ class ProcessBuilder {
         // Resolve the server declared libraries.
         const servLibs = this._resolveServerLibraries(mods)
 
-        // Merge libraries, server libs with the same
-        // maven identifier will override the mojang ones.
-        // Ex. 1.7.10 forge overrides mojang's guava with newer version.
-        const finalLibs = {...mojangLibs, ...servLibs}
+        // Resolve Forge version manifest libraries (modlauncher, asm-9, fmlloader, mixin, etc.)
+        // These take highest priority so that the slim Forge JAR (extracted from the installer)
+        // overrides the installer JAR entry that _resolveServerLibraries adds for ForgeHosted.
+        const forgeManifestLibs = this._resolveForgeManifestLibraries()
+
+        // Merge libraries. Priority (highest last): Mojang < Server distro < Forge manifest.
+        const finalLibs = {...mojangLibs, ...servLibs, ...forgeManifestLibs}
         cpArgs = cpArgs.concat(Object.values(finalLibs))
 
         this._processClassPathList(cpArgs)
@@ -860,8 +870,32 @@ class ProcessBuilder {
     }
 
     /**
+     * Resolve the libraries listed in the Forge version manifest (modManifest.libraries).
+     * These include modlauncher, asm-9, fmlloader, mixin, and other Forge runtime JARs
+     * that are not declared in the distribution index but are required on the classpath.
+     * The slim Forge JAR (empty URL in the manifest) is also resolved here so it takes
+     * priority over the installer JAR that may be present from the ForgeHosted module.
+     *
+     * @returns {{[id: string]: string}}
+     */
+    _resolveForgeManifestLibraries() {
+        if (!this.modManifest || !this.modManifest.libraries) {
+            return {}
+        }
+        const libs = {}
+        for (const lib of this.modManifest.libraries) {
+            const artifact = lib.downloads && lib.downloads.artifact
+            if (artifact && artifact.path) {
+                const versionIndependentId = lib.name.substring(0, lib.name.lastIndexOf(':'))
+                libs[versionIndependentId] = path.join(this.libPath, artifact.path)
+            }
+        }
+        return libs
+    }
+
+    /**
      * Recursively resolve the path of each library required by this module.
-     * 
+     *
      * @param {Object} mdl A module object from the server distro index.
      * @returns {{[id: string]: string}} An object containing the paths of each library this module requires.
      */
