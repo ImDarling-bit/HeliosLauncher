@@ -33,11 +33,8 @@ exports.queryEJS = function(id, placeHolders){
 }
 
 exports.setupLanguage = function(){
-    // Load Language Files
+    // Load base language, then French override, then custom overrides
     exports.loadLanguage('en_US')
-    // Uncomment this when translations are ready
-    //exports.loadLanguage('xx_XX')
-
-    // Load Custom Language File for Launcher Customizer
+    exports.loadLanguage('fr_FR')
     exports.loadLanguage('_custom')
 }

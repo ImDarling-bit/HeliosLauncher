@@ -119,7 +119,16 @@ body {
     align-items: flex-start;
     justify-content: center;
     padding-top: 12px;
-    visibility: hidden; /* présent pour JS, invisible */
+    visibility: visible;
+}
+
+#user_content {
+    visibility: visible;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding-top: 20px;
 }
 
 #image_seal_container {

@@ -172,13 +172,7 @@ document.getElementById('settingsMediaButton').onclick = async e => {
     switchView(getCurrentView(), VIEWS.settings)
 }
 
-// Bind avatar overlay button.
-document.getElementById('avatarOverlay').onclick = async e => {
-    await prepareSettings()
-    switchView(getCurrentView(), VIEWS.settings, 500, 500, () => {
-        settingsNavItemListener(document.getElementById('settingsNavAccount'), false)
-    })
-}
+// Avatar overlay removed — no avatar display.
 
 // GUIDE UI/UX — Affichage du compte sélectionné (landing.ejs #user_content)
 // updateSelectedAccount() met à jour :
@@ -193,9 +187,7 @@ function updateSelectedAccount(authUser){
         if(authUser.displayName != null){
             username = authUser.displayName
         }
-        if(authUser.uuid != null){
-            document.getElementById('avatarContainer').style.backgroundImage = `url('https://mc-heads.net/body/${authUser.uuid}/right')`
-        }
+        // Avatar display removed.
     }
     user_text.innerHTML = username
 }

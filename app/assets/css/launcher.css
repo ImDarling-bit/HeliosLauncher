@@ -273,12 +273,8 @@ body, button {
 */
 
 #welcomeImageSeal {
-    border-radius: 50%;
-    border: 2px solid #cad7e1;
-    background: rgba(1, 2, 1, 0.5);
     height: 125px;
     width: 125px;
-    box-shadow: 0px 0px 10px 0px rgb(0, 0, 0);
     margin-bottom: 5%;
     margin-top: 10%;
 }
@@ -486,12 +482,8 @@ body, button {
 
 /* Logo on login form. */
 #loginImageSeal {
-    border-radius: 50%;
-    border: 2px solid #cad7e1;
-    background: rgba(1, 2, 1, 0.5);
     height: 125px;
     width: 125px;
-    box-shadow: 0px 0px 10px 0px rgb(0, 0, 0);
     margin-bottom: 20px;
 }
 
@@ -3032,10 +3024,17 @@ input:checked + .toggleSwitchSlider:before {
 /* Right hand user content container. */
 #user_content {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     box-sizing: border-box;
-    position: relative;
+    gap: 10px;
+    padding-top: 10px;
+}
+
+#launcherIcon {
+    height: 100px;
+    width: 100px;
 }
 
 /* User profile avatar container. */
@@ -3081,16 +3080,22 @@ input:checked + .toggleSwitchSlider:before {
     background-color: rgba(0, 0, 0, 0.45);
 }
 
+/* User badge container. */
+#user_badge {
+    background: rgba(0, 0, 0, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    padding: 5px 12px;
+    backdrop-filter: blur(4px);
+    text-align: center;
+}
+
 /* User profile name text. */
 #user_text {
     font-size: 12px;
-    min-width: 135px;
     font-weight: 900;
     letter-spacing: 1px;
-    text-shadow: 0px 0px 20px black;
-    position: absolute;
-    right: 95px;
-    text-align: right;
+    color: #ffffff;
     -webkit-user-select: initial;
 }
 

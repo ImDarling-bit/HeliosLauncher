@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(powershell.exe:*)",
+      "Bash(mv \"mods_add/supermartijn642corelib-1.1.21-forge-mc1.16.jar\" .)",
+      "Bash(rm \"supermartijn642corelib-1.1.6-forge-mc1.16.jar\")"
+    ]
+  }
+}
