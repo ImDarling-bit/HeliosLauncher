@@ -36,7 +36,7 @@ git push origin master
 
 ## 3. Workflow GitHub Actions (build automatique)
 
-Le workflow `.github/workflows/build.yml` se déclenche **automatiquement à chaque `git push`**.
+Le workflow `.github/workflows/build.yml` se déclenche **uniquement sur un push de tag** `v*` (ex: `v2.2.2`).
 
 Il build le launcher sur les 3 plateformes en parallèle :
 
