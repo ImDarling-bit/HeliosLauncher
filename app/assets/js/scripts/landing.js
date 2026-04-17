@@ -785,6 +785,8 @@ async function dlAsync(login = true) {
             }
             proc.stdout.removeListener('data', tempListener)
             proc.stderr.removeListener('data', gameErrorListener)
+            // Masque le launcher une fois le jeu lancé
+            remote.getCurrentWindow().hide()
         }
         const start = Date.now()
 
@@ -831,6 +833,17 @@ async function dlAsync(login = true) {
 
             setLaunchDetails(Lang.queryJS('landing.dlAsync.doneEnjoyServer'))
 
+            // Réaffiche le launcher quand le jeu se ferme
+            proc.on('close', (code, signal) => {
+                loggerLaunchSuite.info('Game closed, showing launcher.')
+                proc = null
+                stopYggdrasilServer()
+                const win = remote.getCurrentWindow()
+                win.show()
+                win.focus()
+                toggleLaunchArea(false)
+            })
+
             // Init Discord Hook
             if(distro.rawDistribution.discord != null && serv.rawServer.discord != null){
                 DiscordWrapper.initRPC(distro.rawDistribution.discord, serv.rawServer.discord)
@@ -839,8 +852,6 @@ async function dlAsync(login = true) {
                     loggerLaunchSuite.info('Shutting down Discord Rich Presence..')
                     DiscordWrapper.shutdownRPC()
                     hasRPC = false
-                    proc = null
-                    stopYggdrasilServer()
                 })
             }
 

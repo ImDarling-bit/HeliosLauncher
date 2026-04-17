@@ -144,18 +144,7 @@ document.addEventListener('readystatechange', function () {
             })
         })
 
-        // Bind restore down button.
-        Array.from(document.getElementsByClassName('fRb')).map((val) => {
-            val.addEventListener('click', e => {
-                const window = remote.getCurrentWindow()
-                if(window.isMaximized()){
-                    window.unmaximize()
-                } else {
-                    window.maximize()
-                }
-                document.activeElement.blur()
-            })
-        })
+        // Maximize button disabled — window size is fixed.
 
         // Bind minimize button.
         Array.from(document.getElementsByClassName('fMb')).map((val) => {

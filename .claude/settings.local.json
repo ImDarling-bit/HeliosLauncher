@@ -9,7 +9,8 @@
       "Bash(curl -sL \"https://github.com/DistrictLife/DistrictPhone/releases/download/v1.0.7/districtlife_phone-1.0.7.jar\" -o /tmp/districtlife_phone-1.0.7.jar)",
       "Read(//tmp/**)",
       "Bash(curl -sL \"https://github.com/DistrictLife/DistrictPhone/releases/download/v1.0.12/districtlife_phone-1.0.12.jar\" -o /tmp/districtlife_phone-1.0.12.jar)",
-      "Bash(git *)"
+      "Bash(git *)",
+      "Bash(node *)"
     ]
   }
 }
