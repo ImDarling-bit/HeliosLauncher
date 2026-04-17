@@ -50,6 +50,7 @@ publish:
   provider: github
   owner: ImDarling-bit
   repo: HeliosLauncher
+  releaseType: release
 
 directories:
   buildResources: 'build'
