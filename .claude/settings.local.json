@@ -3,7 +3,13 @@
     "allow": [
       "Bash(powershell.exe:*)",
       "Bash(mv \"mods_add/supermartijn642corelib-1.1.21-forge-mc1.16.jar\" .)",
-      "Bash(rm \"supermartijn642corelib-1.1.6-forge-mc1.16.jar\")"
+      "Bash(rm \"supermartijn642corelib-1.1.6-forge-mc1.16.jar\")",
+      "Bash(gh release:*)",
+      "WebFetch(domain:api.github.com)",
+      "Bash(curl -sL \"https://github.com/DistrictLife/DistrictPhone/releases/download/v1.0.7/districtlife_phone-1.0.7.jar\" -o /tmp/districtlife_phone-1.0.7.jar)",
+      "Read(//tmp/**)",
+      "Bash(curl -sL \"https://github.com/DistrictLife/DistrictPhone/releases/download/v1.0.12/districtlife_phone-1.0.12.jar\" -o /tmp/districtlife_phone-1.0.12.jar)",
+      "Bash(git *)"
     ]
   }
 }

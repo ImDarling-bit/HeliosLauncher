@@ -729,6 +729,23 @@ async function dlAsync(login = true) {
 
     fullRepairModule.destroyReceiver()
 
+    // Supprime les mods présents sur le disque qui ne sont plus dans le distribution.json
+    const modsDir = path.join(ConfigManager.getInstanceDirectory(), ConfigManager.getSelectedServer(), 'mods')
+    if(await fsExtra.pathExists(modsDir)) {
+        const expectedMods = new Set(
+            serv.modules
+                .filter(m => m.rawModule.type === 'File' && m.rawModule.artifact.path?.startsWith('mods/'))
+                .map(m => path.basename(m.rawModule.artifact.path))
+        )
+        const presentFiles = await fsExtra.readdir(modsDir)
+        for(const file of presentFiles) {
+            if(file.endsWith('.jar') && !expectedMods.has(file)) {
+                loggerLaunchSuite.info(`Suppression mod obsolète : ${file}`)
+                await fsExtra.remove(path.join(modsDir, file))
+            }
+        }
+    }
+
     setLaunchDetails(Lang.queryJS('landing.dlAsync.preparingToLaunch'))
 
     const mojangIndexProcessor = new MojangIndexProcessor(
