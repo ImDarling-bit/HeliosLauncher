@@ -19,7 +19,7 @@ const Lang = require('./langloader')
 const { AuthClient }         = require('azuriom-auth')
 
 // Client Azuriom — URL du site sans slash final
-const azuriomClient = new AuthClient('https://azuriom.ap-bts.wstr.fr')
+const azuriomClient = new AuthClient('https://www.districtliferp.fr')
 
 const log = LoggerUtil.getLogger('AuthManager')
 

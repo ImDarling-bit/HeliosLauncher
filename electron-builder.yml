@@ -6,6 +6,7 @@ copyright: 'Copyright © 2018-2026 Daniel Scalzi'
 
 asar: true
 compression: 'maximum'
+icon: 'app/assets/images/district_life_icon_v1_4092x4092.png'
 
 files:
   - '!{dist,.gitignore,.vscode,docs,dev-app-update.yml,.nvmrc,eslint.config.mjs}'

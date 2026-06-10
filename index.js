@@ -130,7 +130,7 @@ ipcMain.on(MSFT_OPCODE.OPEN_LOGIN, (ipcEvent, ...arguments_) => {
         width: 520,
         height: 600,
         frame: true,
-        icon: getPlatformIcon('SealCircle')
+        icon: getPlatformIcon('district_life_icon_v1_4092x4092')
     })
 
     msftAuthWindow.on('closed', () => {
@@ -181,7 +181,7 @@ ipcMain.on(MSFT_OPCODE.OPEN_LOGOUT, (ipcEvent, uuid, isLastAccount) => {
         width: 520,
         height: 600,
         frame: true,
-        icon: getPlatformIcon('SealCircle')
+        icon: getPlatformIcon('district_life_icon_v1_4092x4092')
     })
 
     msftLogoutWindow.on('closed', () => {
@@ -227,7 +227,7 @@ function createWindow() {
     win = new BrowserWindow({
         width: 980,
         height: 552,
-        icon: getPlatformIcon('SealCircle'),
+        icon: getPlatformIcon('district_life_icon_v1_4092x4092'),
         frame: false,
         resizable: false,
         maximizable: false,
@@ -325,19 +325,7 @@ function createMenu() {
 }
 
 function getPlatformIcon(filename){
-    let ext
-    switch(process.platform) {
-        case 'win32':
-            ext = 'ico'
-            break
-        case 'darwin':
-        case 'linux':
-        default:
-            ext = 'png'
-            break
-    }
-
-    return path.join(__dirname, 'app', 'assets', 'images', `${filename}.${ext}`)
+    return path.join(__dirname, 'app', 'assets', 'images', `${filename}.png`)
 }
 
 app.on('ready', createWindow)

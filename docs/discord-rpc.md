@@ -86,7 +86,7 @@ Le RPC nécessite deux blocs de configuration.
 | `app/assets/js/discordwrapper.js` | Initialisation, mise à jour et arrêt du RPC |
 | `app/assets/js/scripts/landing.js` | Appelle `initRPC`, `updateDetails`, `shutdownRPC` |
 | `app/assets/lang/en_US.toml` | Textes affichés (`[js.discord]`, `[js.landing.discord]`) |
-| `distribution.ap-bts.wstr.fr/distribution.json` | Clés d'images et `clientId` |
+| `distribution.districtliferp.fr/distribution.json` | Clés d'images et `clientId` |
 
 ---
 

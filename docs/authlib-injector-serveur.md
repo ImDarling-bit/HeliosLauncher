@@ -7,7 +7,7 @@ Ce guide explique comment configurer le serveur Minecraft pour n'accepter **que 
 ## Prérequis
 
 - Un serveur Minecraft Forge 1.16.5 fonctionnel
-- Un site Azuriome accessible publiquement (`https://azuriom.ap-bts.wstr.fr`)
+- Un site Azuriome accessible publiquement (`https://azuriom.districtliferp.fr`)
 - Accès au script de démarrage du serveur
 
 ---
@@ -47,7 +47,7 @@ Place le fichier `authlib-injector-x.x.x.jar` dans le dossier racine de ton serv
 
 Ajoute l'argument `-javaagent` **avant** le `-jar` dans ta commande de lancement.
 
-Ajoute `-javaagent:authlib-injector-1.2.5.jar=https://azuriom.ap-bts.wstr.fr` **avant** le `-jar`, en conservant tous les autres arguments existants.
+Ajoute `-javaagent:authlib-injector-1.2.5.jar=https://azuriom.districtliferp.fr` **avant** le `-jar`, en conservant tous les autres arguments existants.
 
 ### Script actuel → Script modifié
 
@@ -56,7 +56,7 @@ Ajoute `-javaagent:authlib-injector-1.2.5.jar=https://azuriom.ap-bts.wstr.fr` **
 java -Xms128M -XX:MaxRAMPercentage=95.0 -Dterminal.jline=false -Dterminal.ansi=true -jar server.jar nogui
 
 # Après
-java -Xms128M -XX:MaxRAMPercentage=95.0 -Dterminal.jline=false -Dterminal.ansi=true -javaagent:authlib-injector-1.2.5.jar=https://azuriom.ap-bts.wstr.fr -jar server.jar nogui
+java -Xms128M -XX:MaxRAMPercentage=95.0 -Dterminal.jline=false -Dterminal.ansi=true -javaagent:authlib-injector-1.2.5.jar=https://azuriom.districtliferp.fr -jar server.jar nogui
 ```
 
 > **Important :** L'URL passée à authlib-injector est la **racine de ton site Azuriome**, sans chemin supplémentaire. authlib-injector découvre automatiquement l'API via `/.well-known/yggdrasil-alt-api-key`.
@@ -94,7 +94,7 @@ online-mode=true
 Dans un navigateur, ouvre :
 
 ```
-https://azuriom.ap-bts.wstr.fr/.well-known/yggdrasil-alt-api-key
+https://azuriom.districtliferp.fr/.well-known/yggdrasil-alt-api-key
 ```
 
 Tu dois obtenir une réponse JSON. Si la page renvoie une erreur 404, vérifie que le plugin **Azuriome Auth** est bien installé et activé sur ton site Azuriome.
@@ -106,7 +106,7 @@ Tu dois obtenir une réponse JSON. Si la page renvoie une erreur 404, vérifie q
 Arrête le serveur puis relance-le avec le nouveau script. Au démarrage, tu dois voir dans les logs :
 
 ```
-[authlib-injector] Authentication server: https://azuriom.ap-bts.wstr.fr
+[authlib-injector] Authentication server: https://azuriom.districtliferp.fr
 ```
 
 ---

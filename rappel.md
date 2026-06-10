@@ -19,7 +19,7 @@ La version doit suivre le format `MAJEUR.MINEUR.PATCH` (ex: `2.2.2`).
 git status
 
 # Ajouter les fichiers modifiés
-git add distribution.ap-bts.wstr.fr/distribution.json
+git add distribution.districtliferp.fr/distribution.json
 git add package.json
 # (ajouter les autres fichiers modifiés si besoin)
 

@@ -8,7 +8,7 @@ setlocal EnableDelayedExpansion
 
 set "SCRIPT_DIR=%~dp0"
 set "DISTRO_JSON=%SCRIPT_DIR%distribution.json"
-set "BASE_URL=https://distribution.ap-bts.wstr.fr"
+set "BASE_URL=https://distribution.districtliferp.fr"
 
 if not exist "%DISTRO_JSON%" (
     echo [ERREUR] distribution.json introuvable : %DISTRO_JSON%

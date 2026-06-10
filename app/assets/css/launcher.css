@@ -222,141 +222,146 @@ body, button {
     align-items: center;
     height: 100%;
     width: 100%;
-    background: rgba(0, 0, 0, 0.50);
+    background: transparent;
+}
+
+#welcomeContainer::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(10, 14, 20, 0.55);
+    z-index: 0;
 }
 
 #welcomeContent {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    width: 50%;
-    top: -10%;
     position: relative;
-}
-
-/*
-.cloudDiv {
-    position: absolute;
-    height: 100%;
-    width: 100%;
+    z-index: 1;
     display: flex;
     flex-direction: column;
+    align-items: center;
+    width: 460px;
+    max-width: calc(100% - 40px);
+    padding: 32px 36px 26px;
+    box-sizing: border-box;
+    background: #FFFFFF;
+    border-radius: 14px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.50);
+    overflow: hidden;
 }
 
-.cloudTop {
-    height: 50%;
-    width: 100%;
-    background-image: url('../images/cloudTrans.png');
-    animation: clouds1 80s linear infinite;
-    background-size: cover;
+/* Filet doré en bas de la carte */
+#welcomeContent::after {
+    content: '';
+    display: block;
+    position: absolute;
+    bottom: 0;
+    left: 8%;
+    width: 84%;
+    height: 3px;
+    background: linear-gradient(90deg, transparent 0%, #E3BB6A 20%, #f0cc80 50%, #E3BB6A 80%, transparent 100%);
+    opacity: 0.90;
+    z-index: 1;
 }
-
-.cloudBottom {
-    height: 50%;
-    width: 100%;
-    background-image: url('../images/cloudTrans2.png');
-    animation: clouds2 70s linear infinite;
-    background-size: cover;
-}
-
-@keyframes clouds1 {
-    to {
-        background-position: 200%;
-    }
-}
-@keyframes clouds2 {
-    to {
-        background-position: 230%;
-    }
-}
-*/
 
 #welcomeImageSeal {
-    height: 125px;
-    width: 125px;
-    margin-bottom: 5%;
-    margin-top: 10%;
+    height: 78px;
+    width: 78px;
+    display: block;
+    margin: 0 auto 16px;
+    filter: drop-shadow(0 4px 12px rgba(227,187,106,0.25));
 }
 
 #welcomeHeader {
-    font-family: 'Avenir Medium';
+    font-size: 18px;
+    font-weight: 900;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
     text-align: center;
-    color: white;
-    margin-bottom: 25px;
-    letter-spacing: 1px;
-    font-size: 20px;
-    text-shadow: white 0px 0px 0px;
+    color: #1F252F;
+    text-shadow: none;
+    margin-bottom: 16px;
+    display: block;
 }
 
 #welcomeDescription {
-    text-align: justify;
-    font-size: 13px;
-    font-weight: 100;
-    text-shadow: rgba(255, 255, 255, 0.75) 0px 0px 20px
+    font-size: 12px;
+    font-weight: 400;
+    line-height: 1.75;
+    text-align: center;
+    color: rgba(31,37,47,0.65);
+    text-shadow: none;
+    margin-bottom: 10px;
+    display: block;
 }
 
 #welcomeDescCTA {
+    font-size: 11px;
+    font-weight: 600;
     text-align: center;
-    font-size: 14px;
-    font-weight: 100;
-    text-shadow: rgba(255, 255, 255, 0.75) 0px 0px 20px
+    color: #E3BB6A;
+    text-shadow: none;
+    margin-bottom: 22px;
+    display: block;
+    letter-spacing: 0.04em;
 }
 
-/* Login button styles. */
 #welcomeButton {
-    background: none;
-    font-weight: bold;
-    letter-spacing: 2px;
+    background: #E3BB6A;
+    color: #1F252F;
+    font-weight: 900;
+    letter-spacing: 0.22em;
     border: none;
-    padding: 15px 5px;
-    margin: 10px 0px;
+    border-radius: 999px;
+    padding: 13px 20px;
+    margin: 0;
     cursor: pointer;
-    position: relative;
-    right: -20px;
-    transition: 0.5s ease;
-    margin-top: 5%;
-    margin-bottom: -5%;
+    display: block;
+    width: 100%;
+    font-size: 12px;
+    text-transform: uppercase;
+    text-shadow: none;
+    box-shadow: 0 4px 20px rgba(227,187,106,0.35);
+    transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
 }
 #welcomeButton:disabled {
-    color: rgba(255, 255, 255, 0.75);
+    opacity: 0.40;
     pointer-events: none;
+    box-shadow: none;
 }
 #welcomeButton:hover,
 #welcomeButton:focus {
-    text-shadow: 0px 0px 20px #fff;
+    background: #f0cc80;
+    box-shadow: 0 6px 28px rgba(227,187,106,0.50);
+    transform: translateY(-1px);
     outline: none;
+    text-shadow: none;
 }
 #welcomeButton:active {
-    color: #c7c7c7;
-    text-shadow: 0px 0px 20px #c7c7c7;
+    transform: translateY(0);
+    box-shadow: 0 2px 10px rgba(227,187,106,0.25);
 }
+
 #welcomeSVG {
-    -webkit-transform: translate3d(0, 0, 0);
     overflow: visible;
     transform: rotate(90deg);
-    margin-left: 20px;
+    margin-left: 12px;
     transition: 0.25s ease;
-    width: 20px;
-    height: 20px;
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
 }
 #welcomeButton:hover #welcomeSVG,
 #welcomeButton:focus #welcomeSVG {
-    -webkit-filter: drop-shadow(0px 0px 2px #fff);
-}
-#welcomeButton:active #welcomeSVG .arrowLine {
-    stroke: #c7c7c7;
-}
-#welcomeButton:active #welcomeSVG {
-    -webkit-filter: drop-shadow(0px 0px 2px #c7c7c7);
+    -webkit-filter: drop-shadow(0px 0px 2px rgba(31,37,47,0.4));
 }
 #welcomeButton:disabled #welcomeSVG .arrowLine {
-    stroke: rgba(255, 255, 255, 0.75);
+    stroke: rgba(31, 37, 47, 0.40);
 }
 
 #welcomeButtonContent {
     display: flex;
     align-items: center;
+    justify-content: center;
 }
 
 /*******************************************************************************
@@ -381,14 +386,31 @@ body, button {
     height: 100%;
     width: 100%;
     transition: filter 0.25s ease;
-    background: rgba(0, 0, 0, 0.50);
+    background: transparent;
+}
+
+/* Overlay sombre sur le background image du body */
+#loginContainer::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(10, 14, 20, 0.60);
+    z-index: 0;
+}
+
+/* La carte doit passer au-dessus de l'overlay */
+#loginContent,
+#loginCancelContainer {
+    position: relative;
+    z-index: 1;
 }
 
 /* Login cancel button styles. */
 #loginCancelContainer {
     position: absolute;
-    top: 5%;
-    right: 5%;
+    top: 16px;
+    left: 16px;
+    right: auto;
 }
 
 /* Login cancel button styles. */
@@ -397,70 +419,103 @@ body, button {
     border: none;
     outline: none;
     cursor: pointer;
-    transition: 0.25s ease;
-}
-#loginCancelButton:hover #loginCancelIcon,
-#loginCancelButton:hover #loginCancelText,
-#loginCancelButton:focus #loginCancelIcon,
-#loginCancelButton:focus #loginCancelText {
-    text-shadow: 0px 0px 20px white;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0;
+    color: rgba(255,255,255,0.45);
+    transition: 0.20s ease;
 }
 #loginCancelButton:hover #loginCancelIcon,
 #loginCancelButton:focus #loginCancelIcon {
-    box-shadow: 0px 0px 20px white;
+    border-color: rgba(255,255,255,0.70);
+    color: #FFFFFF;
+    box-shadow: none;
+    text-shadow: none;
+}
+#loginCancelButton:hover #loginCancelText,
+#loginCancelButton:focus #loginCancelText {
+    color: #FFFFFF;
+    text-shadow: none;
 }
 #loginCancelButton:active #loginCancelIcon,
 #loginCancelButton:active #loginCancelText {
-    text-shadow: 0px 0px 20px rgba(255, 255, 255, 0.75);
-    color: rgba(255, 255, 255, 0.75);
-    border-color: rgba(255, 255, 255, 0.75);
-}
-#loginCancelButton:active #loginCancelIcon {
-    box-shadow: 0px 0px 20px rgba(255, 255, 255, 0.75);
+    color: rgba(255,255,255,0.70);
+    border-color: rgba(255,255,255,0.70);
+    box-shadow: none;
+    text-shadow: none;
 }
 #loginCancelButton:disabled {
     pointer-events: none;
+    opacity: 0.4;
 }
 #loginCancelButton:disabled #loginCancelIcon,
 #loginCancelButton:disabled #loginCancelText {
-    color: rgba(255, 255, 255, 0.75);
-    border-color: rgba(255, 255, 255, 0.75);
+    color: rgba(255,255,255,0.40);
+    border-color: rgba(255,255,255,0.25);
 }
 
 /* The X in a circle icon for the cancel button. */
 #loginCancelIcon {
     border-radius: 50%;
-    border: 1px solid white;
+    border: 1px solid rgba(255,255,255,0.30);
     box-sizing: border-box;
-    height: 30px;
-    width: 30px;
-    font-size: 19px;
-    line-height: 30px;
-    margin: 0 auto;
-    margin-bottom: 5px;
-    transition: 0.25s ease;
+    height: 26px;
+    width: 26px;
+    font-size: 13px;
+    line-height: 26px;
+    text-align: center;
+    flex-shrink: 0;
+    margin: 0;
+    transition: 0.20s ease;
 }
 /* Text for the login cancel button. */
 #loginCancelText {
-    font-size: 15px;
-    transition: 0.25s ease;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    transition: 0.20s ease;
 }
 
-/* Login content wrapper. */
+/* Login content — centered card */
 #loginContent {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100%;
-    padding: 0px 25px;
+    display: block;
+    width: 390px;
+    max-width: calc(100% - 40px);
+    height: auto;
+    padding: 0;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.10);
+    border-radius: 14px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.40);
+    position: relative;
+    overflow: hidden;
 }
 
-/* Login form. */
+/* Gold accent line at bottom of card */
+#loginContent::after {
+    content: '';
+    display: block;
+    position: absolute;
+    bottom: 0;
+    left: 8%;
+    width: 84%;
+    height: 3px;
+    background: linear-gradient(90deg, transparent 0%, #E3BB6A 20%, #f0cc80 50%, #E3BB6A 80%, transparent 100%);
+    opacity: 0.90;
+    z-index: 1;
+}
+
+/* Login form */
 #loginForm {
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
+    justify-content: flex-start;
+    align-items: stretch;
+    padding: 28px 30px 22px;
+    box-sizing: border-box;
+    width: 100%;
 }
 
 /* Login form anchor styles. */
@@ -482,18 +537,25 @@ body, button {
 
 /* Logo on login form. */
 #loginImageSeal {
-    height: 125px;
-    width: 125px;
-    margin-bottom: 20px;
+    height: 78px;
+    width: 78px;
+    display: block;
+    margin: 0 auto 12px;
+    filter: drop-shadow(0 4px 12px rgba(227,187,106,0.25));
 }
 
-/* Header on login view. */
+/* Title on login view. */
 #loginSubheader {
-    font-family: 'Avenir Medium';
-    margin-bottom: 25px;
-    font-size: 12px;
-    letter-spacing: 1px;
-    font-weight: bold;
+    font-size: 20px;
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #FFFFFF;
+    text-shadow: none;
+    margin-bottom: 20px;
+    text-align: center;
+    display: block;
+    font-family: inherit;
 }
 
 /* Container to organize login field elements. */
@@ -501,27 +563,39 @@ body, button {
     position: relative;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
-}
-
-/* SVG icons on the login view. */
-.loginSVG {
-    fill: #fff;
-    height: 20px;
-    width: 20px;
-}
-
-/* Span which displays errors related to login field content. */
-.loginErrorSpan {
-    font-family: 'Avenir Medium';
-    font-weight: bold;
-    font-size: 8px;
-    color: #ff1b0c;
+    justify-content: flex-start;
+    align-items: stretch;
     width: 100%;
-    text-align: right;
-    position: absolute;
-    top: 7px;
+    margin-bottom: 14px;
+}
+
+/* Labels above fields */
+.loginLabel {
+    display: block;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.60);
+    margin-bottom: 6px;
+}
+
+/* SVG icons on the login view — hidden */
+.loginSVG {
+    display: none;
+}
+
+/* Span which displays errors. */
+.loginErrorSpan {
+    display: block;
+    position: static;
+    font-weight: 700;
+    font-size: 9px;
+    color: #ff6b6b;
+    width: 100%;
+    text-align: left;
+    margin-top: 5px;
+    min-height: 14px;
     opacity: 0;
     transition: 0.25s ease;
 }
@@ -550,110 +624,144 @@ body, button {
 
 /* Login text input styles. */
 .loginField {
-    font-family: 'Avenir Book';
-    background: none;
-    border-width: 1.5px 0px 0px 0px;
-    border-style: solid;
-    width: 250px;
-    margin-bottom: 20px;
-    border-color: #fff;
-    color: rgba(255, 255, 255, 0.75);
-    font-weight: bold;
-    text-align: center;
+    background: rgba(255,255,255,0.08);
+    border: 1.5px solid rgba(255,255,255,0.15);
+    border-radius: 8px;
+    width: 100%;
+    margin-bottom: 0;
+    color: #FFFFFF;
+    font-weight: 400;
+    text-align: left;
     box-sizing: border-box;
-    padding: 7.5px;
-    font-size: 10px;
-    letter-spacing: 1px;
+    padding: 11px 14px;
+    font-size: 13px;
+    letter-spacing: 0.02em;
+    transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
 }
 .loginField:focus {
     outline: none;
+    border-color: #E3BB6A;
+    background: rgba(255,255,255,0.12);
+    box-shadow: 0 0 0 3px rgba(227,187,106,0.18);
 }
 .loginField:disabled {
-    color: rgba(255, 255, 255, 0.50);
+    color: rgba(255,255,255,0.25);
+    background: rgba(255,255,255,0.04);
+    border-color: rgba(255,255,255,0.07);
 }
 .loginField::-webkit-input-placeholder {
-    color: rgba(255, 255, 255, 0.75);
-    font-size: 10px;
-    letter-spacing: 1px;
-    text-align: center;
-    font-weight: bold;
+    color: rgba(255,255,255,0.25);
+    font-size: 13px;
+    text-align: left;
+    font-weight: 400;
 }
 .loginField:focus::-webkit-input-placeholder {
     color: transparent;
 }
 
-/* Add spacing between password field and options bar. */
-#labelPassword {
-    margin-bottom: 13px;
-}
-
-/* Container which contains the forgot and remember options. */
+/* Options row — Se souvenir (left) | Mot de passe oublié (right) */
 #loginOptions {
     display: flex;
+    flex-direction: row-reverse;
     justify-content: space-between;
+    align-items: center;
     width: 100%;
+    margin: 2px 0 16px;
 }
 
-/* Remember option text. */
+/* "Mot de passe oublié ?" in gold */
+#loginOptions .loginSpanDim a {
+    color: #E3BB6A;
+    font-weight: 600;
+    font-size: 10px;
+}
+#loginOptions .loginSpanDim a:hover {
+    color: #f0cc80;
+}
+
+/* Remember me text. */
 #loginRememberText {
-    padding-right: 10px;
-    transition: 0.25s ease;
+    color: rgba(255,255,255,0.55);
+    font-size: 10px;
+    letter-spacing: 0.03em;
+    text-shadow: none;
+    padding-right: 0;
+    transition: 0.20s ease;
 }
 
 /* Login button styles. */
 #loginButton {
-    background: none;
-    font-weight: bold;
-    letter-spacing: 2px;
+    background: #E3BB6A;
+    color: #1F252F;
+    font-weight: 900;
+    letter-spacing: 0.22em;
     border: none;
-    padding: 8px 5px;
-    margin: 10px auto;
+    border-radius: 999px;
+    padding: 13px 20px;
+    margin: 0 0 14px 0;
     cursor: pointer;
     display: block;
-    transition: 0.5s ease;
+    width: 100%;
+    font-size: 12px;
+    text-transform: uppercase;
+    text-shadow: none;
+    box-shadow: 0 4px 20px rgba(227,187,106,0.35);
+    transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
 }
 #loginButton:disabled {
-    color: rgba(255, 255, 255, 0.75);
+    opacity: 0.40;
     pointer-events: none;
+    box-shadow: none;
 }
 #loginButton[loading] {
-    color: #fff;
+    opacity: 0.70;
+    cursor: wait;
+    pointer-events: none;
 }
 #loginButton:hover,
 #loginButton:focus {
-    text-shadow: 0px 0px 20px #fff;
+    background: #f0cc80;
+    text-shadow: none;
     outline: none;
+    transform: translateY(-2px);
+    box-shadow: 0 7px 24px rgba(227,187,106,0.50);
 }
 #loginButton:active {
-    color: #c7c7c7;
-    text-shadow:  0px 0px 20px #c7c7c7;
+    background: #d4a852;
+    color: #1F252F;
+    text-shadow: none;
+    transform: translateY(0);
+    box-shadow: 0 3px 10px rgba(227,187,106,0.30);
 }
 #loginSVG {
     -webkit-transform: translate3d(0, 0, 0);
     overflow: visible;
     transform: rotate(90deg);
-    margin-left: 20px;
+    margin-left: 0;
     transition: 0.25s ease;
-    width: 20px;
-    height: 20px;
+    width: 12px;
+    height: 12px;
 }
 #loginButton:hover #loginSVG,
 #loginButton:focus #loginSVG {
-    -webkit-filter: drop-shadow(0px 0px 2px #fff);
+    -webkit-filter: none;
+    filter: none;
 }
 #loginButton:active #loginSVG .arrowLine {
-    stroke: #c7c7c7;
+    stroke: #1F252F;
 }
 #loginButton:active #loginSVG {
-    -webkit-filter: drop-shadow(0px 0px 2px #c7c7c7);
+    -webkit-filter: none;
 }
 #loginButton:disabled #loginSVG .arrowLine {
-    stroke: rgba(255, 255, 255, 0.75);
+    stroke: #1F252F;
 }
 
 #loginButtonContent {
     display: flex;
     align-items: center;
+    justify-content: center;
+    gap: 10px;
 }
 
 #loginButton .circle-loader,
@@ -667,9 +775,9 @@ body, button {
 
 
 .circle-loader {
-    margin-left: 20px;
-    border: 2px solid rgba(255, 255, 255, 0.5);
-    border-left-color: #ffffff;
+    margin-left: 0;
+    border: 2px solid rgba(31,37,47,0.35);
+    border-left-color: #1F252F;
     animation-name: loader-spin;
     animation-duration: 1s;
     animation-iteration-count: infinite;
@@ -678,12 +786,12 @@ body, button {
     display: inline-block;
     vertical-align: top;
     border-radius: 50%;
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
 }
 .load-complete {
     animation: none;
-    border-color: #ffffff;
+    border-color: #1F252F;
     transition: border 500ms ease-out;
 }
 .checkmark {
@@ -700,8 +808,8 @@ body, button {
     height: 8px;
     width: 4px;
     transform-origin: left top;
-    border-right: 2px solid #ffffff;
-    border-top: 2px solid #ffffff;
+    border-right: 2px solid #1F252F;
+    border-top: 2px solid #1F252F;
     content: '';
     left: 2px;
     top: 8px;
@@ -772,15 +880,16 @@ body, button {
 
 /* Add spacing between register anchor and disclaimer. */
 #loginRegisterSpan {
-    margin-bottom: 5px;
+    margin-bottom: 8px;
 }
 
 /* Disclaimer text styles. */
 .loginDisclaimerText {
-    font-size: 7px;
-    color: #848484;
-    font-weight: bold;
+    font-size: 7.5px;
+    color: rgba(255,255,255,0.20);
+    font-weight: 400;
     text-align: center;
+    text-shadow: none;
 }
 
 /* * *
@@ -790,11 +899,11 @@ body, button {
 /* Checkbox container. */
 #checkmarkContainer {
     display: flex;
-    justify-content: flex-end;
+    justify-content: flex-start;
     align-items: center;
+    gap: 7px;
     position: relative;
     cursor: pointer;
-    font-size: 22px;
     -webkit-user-select: none;
 }
 
@@ -808,45 +917,49 @@ body, button {
 /* Create a custom checkbox. */
 .loginCheckmark {
     position: relative;
-    height: 10px;
-    width: 10px;
-    border: 1px solid #848484;
-    border-radius: 1px;
-    background: none;
-    transition: 0.25s ease;
+    flex-shrink: 0;
+    height: 14px;
+    width: 14px;
+    border: 1.5px solid rgba(255,255,255,0.30);
+    border-radius: 3px;
+    background: rgba(255,255,255,0.06);
+    transition: 0.20s ease;
 }
-/* On hover and focus, add a grey border color. */
-#checkmarkContainer:hover input ~ *,
-#checkmarkContainer input:focus ~ * {
-    color: #a2a2a2;
-    border-color: #a2a2a2;
+/* On hover and focus */
+#checkmarkContainer:hover input ~ .loginCheckmark,
+#checkmarkContainer input:focus ~ .loginCheckmark {
+    border-color: rgba(255,255,255,0.55);
 }
-/* On keydown, darken the checkbox a bit. */
-#checkmarkContainer input:active ~ *:not(#loginRememberText) {
-    color: #8d8d8d;
-    border-color: #8d8d8d;
+/* On keydown */
+#checkmarkContainer input:active ~ .loginCheckmark {
+    border-color: #E3BB6A;
 }
 #checkmarkContainer[disabled] {
     pointer-events: none;
+    opacity: 0.4;
 }
-/* For checked -> #checkmarkContainer input:checked ~ * */
-/* Create the checkmark/indicator (hidden when not checked). */
+/* Checkmark indicator — hidden when not checked. */
 .loginCheckmark:after {
     content: "";
     display: none;
 }
-/* Show the checkmark when checked. */
+/* When checked — gold background */
+#checkmarkContainer input:checked ~ .loginCheckmark {
+    background: #E3BB6A;
+    border-color: #E3BB6A;
+}
+/* Show the checkmark indicator when checked. */
 #checkmarkContainer input:checked ~ .loginCheckmark:after {
     display: block;
 }
-/* Style the checkmark/indicator. */
+/* Style the checkmark indicator. */
 #checkmarkContainer .loginCheckmark:after {
     position: absolute;
-    left: 3.5px;
-    top: 0.5px;
-    width: 2px;
-    height: 6px;
-    border: solid #a2a2a2;
+    left: 4px;
+    top: 1px;
+    width: 3px;
+    height: 7px;
+    border: solid #1F252F;
     border-width: 0 2px 2px 0;
     transform: rotate(45deg);
 }
@@ -957,19 +1070,75 @@ body, button {
     height: 100%;
     width: 100%;
     transition: filter 0.25s ease;
-    background: rgba(0, 0, 0, 0.50);
+    background: transparent;
 }
 
+/* Overlay sombre sur le background image du body */
+#loginOptionsContainer::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(10, 14, 20, 0.55);
+    z-index: 0;
+}
+
+/* La carte passe au-dessus de l'overlay */
 #loginOptionsContent {
-    border-radius: 3px;
     position: relative;
-    top: -5%;
+    top: 0;
+    z-index: 1;
 }
 
 .loginOptionsMainContent {
     display: flex;
     flex-direction: column;
-    align-items: center;
+    align-items: stretch;
+    width: 390px;
+    max-width: calc(100% - 40px);
+    padding: 28px 30px 22px;
+    box-sizing: border-box;
+    background: #FFFFFF;
+    border: none;
+    border-radius: 14px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.50);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Overrides couleurs pour la carte blanche */
+.loginOptionsMainContent #loginSubheader {
+    color: #1F252F;
+    text-shadow: none;
+}
+.loginOptionsMainContent .loginLabel {
+    color: rgba(31,37,47,0.55);
+}
+.loginOptionsMainContent .loginField {
+    background: #F5F6FA;
+    border: 1.5px solid rgba(31,37,47,0.15);
+    color: #1F252F;
+}
+.loginOptionsMainContent .loginField::placeholder {
+    color: rgba(31,37,47,0.35);
+}
+.loginOptionsMainContent .loginField:focus {
+    background: #FFFFFF;
+    border-color: #E3BB6A;
+    box-shadow: 0 0 0 3px rgba(227,187,106,0.18);
+}
+
+/* Filet doré en bas de la carte */
+.loginOptionsMainContent::after {
+    content: '';
+    display: block;
+    position: absolute;
+    bottom: 0;
+    left: 8%;
+    width: 84%;
+    height: 3px;
+    background: linear-gradient(90deg, transparent 0%, #E3BB6A 20%, #f0cc80 50%, #E3BB6A 80%, transparent 100%);
+    opacity: 0.90;
+    z-index: 1;
 }
 
 .loginOptionActions {
@@ -1004,61 +1173,79 @@ body, button {
 }
 
 #loginOptionCancelContainer {
-    position: absolute;
-    bottom: -100px;
+    margin-top: 10px;
+    text-align: center;
 }
 
 #loginOptionCancelButton {
     background: none;
-    border: none;
-    padding: 2px 0px;
-    font-size: 16px;
-    font-weight: bold;
-    color: lightgrey;
+    border: 1.5px solid rgba(31,37,47,0.18);
+    border-radius: 999px;
+    padding: 9px 20px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    color: rgba(31,37,47,0.45);
     cursor: pointer;
     outline: none;
-    transition: 0.25s ease;
+    transition: 0.20s ease;
+    width: 100%;
+    display: block;
 }
 #loginOptionCancelButton:hover,
 #loginOptionCancelButton:focus {
-    text-shadow: 0px 0px 20px lightgrey;
+    border-color: rgba(31,37,47,0.35);
+    color: rgba(31,37,47,0.75);
+    text-shadow: none;
 }
 #loginOptionCancelButton:active {
-    text-shadow: 0px 0px 20px rgba(211, 211, 211, 0.75);
-    color: rgba(211, 211, 211, 0.75);
+    color: rgba(31,37,47,0.45);
 }
 #loginOptionCancelButton:disabled {
-    color: rgba(211, 211, 211, 0.75);
+    opacity: 0.30;
     pointer-events: none;
 }
 
 #loginOptionsButton {
-    background: none;
-    color: #fff;
-    font-weight: bold;
-    letter-spacing: 2px;
+    background: #E3BB6A;
+    color: #1F252F;
+    font-weight: 900;
+    letter-spacing: 0.22em;
     border: none;
-    padding: 8px 5px;
-    margin: 10px auto;
+    border-radius: 999px;
+    padding: 13px 20px;
+    margin: 0 0 14px 0;
     cursor: pointer;
     display: block;
-    transition: 0.5s ease;
+    width: 100%;
+    font-size: 12px;
+    text-transform: uppercase;
+    text-shadow: none;
+    box-shadow: 0 4px 20px rgba(227,187,106,0.35);
+    transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
 }
 #loginOptionsButton:disabled {
-    color: rgba(255, 255, 255, 0.75);
+    opacity: 0.40;
     pointer-events: none;
+    box-shadow: none;
 }
 #loginOptionsButton[loading] {
-    color: #fff;
+    opacity: 1;
 }
 #loginOptionsButton:hover,
 #loginOptionsButton:focus {
-    text-shadow: 0px 0px 20px #fff;
+    background: #f0cc80;
+    box-shadow: 0 6px 28px rgba(227,187,106,0.50);
+    transform: translateY(-1px);
     outline: none;
+    text-shadow: none;
 }
 #loginOptionsButton:active {
-    color: #c7c7c7;
-    text-shadow: 0px 0px 20px #c7c7c7;
+    transform: translateY(0);
+    box-shadow: 0 2px 10px rgba(227,187,106,0.25);
+    color: #1F252F;
+    text-shadow: none;
 }
 #loginOptionsButtonContent {
     display: flex;
@@ -1074,10 +1261,10 @@ body, button {
 }
 #loginOptionsButton:hover #loginOptionsSVG,
 #loginOptionsButton:focus #loginOptionsSVG {
-    -webkit-filter: drop-shadow(0px 0px 2px #fff);
+    -webkit-filter: drop-shadow(0px 0px 2px rgba(31,37,47,0.4));
 }
 #loginOptionsButton:disabled #loginOptionsSVG .arrowLine {
-    stroke: rgba(255, 255, 255, 0.75);
+    stroke: rgba(31, 37, 47, 0.40);
 }
 #loginOptionsButton .circle-loader,
 #loginOptionsButton[loading] #loginOptionsSVG {
@@ -1094,13 +1281,14 @@ body, button {
 }
 #loginOptionsDisclaimer a {
     font-size: 11px;
-    color: rgba(255, 255, 255, 0.4);
+    color: #E3BB6A;
     text-decoration: none;
     letter-spacing: 0.5px;
+    font-weight: 600;
     transition: color 0.2s ease;
 }
 #loginOptionsDisclaimer a:hover {
-    color: rgba(255, 255, 255, 0.7);
+    color: #C49A44;
 }
 
 

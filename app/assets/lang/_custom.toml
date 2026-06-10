@@ -29,7 +29,7 @@ passwordPlaceholder = "MOT DE PASSE"
 emailError         = "* Valeur invalide"
 passwordError      = "* Requis"
 loginButton        = "SE CONNECTER"
-forgotPasswordLink = "https://azuriom.ap-bts.wstr.fr/password/reset"
+forgotPasswordLink = "https://azuriom.districtliferp.fr/password/reset"
 forgotPasswordText = "Mot de passe oublié ?"
 cancelButton       = "Annuler"
 

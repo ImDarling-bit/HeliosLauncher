@@ -73,6 +73,8 @@ const loggerLanding = LoggerUtil.getLogger('Landing')
 function toggleLaunchArea(loading){
     if(loading){
         launch_details.style.display = 'flex'
+        launch_details.style.setProperty('width', '100%', 'important')
+        launch_details.style.setProperty('max-width', '100%', 'important')
         launch_content.style.display = 'none'
     } else {
         launch_details.style.display = 'none'
@@ -183,11 +185,14 @@ document.getElementById('settingsMediaButton').onclick = async e => {
 // Bind selected account
 function updateSelectedAccount(authUser){
     let username = Lang.queryJS('landing.selectedAccount.noAccountSelected')
+    const avatarImg = document.getElementById('avatarImg')
     if(authUser != null){
         if(authUser.displayName != null){
             username = authUser.displayName
         }
-        // Avatar display removed.
+        if(avatarImg) avatarImg.src = `https://www.districtliferp.fr/api/apiextender/images/head/full/${encodeURIComponent(username)}`
+    } else {
+        if(avatarImg) avatarImg.src = ''
     }
     user_text.innerHTML = username
 }
@@ -290,15 +295,21 @@ const refreshServerStatus = async (fade = false) => {
         loggerLanding.warn('Unable to refresh server status, assuming offline.')
         loggerLanding.debug(err)
     }
+    const updateBentoPlayers = () => {
+        const el = document.getElementById('dl-bc-players')
+        if(el) el.textContent = pVal
+    }
     if(fade){
         $('#server_status_wrapper').fadeOut(250, () => {
             document.getElementById('landingPlayerLabel').innerHTML = pLabel
             document.getElementById('player_count').innerHTML = pVal
+            updateBentoPlayers()
             $('#server_status_wrapper').fadeIn(500)
         })
     } else {
         document.getElementById('landingPlayerLabel').innerHTML = pLabel
         document.getElementById('player_count').innerHTML = pVal
+        updateBentoPlayers()
     }
     
 }
@@ -984,6 +995,17 @@ function setNewsLoading(val){
     }
 }
 
+// Bento link cells — open URLs in system browser
+;(function bindBentoCells() {
+    const discordEl = document.getElementById('dl-bc-discord')
+    const voteEl    = document.getElementById('dl-bc-vote')
+    const storeEl   = document.getElementById('dl-bc-store')
+    const discordUrl = document.getElementById('discordURL')?.href || 'https://discord.gg/zNWUXdt'
+    if(discordEl) discordEl.onclick = () => shell.openExternal(discordUrl)
+    if(voteEl)    voteEl.onclick    = () => shell.openExternal('https://www.districtliferp.fr/vote')
+    if(storeEl)   storeEl.onclick   = () => shell.openExternal('https://www.districtliferp.fr/boutique')
+})()
+
 // Bind retry button.
 newsErrorRetry.onclick = () => {
     $('#newsErrorFailed').fadeOut(250, () => {
@@ -1059,6 +1081,16 @@ async function initNews(){
         await $('#newsErrorLoading').fadeOut(250).promise()
         await $('#newsErrorFailed').fadeIn(250).promise()
 
+        // Bento : état erreur
+        const _bcTitle = document.getElementById('dl-bc-news-title')
+        const _bcExcerpt = document.getElementById('dl-bc-news-excerpt')
+        const _bcThumb = document.getElementById('dl-bc-news-thumb')
+        const _bcCta = document.querySelector('#dl-bc-news .dl-bc-cta')
+        if(_bcTitle) _bcTitle.textContent = 'Impossible de charger les actualités'
+        if(_bcExcerpt) _bcExcerpt.textContent = 'Une erreur est survenue lors du chargement.'
+        if(_bcThumb) _bcThumb.style.display = 'none'
+        if(_bcCta) _bcCta.style.display = 'none'
+
     } else if(newsArr.length === 0) {
         // No News Articles
         setNewsLoading(false)
@@ -1072,6 +1104,17 @@ async function initNews(){
 
         await $('#newsErrorLoading').fadeOut(250).promise()
         await $('#newsErrorNone').fadeIn(250).promise()
+
+        // Bento : pas d'article
+        const _bcTitle = document.getElementById('dl-bc-news-title')
+        const _bcExcerpt = document.getElementById('dl-bc-news-excerpt')
+        const _bcThumb = document.getElementById('dl-bc-news-thumb')
+        const _bcCta = document.querySelector('#dl-bc-news .dl-bc-cta')
+        if(_bcTitle) _bcTitle.textContent = 'Pas d\'article pour le moment'
+        if(_bcExcerpt) _bcExcerpt.textContent = 'Aucune actualité disponible pour l\'instant.'
+        if(_bcThumb) _bcThumb.style.display = 'none'
+        if(_bcCta) _bcCta.style.display = 'none'
+
     } else {
         // Success
         setNewsLoading(false)
@@ -1128,6 +1171,29 @@ async function initNews(){
         await $('#newsErrorContainer').fadeOut(250).promise()
         displayArticle(newsArr[0], 1)
         await $('#newsContent').fadeIn(250).promise()
+
+        // Populate bento news cell
+        const bentoNews = document.getElementById('dl-bc-news')
+        if(bentoNews && newsArr.length > 0) {
+            const art = newsArr[0]
+            const bcTitle   = document.getElementById('dl-bc-news-title')
+            const bcExcerpt = document.getElementById('dl-bc-news-excerpt')
+            const bcImg     = document.getElementById('dl-bc-news-img')
+            const bcThumb   = document.getElementById('dl-bc-news-thumb')
+            if(bcTitle) bcTitle.textContent = art.title
+            if(bcExcerpt) {
+                const tmp = document.createElement('div')
+                tmp.innerHTML = art.content
+                const txt = (tmp.textContent || tmp.innerText || '').replace(/\s+/g, ' ').trim()
+                bcExcerpt.textContent = txt.length > 120 ? txt.slice(0, 120) + '…' : txt
+            }
+            if(bcImg && art.image) {
+                bcImg.src = art.image
+            } else if(bcThumb) {
+                bcThumb.style.display = 'none'
+            }
+            bentoNews.onclick = () => shell.openExternal(art.link)
+        }
     }
 
 
@@ -1199,6 +1265,7 @@ async function loadNews(){
         const newsHost = new URL(newsFeed).origin + '/'
         $.ajax({
             url: newsFeed,
+            dataType: 'xml',
             success: (data) => {
                 const items = $(data).find('item')
                 const articles = []
@@ -1226,6 +1293,15 @@ async function loadNews(){
                     let title  = el.find('title').text()
                     let author = el.find('dc\\:creator').text()
 
+                    // Extract thumbnail: enclosure first, fallback to first <img> in content
+                    let image = el.find('enclosure').attr('url') || ''
+                    if(!image) {
+                        const tmpImg = document.createElement('div')
+                        tmpImg.innerHTML = content
+                        const firstImg = tmpImg.querySelector('img')
+                        if(firstImg) image = firstImg.getAttribute('src') || ''
+                    }
+
                     // Generate article.
                     articles.push(
                         {
@@ -1235,7 +1311,8 @@ async function loadNews(){
                             author,
                             content,
                             comments,
-                            commentsLink: link + '#comments'
+                            commentsLink: link + '#comments',
+                            image
                         }
                     )
                 }
@@ -1243,7 +1320,7 @@ async function loadNews(){
                     articles
                 })
             },
-            timeout: 2500
+            timeout: 6000
         }).catch(err => {
             resolve({
                 articles: null

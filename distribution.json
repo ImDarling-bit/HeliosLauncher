@@ -5,13 +5,13 @@
         "smallImageText": "DistrictLife",
         "smallImageKey": "seal-circle"
     },
-    "rss": "https://azuriom.ap-bts.wstr.fr/api/rss",
+    "rss": "https://www.districtliferp.fr/api/rss",
     "servers": [
         {
             "id": "DistrictLife",
             "name": "DistrictLife",
             "description": "Serveur Minecraft DistrictLife - Forge 1.16.5",
-            "icon": "https://distribution.ap-bts.wstr.fr/icon.png",
+            "icon": "https://distribution.districtliferp.fr/icon.png",
             "version": "1.0.0",
             "address": "play.noah-sagot.dev:25567",
             "minecraftVersion": "1.16.5",
@@ -49,7 +49,7 @@
                             "artifact": {
                                 "size": 13577,
                                 "MD5": "2090bfafdec72f885ddf95300bd96714",
-                                "url": "https://distribution.ap-bts.wstr.fr/forge-1.16.5-36.2.39-version.json"
+                                "url": "https://distribution.districtliferp.fr/forge-1.16.5-36.2.39-version.json"
                             }
                         }
                     ]

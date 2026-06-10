@@ -14,7 +14,7 @@ Tout le contenu distribué aux joueurs est déclaré dans `distribution.json`, d
     "artifact": {
         "size": 123456,
         "MD5": "abcdef1234567890abcdef1234567890",
-        "url": "https://distribution.ap-bts.wstr.fr/chemin/vers/fichier.jar"
+        "url": "https://distribution.districtliferp.fr/chemin/vers/fichier.jar"
     }
 }
 ```
@@ -52,7 +52,7 @@ Tout le contenu distribué aux joueurs est déclaré dans `distribution.json`, d
     "artifact": {
         "size": 1547832,
         "MD5": "d41d8cd98f00b204e9800998ecf8427e",
-        "url": "https://distribution.ap-bts.wstr.fr/mods/fancymenu-2.14.9.jar"
+        "url": "https://distribution.districtliferp.fr/mods/fancymenu-2.14.9.jar"
     }
 }
 ```
@@ -74,7 +74,7 @@ Le type `File` permet de placer n'importe quel fichier dans le gameDir du joueur
         "size": 3072,
         "MD5": "d41d8cd98f00b204e9800998ecf8427e",
         "path": "config/fancymenu/layouts/mainmenu.txt",
-        "url": "https://distribution.ap-bts.wstr.fr/config/fancymenu/layouts/mainmenu.txt"
+        "url": "https://distribution.districtliferp.fr/config/fancymenu/layouts/mainmenu.txt"
     }
 }
 ```
@@ -111,7 +111,7 @@ FancyMenu nécessite **Konkrete** comme dépendance.
         "artifact": {
             "size": 1547832,
             "MD5": "REMPLACER_PAR_MD5_REEL",
-            "url": "https://distribution.ap-bts.wstr.fr/mods/fancymenu-2.14.9.jar"
+            "url": "https://distribution.districtliferp.fr/mods/fancymenu-2.14.9.jar"
         }
     },
     {
@@ -121,7 +121,7 @@ FancyMenu nécessite **Konkrete** comme dépendance.
         "artifact": {
             "size": 98304,
             "MD5": "REMPLACER_PAR_MD5_REEL",
-            "url": "https://distribution.ap-bts.wstr.fr/mods/konkrete-1.3.3.jar"
+            "url": "https://distribution.districtliferp.fr/mods/konkrete-1.3.3.jar"
         }
     },
     {
@@ -132,7 +132,7 @@ FancyMenu nécessite **Konkrete** comme dépendance.
             "size": 4096,
             "MD5": "REMPLACER_PAR_MD5_REEL",
             "path": "config/fancymenu/layouts/mainmenu.txt",
-            "url": "https://distribution.ap-bts.wstr.fr/layouts/mainmenu.txt"
+            "url": "https://distribution.districtliferp.fr/layouts/mainmenu.txt"
         }
     }
 ]
@@ -166,9 +166,9 @@ md5sum monfichier.jar
 
 1. **Prépare le fichier** (JAR, config, layout...)
 2. **Calcule** `size` et `MD5`
-3. **Uploade** le fichier sur `https://distribution.ap-bts.wstr.fr/`
+3. **Uploade** le fichier sur `https://distribution.districtliferp.fr/`
 4. **Ajoute** l'entrée dans `modules` de `distribution.json`
-5. **Déploie** le `distribution.json` mis à jour sur `https://distribution.ap-bts.wstr.fr/distribution.json`
+5. **Déploie** le `distribution.json` mis à jour sur `https://distribution.districtliferp.fr/distribution.json`
 6. Au prochain lancement, le launcher détecte le fichier manquant et le télécharge automatiquement
 
 ---
@@ -189,7 +189,7 @@ Un module peut être rendu optionnel via `required.value = false`. Il apparaîtr
     "artifact": {
         "size": 3145728,
         "MD5": "REMPLACER_PAR_MD5_REEL",
-        "url": "https://distribution.ap-bts.wstr.fr/mods/optifine-G8.jar"
+        "url": "https://distribution.districtliferp.fr/mods/optifine-G8.jar"
     }
 }
 ```

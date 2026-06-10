@@ -1,5 +1,5 @@
 #!/bin/bash
-DISTRO_URL="https://distribution.ap-bts.wstr.fr/distribution.json"
+DISTRO_URL="https://distribution.districtliferp.fr/distribution.json"
 MODS_DIR="./mods"
 
 echo ""
