@@ -57,7 +57,7 @@ Tout le contenu distribué aux joueurs est déclaré dans `distribution.json`, d
 }
 ```
 
-Le fichier sera placé dans `.DistrictLife-launcheur/instances/DistrictLife/mods/fancymenu-2.14.9.jar`.
+Le fichier sera placé dans `.DistrictLife-launcher/instances/DistrictLife/mods/fancymenu-2.14.9.jar`.
 
 ---
 
