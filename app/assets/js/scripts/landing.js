@@ -76,9 +76,11 @@ function toggleLaunchArea(loading){
         launch_details.style.setProperty('width', '100%', 'important')
         launch_details.style.setProperty('max-width', '100%', 'important')
         launch_content.style.display = 'none'
+        setLaunchEnabled(false)
     } else {
         launch_details.style.display = 'none'
         launch_content.style.display = 'inline-flex'
+        setLaunchEnabled(ConfigManager.getSelectedServer() != null)
     }
 }
 
@@ -181,7 +183,7 @@ document.getElementById('settingsMediaButton').onclick = async e => {
 //   - #user_text          → nom d'utilisateur affiché (span dans landing.ejs)
 //   - #avatarContainer    → background-image avec l'avatar Minecraft (mc-heads.net)
 // Pour modifier le style : surcharger #user_text et #avatarContainer dans dl-theme.css
-// Pour changer la source des avatars : modifier l'URL mc-heads.net ci-dessous
+// Pour changer la source des avatars : modifier l'URL skin-api ci-dessous
 // Bind selected account
 function updateSelectedAccount(authUser){
     let username = Lang.queryJS('landing.selectedAccount.noAccountSelected')
@@ -190,7 +192,13 @@ function updateSelectedAccount(authUser){
         if(authUser.displayName != null){
             username = authUser.displayName
         }
-        if(avatarImg) avatarImg.src = `https://www.districtliferp.fr/api/apiextender/images/head/full/${encodeURIComponent(username)}`
+        if(avatarImg) {
+            avatarImg.src = `https://www.districtliferp.fr/api/apiextender/images/head/full/${encodeURIComponent(username)}.png`
+            avatarImg.onerror = () => {
+                avatarImg.onerror = null
+                avatarImg.src = `https://www.districtliferp.fr/api/skin-api/avatars/face/${encodeURIComponent(username)}.png`
+            }
+        }
     } else {
         if(avatarImg) avatarImg.src = ''
     }
@@ -995,15 +1003,51 @@ function setNewsLoading(val){
     }
 }
 
+// ──────────── PATCH NOTES ────────────
+function renderPatchNotes(data) {
+    const el = document.getElementById('dl-bc-patch-content')
+    if (!el) return
+    if (!data || !data.version) {
+        el.innerHTML = '<span class="dl-bc-patch-empty">Aucune mise à jour</span>'
+        return
+    }
+    const TAG_LABELS = { new: 'Nouveau', fix: 'Correctif', balance: 'Équilibre', remove: 'Retiré' }
+    const items = (data.changes || []).map(c => {
+        const type = c.type || 'fix'
+        const label = TAG_LABELS[type] || type
+        return `<li class="dl-bc-patch-item">
+            <span class="dl-bc-patch-tag dl-bc-patch-tag-${_escHtml(type)}">${_escHtml(label)}</span>
+            <span>${_escHtml(c.text)}</span>
+        </li>`
+    }).join('')
+    el.innerHTML = `
+        <div class="dl-bc-patch-header">
+            <span class="dl-bc-patch-version">v${_escHtml(data.version)}</span>
+            <span class="dl-bc-patch-date">${_escHtml(data.date || '')}</span>
+        </div>
+        <ul class="dl-bc-patch-list">${items || '<li class="dl-bc-patch-item" style="justify-content:center;color:rgba(255,255,255,0.3)">—</li>'}</ul>`
+}
+
+async function initPatchNotes() {
+    try {
+        const resp = await fetch('https://distribution.districtliferp.fr/patch.json')
+        if (!resp.ok) throw new Error('HTTP ' + resp.status)
+        renderPatchNotes(await resp.json())
+    } catch (e) {
+        const el = document.getElementById('dl-bc-patch-content')
+        if (el) el.innerHTML = '<span class="dl-bc-patch-empty">Indisponible</span>'
+    }
+}
+
 // Bento link cells — open URLs in system browser
 ;(function bindBentoCells() {
     const discordEl = document.getElementById('dl-bc-discord')
     const voteEl    = document.getElementById('dl-bc-vote')
     const storeEl   = document.getElementById('dl-bc-store')
-    const discordUrl = document.getElementById('discordURL')?.href || 'https://discord.gg/zNWUXdt'
+    const discordUrl = document.getElementById('discordURL')?.href || 'https://discord.gg/7DR8YERnvz'
     if(discordEl) discordEl.onclick = () => shell.openExternal(discordUrl)
     if(voteEl)    voteEl.onclick    = () => shell.openExternal('https://www.districtliferp.fr/vote')
-    if(storeEl)   storeEl.onclick   = () => shell.openExternal('https://www.districtliferp.fr/boutique')
+    if(storeEl)   storeEl.onclick   = () => shell.openExternal('https://www.districtliferp.fr/shop')
 })()
 
 // Bind retry button.
@@ -1192,6 +1236,9 @@ async function initNews(){
             } else if(bcThumb) {
                 bcThumb.style.display = 'none'
             }
+            if(/\[EVENT\]/i.test(art.title)) {
+                bentoNews.classList.add('dl-bc-news-event')
+            }
             bentoNews.onclick = () => shell.openExternal(art.link)
         }
     }
@@ -1329,4 +1376,78 @@ async function loadNews(){
     })
 
     return await promise
+}
+
+// ─────────────────────────────────────────────────────────
+//  PODIUM VOTES
+// ─────────────────────────────────────────────────────────
+
+function _escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')
+}
+
+function renderVotePodium(players) {
+    const wrap = document.getElementById('dl-bc-podium-wrap')
+    if (!wrap) return
+
+    if (!players || players.length === 0) {
+        wrap.innerHTML = '<span class="dl-bc-podium-empty">Aucun vote ce mois-ci</span>'
+        return
+    }
+
+    // Ordre visuel podium : #2 gauche · #1 centre · #3 droite
+    const byRank = {}
+    players.forEach(p => { byRank[p.rank] = p })
+    const slots = [byRank[2], byRank[1], byRank[3]].filter(Boolean)
+
+    const headBase = 'https://www.districtliferp.fr/api/skin-api/avatars/face'
+
+    const html = '<div class="dl-bc-podium-stage">' + slots.map(p => `
+        <div class="dl-bc-pod-slot pod-rank-${p.rank}">
+            <span class="dl-bc-pod-crown">&#9819;</span>
+            <img class="dl-bc-pod-head"
+                 src="${headBase}/${encodeURIComponent(p.username)}.png"
+                 onerror="this.src='assets/images/SealCircle.png'"
+                 alt="${_escHtml(p.username)}">
+            <span class="dl-bc-pod-name">${_escHtml(p.username)}</span>
+            <span class="dl-bc-pod-vcnt">${p.votes} votes</span>
+            <div class="dl-bc-pod-base">${p.rank}</div>
+        </div>`).join('') + '</div>'
+
+    wrap.innerHTML = html
+}
+
+async function initVotePodium() {
+    try {
+        const resp = await fetch('https://www.districtliferp.fr/api/api-vote-list/top?limit=3&period=monthly')
+        if (!resp.ok) throw new Error('HTTP ' + resp.status)
+        const json = await resp.json()
+        renderVotePodium(json.data || [])
+    } catch (e) {
+        const wrap = document.getElementById('dl-bc-podium-wrap')
+        if (wrap) wrap.innerHTML = '<span class="dl-bc-podium-empty">Classement indisponible</span>'
+    }
+}
+
+// ─────────────────────────────────────────────────────────
+//  DEV PREVIEW — utilisable dans les DevTools Electron
+//  Commandes : dlPreview.votePodium()
+// ─────────────────────────────────────────────────────────
+window.dlPreview = {
+    votePodium() {
+        renderVotePodium([
+            { rank: 1, username: 'schwarzy2',  votes: 186 },
+            { rank: 2, username: 'Mcmathis7',  votes: 76  },
+            { rank: 3, username: 'Dralezazou', votes: 74  }
+        ])
+        console.log('[dlPreview] commandes :', Object.keys(window.dlPreview))
+    },
+    shopPromos() {
+        renderShopPromos([
+            { name: 'Grade VIP',      category: 'Grade',      price: 9.99,  original_price: 14.99, image: '', link: 'https://www.districtliferp.fr/shop' },
+            { name: 'Kit Démarrage',  category: 'Cosmétique', price: 4.99,  original_price: 7.99,  image: '', link: 'https://www.districtliferp.fr/shop' },
+            { name: 'Rang Légendaire',category: 'Grade',      price: 19.99, original_price: null,  image: '', link: 'https://www.districtliferp.fr/shop' }
+        ])
+        console.log('[dlPreview] commandes :', Object.keys(window.dlPreview))
+    }
 }

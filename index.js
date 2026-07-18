@@ -225,8 +225,8 @@ let win
 function createWindow() {
 
     win = new BrowserWindow({
-        width: 980,
-        height: 552,
+        width: 1080,
+        height: 720,
         icon: getPlatformIcon('district_life_icon_v1_4092x4092'),
         frame: false,
         resizable: false,
