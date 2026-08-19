@@ -8,16 +8,16 @@
     "rss": "https://districtliferp.fr/api/rss",
     "servers": [
         {
-            "id": "DistrictLife",
-            "name": "DistrictLife",
-            "description": "Serveur Minecraft DistrictLife - Forge 1.16.5",
+            "id": "DistrictLifeRP",
+            "name": "DistrictLife RP",
+            "description": "Serveur Minecraft DistrictLife RP - Forge 1.16.5",
             "icon": "https://www.districtliferp.fr/storage/img/districtlifeicon.svg",
             "version": "1.0.0",
             "address": "play.noah-sagot.dev:25566",
             "minecraftVersion": "1.16.5",
             "discord": {
-                "shortId": "DistrictLife",
-                "largeImageText": "DistrictLife - Forge 1.16.5",
+                "shortId": "DistrictLifeRP",
+                "largeImageText": "DistrictLife RP - Forge 1.16.5",
                 "largeImageKey": "server-districtlife"
             },
             "mainServer": true,
@@ -58,98 +58,70 @@
                     }
                 },
                 {
-                    "id": "curse:customnpcs:1.16.5.20220515",
-                    "name": "CustomNPCs",
+                    "id": "curse:cloth-config:4.17.132",
+                    "name": "Cloth Config API",
                     "type": "File",
                     "artifact": {
-                        "size": 12457390,
-                        "MD5": "9d204b1c5dd8cdbe9737fbdc761f33d9",
-                        "url": "https://distribution.districtliferp.fr/mods/CustomNPCs-1.16.5.20220515.jar",
-                        "path": "mods/CustomNPCs-1.16.5.20220515.jar"
+                        "size": 1465189,
+                        "MD5": "07248631eca30f7b4872284cc5c4c0f6",
+                        "url": "https://distribution.districtliferp.fr/mods/cloth-config-4.17.132-forge.jar",
+                        "path": "mods/cloth-config-4.17.132-forge.jar"
                     },
                     "required": {
                         "value": true
                     }
                 },
                 {
-                    "id": "curse:immersive-vehicles:23.0.0",
-                    "name": "Immersive Vehicles (MTS)",
+                    "id": "districtlife:districtclothing:1.2.0",
+                    "name": "DistrictClothing",
                     "type": "File",
                     "artifact": {
-                        "size": 5289884,
-                        "MD5": "d136b42abf212326aed44f3bf38bc6e7",
-                        "url": "https://distribution.districtliferp.fr/mods/Immersive%20Vehicles-1.16.5-23.0.0.jar",
-                        "path": "mods/Immersive Vehicles-1.16.5-23.0.0.jar"
+                        "size": 78985,
+                        "MD5": "cbd4a8e3e0e715dd3926b862e78c6a1a",
+                        "url": "https://distribution.districtliferp.fr/mods/districtlife_clothing-1.2.0.jar",
+                        "path": "mods/districtlife_clothing-1.2.0.jar"
                     },
                     "required": {
                         "value": true
                     }
                 },
                 {
-                    "id": "curse:immersiveengineering:5.1.0-148",
-                    "name": "Immersive Engineering",
+                    "id": "districtlife:camera:1.0.14",
+                    "name": "Camera Mod",
                     "type": "File",
                     "artifact": {
-                        "size": 9414280,
-                        "MD5": "834eb9edbfc3136ab5b14983fef05275",
-                        "url": "https://distribution.districtliferp.fr/mods/ImmersiveEngineering-1.16.5-5.1.0-148.jar",
-                        "path": "mods/ImmersiveEngineering-1.16.5-5.1.0-148.jar"
+                        "size": 273299,
+                        "MD5": "91f52f8feec00dfe0aed9a851c19b7ea",
+                        "url": "https://distribution.districtliferp.fr/mods/camera-1.16.5-1.0.14.jar",
+                        "path": "mods/camera-1.16.5-1.0.14.jar"
                     },
                     "required": {
                         "value": true
                     }
                 },
                 {
-                    "id": "curse:immersivepetroleum:3.4.0-20",
-                    "name": "Immersive Petroleum",
+                    "id": "curse:cfm:7.0.0pre22",
+                    "name": "MrCrayfish's Furniture Mod",
                     "type": "File",
                     "artifact": {
-                        "size": 1532710,
-                        "MD5": "79d32cadc73c0d8f4b15bb477c725c32",
-                        "url": "https://distribution.districtliferp.fr/mods/ImmersivePetroleum-1.16.5-3.4.0-20.jar",
-                        "path": "mods/ImmersivePetroleum-1.16.5-3.4.0-20.jar"
+                        "size": 2033912,
+                        "MD5": "b2a5f7a361279de6bb5f51246ad36484",
+                        "url": "https://distribution.districtliferp.fr/mods/cfm-7.0.0pre22-1.16.3.jar",
+                        "path": "mods/cfm-7.0.0pre22-1.16.3.jar"
                     },
                     "required": {
                         "value": true
                     }
                 },
                 {
-                    "id": "curse:obfuscate:0.6.3",
-                    "name": "Obfuscate",
+                    "id": "curse:chiseled:0.4.3",
+                    "name": "Chiseled",
                     "type": "File",
                     "artifact": {
-                        "size": 142536,
-                        "MD5": "514fe4c6c39bc1b7e474d813daab593e",
-                        "url": "https://distribution.districtliferp.fr/mods/obfuscate-0.6.3-1.16.5.jar",
-                        "path": "mods/obfuscate-0.6.3-1.16.5.jar"
-                    },
-                    "required": {
-                        "value": true
-                    }
-                },
-                {
-                    "id": "curse:tac:0.3.14.2",
-                    "name": "TAC (The Armory Craft)",
-                    "type": "File",
-                    "artifact": {
-                        "size": 43320575,
-                        "MD5": "ad52fa4804a4600028c0b0b675ceca39",
-                        "url": "https://distribution.districtliferp.fr/mods/tac-release-0.3.14.2-1.16.5.jar",
-                        "path": "mods/tac-release-0.3.14.2-1.16.5.jar"
-                    },
-                    "required": {
-                        "value": true
-                    }
-                },
-                {
-                    "id": "curse:voicechat-forge:2.6.15",
-                    "name": "Simple Voice Chat",
-                    "type": "File",
-                    "artifact": {
-                        "size": 4899850,
-                        "MD5": "bba7ec6a0052d069c108209eb924a9ec",
-                        "url": "https://distribution.districtliferp.fr/mods/voicechat-forge-1.16.5-2.6.15.jar",
-                        "path": "mods/voicechat-forge-1.16.5-2.6.15.jar"
+                        "size": 3617511,
+                        "MD5": "a5990b7434e1ddf8ce5034348606d1fd",
+                        "url": "https://distribution.districtliferp.fr/mods/chiseled0.4.3.jar",
+                        "path": "mods/chiseled0.4.3.jar"
                     },
                     "required": {
                         "value": true
@@ -170,6 +142,62 @@
                     }
                 },
                 {
+                    "id": "curse:ctm:1.1.2.6",
+                    "name": "CTM",
+                    "type": "File",
+                    "artifact": {
+                        "size": 186068,
+                        "MD5": "758f81bde7ee49b21b8ed2c0e1ef3567",
+                        "url": "https://distribution.districtliferp.fr/mods/CTM-MC1.16.1-1.1.2.6.jar",
+                        "path": "mods/CTM-MC1.16.1-1.1.2.6.jar"
+                    },
+                    "required": {
+                        "value": true
+                    }
+                },
+                {
+                    "id": "curse:customnpcs:1.16.5.20220515",
+                    "name": "CustomNPCs",
+                    "type": "File",
+                    "artifact": {
+                        "size": 12457390,
+                        "MD5": "9d204b1c5dd8cdbe9737fbdc761f33d9",
+                        "url": "https://distribution.districtliferp.fr/mods/CustomNPCs-1.16.5.20220515.jar",
+                        "path": "mods/CustomNPCs-1.16.5.20220515.jar"
+                    },
+                    "required": {
+                        "value": true
+                    }
+                },
+                {
+                    "id": "districtlife:districteconomy:1.3.2",
+                    "name": "DistrictEconomy",
+                    "type": "File",
+                    "artifact": {
+                        "size": 294128,
+                        "MD5": "43b72b5281926534dd4423516564019f",
+                        "url": "https://distribution.districtliferp.fr/mods/districtlife_economy-1.3.2.jar",
+                        "path": "mods/districtlife_economy-1.3.2.jar"
+                    },
+                    "required": {
+                        "value": true
+                    }
+                },
+                {
+                    "id": "districtlife:districtphone:1.17.0",
+                    "name": "DistrictPhone",
+                    "type": "File",
+                    "artifact": {
+                        "size": 2194213,
+                        "MD5": "d2a54209542f4ec603022d1ea274a0b5",
+                        "url": "https://distribution.districtliferp.fr/mods/districtlife_phone-1.17.0.jar",
+                        "path": "mods/districtlife_phone-1.17.0.jar"
+                    },
+                    "required": {
+                        "value": true
+                    }
+                },
+                {
                     "id": "districtlife:dkz-industries:3.2.1b",
                     "name": "DKZ Industries (MTS pack)",
                     "type": "File",
@@ -184,28 +212,126 @@
                     }
                 },
                 {
-                    "id": "districtlife:driplersgarage:1.0.3.2",
-                    "name": "Dripler's Garage (MTS pack)",
+                    "id": "districtlife:dlclient:1.50.0",
+                    "name": "DLClient",
                     "type": "File",
                     "artifact": {
-                        "size": 9086316,
-                        "MD5": "5aa06704658eb68b7b201d5c2a6d8bae",
-                        "url": "https://distribution.districtliferp.fr/mods/driplersgarage1.16.5-1.0.3.2.jar",
-                        "path": "mods/driplersgarage1.16.5-1.0.3.2.jar"
+                        "size": 27405771,
+                        "MD5": "8047d99cd131357fc91069b6a82bf913",
+                        "url": "https://distribution.districtliferp.fr/mods/dlclient-1.50.0.jar",
+                        "path": "mods/dlclient-1.50.0.jar"
                     },
                     "required": {
                         "value": true
                     }
                 },
                 {
-                    "id": "districtlife:goldenaerotransport:3.3.1",
-                    "name": "Golden Aerotransport (MTS pack)",
+                    "id": "curse:dynamic-fps:3.4.3",
+                    "name": "Dynamic FPS",
                     "type": "File",
                     "artifact": {
-                        "size": 72054331,
-                        "MD5": "2a2d130628f6c9fa3d7cbdcd93551df9",
-                        "url": "https://distribution.districtliferp.fr/mods/GoldenAerotransport%203.3.1%2016.jar",
-                        "path": "mods/GoldenAerotransport 3.3.1 16.jar"
+                        "size": 255252,
+                        "MD5": "b1205246e90c5ef08b2d4a698f14be65",
+                        "url": "https://distribution.districtliferp.fr/mods/dynamic-fps-3.4.3%2Bminecraft-1.16.5-forge.jar",
+                        "path": "mods/dynamic-fps-3.4.3+minecraft-1.16.5-forge.jar"
+                    },
+                    "required": {
+                        "value": true
+                    }
+                },
+                {
+                    "id": "curse:embellishcraft:3.4.0.0",
+                    "name": "EmbellishCraft",
+                    "type": "File",
+                    "artifact": {
+                        "size": 5367938,
+                        "MD5": "89936cbddbb45e9827d6c82ae4e76054",
+                        "url": "https://distribution.districtliferp.fr/mods/embellishcraft-1.16.5-3.4.0.0.jar",
+                        "path": "mods/embellishcraft-1.16.5-3.4.0.0.jar"
+                    },
+                    "required": {
+                        "value": true
+                    }
+                },
+                {
+                    "id": "curse:ferritecore:2.1.1",
+                    "name": "FerriteCore",
+                    "type": "File",
+                    "artifact": {
+                        "size": 108557,
+                        "MD5": "6a96a36de00e5d8e9bf2e87634d13125",
+                        "url": "https://distribution.districtliferp.fr/mods/ferritecore-2.1.1-forge.jar",
+                        "path": "mods/ferritecore-2.1.1-forge.jar"
+                    },
+                    "required": {
+                        "value": true
+                    }
+                },
+                {
+                    "id": "org.lwjgl:lwjgl-nanovg:3.2.2",
+                    "name": "LWJGL NanoVG",
+                    "type": "Library",
+                    "artifact": {
+                        "size": 120796,
+                        "MD5": "5ac8662f64e7a938f1b2aae05ba21db2",
+                        "url": "https://distribution.districtliferp.fr/libraries/org/lwjgl/lwjgl-nanovg/3.2.2/lwjgl-nanovg-3.2.2.jar",
+                        "path": "libraries/org/lwjgl/lwjgl-nanovg/3.2.2/lwjgl-nanovg-3.2.2.jar"
+                    },
+                    "required": {
+                        "value": true
+                    }
+                },
+                {
+                    "id": "org.lwjgl:lwjgl-nanovg:3.2.2:natives-windows",
+                    "name": "LWJGL NanoVG (natives-windows)",
+                    "type": "Library",
+                    "artifact": {
+                        "size": 486044,
+                        "MD5": "81d7243d188e16bc3e864078de5d7a8d",
+                        "url": "https://distribution.districtliferp.fr/libraries/org/lwjgl/lwjgl-nanovg/3.2.2/lwjgl-nanovg-3.2.2-natives-windows.jar",
+                        "path": "libraries/org/lwjgl/lwjgl-nanovg/3.2.2/lwjgl-nanovg-3.2.2-natives-windows.jar"
+                    },
+                    "required": {
+                        "value": true
+                    }
+                },
+                {
+                    "id": "org.lwjgl:lwjgl-nanovg:3.2.2:natives-linux",
+                    "name": "LWJGL NanoVG (natives-linux)",
+                    "type": "Library",
+                    "artifact": {
+                        "size": 229153,
+                        "MD5": "146697d2f2d28f2262445bb6b4f4e7b6",
+                        "url": "https://distribution.districtliferp.fr/libraries/org/lwjgl/lwjgl-nanovg/3.2.2/lwjgl-nanovg-3.2.2-natives-linux.jar",
+                        "path": "libraries/org/lwjgl/lwjgl-nanovg/3.2.2/lwjgl-nanovg-3.2.2-natives-linux.jar"
+                    },
+                    "required": {
+                        "value": true
+                    }
+                },
+                {
+                    "id": "org.lwjgl:lwjgl-nanovg:3.2.2:natives-macos",
+                    "name": "LWJGL NanoVG (natives-macos)",
+                    "type": "Library",
+                    "artifact": {
+                        "size": 193986,
+                        "MD5": "7ca66e35ec31847bcc201cd001b6fad1",
+                        "url": "https://distribution.districtliferp.fr/libraries/org/lwjgl/lwjgl-nanovg/3.2.2/lwjgl-nanovg-3.2.2-natives-macos.jar",
+                        "path": "libraries/org/lwjgl/lwjgl-nanovg/3.2.2/lwjgl-nanovg-3.2.2-natives-macos.jar"
+                    },
+                    "required": {
+                        "value": true
+                    }
+                },
+                {
+                    "id": "districtlife:dlui:1.0.0",
+                    "name": "DLUI",
+                    "type": "File",
+                    "artifact": {
+                        "size": 1101784,
+                        "MD5": "7d1103319f06a4280b4efdfed4467311",
+                        "url": "https://distribution.districtliferp.fr/mods/dlui-1.0.0.jar",
+                        "path": "mods/dlui-1.0.0.jar"
                     },
                     "required": {
                         "value": true
@@ -240,14 +366,14 @@
                     }
                 },
                 {
-                    "id": "districtlife:immersive-flight-simulator:1.0.0-B13",
-                    "name": "Immersive Flight Simulator (MTS pack)",
+                    "id": "curse:immersive-vehicles:24.0.0",
+                    "name": "Immersive Vehicles (MTS)",
                     "type": "File",
                     "artifact": {
-                        "size": 75929299,
-                        "MD5": "e83de1308735d1eeab0fa62d53410857",
-                        "url": "https://distribution.districtliferp.fr/mods/Immersive-Flight-Simulator%201.0.0%20B13.jar",
-                        "path": "mods/Immersive-Flight-Simulator 1.0.0 B13.jar"
+                        "size": 5312059,
+                        "MD5": "fef4b6b2b7687a8335977e86750350c0",
+                        "url": "https://distribution.districtliferp.fr/mods/Immersive%20Vehicles-1.16.5-24.0.0.jar",
+                        "path": "mods/Immersive Vehicles-1.16.5-24.0.0.jar"
                     },
                     "required": {
                         "value": true
@@ -268,328 +394,6 @@
                     }
                 },
                 {
-                    "id": "districtlife:mts-official-pack:V28.2",
-                    "name": "MTS Official Pack",
-                    "type": "File",
-                    "artifact": {
-                        "size": 89595481,
-                        "MD5": "e72cb47feed450ffd8566dd4410a6166",
-                        "url": "https://distribution.districtliferp.fr/mods/MTS%20Official%20Pack-1.16.5-V28.2.jar",
-                        "path": "mods/MTS Official Pack-1.16.5-V28.2.jar"
-                    },
-                    "required": {
-                        "value": true
-                    }
-                },
-                {
-                    "id": "districtlife:new-cars:4.4",
-                    "name": "New Cars (MTS pack)",
-                    "type": "File",
-                    "artifact": {
-                        "size": 512899903,
-                        "MD5": "ea3552d83b8bb9d3cb40ba409346edb9",
-                        "url": "https://distribution.districtliferp.fr/mods/New_Cars4.4(1.16-1.20).jar",
-                        "path": "mods/New_Cars4.4(1.16-1.20).jar"
-                    },
-                    "required": {
-                        "value": true
-                    }
-                },
-                {
-                    "id": "districtlife:rage:2.3",
-                    "name": "R.A.G.E (MTS pack)",
-                    "type": "File",
-                    "artifact": {
-                        "size": 27819462,
-                        "MD5": "60b027ae860c4a08434af046f54b9e50",
-                        "url": "https://distribution.districtliferp.fr/mods/R.A.G.E-V2.3_1.16.5.jar",
-                        "path": "mods/R.A.G.E-V2.3_1.16.5.jar"
-                    },
-                    "required": {
-                        "value": true
-                    }
-                },
-                {
-                    "id": "districtlife:svmp:3.7.3",
-                    "name": "SVMP (MTS pack)",
-                    "type": "File",
-                    "artifact": {
-                        "size": 33891838,
-                        "MD5": "ce5033a48b181a287245ecfda5fe2191",
-                        "url": "https://distribution.districtliferp.fr/mods/SVMP3.7.3%201.16%2B.jar",
-                        "path": "mods/SVMP3.7.3 1.16+.jar"
-                    },
-                    "required": {
-                        "value": true
-                    }
-                },
-                {
-                    "id": "districtlife:unu-parts-pack:22.18.0-6.7.3",
-                    "name": "UNU Parts Pack (MTS pack)",
-                    "type": "File",
-                    "artifact": {
-                        "size": 32155874,
-                        "MD5": "907e3ecd995ea288cc44c586ebecfc9f",
-                        "url": "https://distribution.districtliferp.fr/mods/UNU%20Parts%20Pack%20%5BMTS%5D%201.16.5-22.18.0-6.7.3.jar",
-                        "path": "mods/UNU Parts Pack [MTS] 1.16.5-22.18.0-6.7.3.jar"
-                    },
-                    "required": {
-                        "value": true
-                    }
-                },
-                {
-                    "id": "districtlife:veb:1.1.11",
-                    "name": "VEB (MTS pack)",
-                    "type": "File",
-                    "artifact": {
-                        "size": 65991294,
-                        "MD5": "feb9ddb8dd4a3aded58a973729d13521",
-                        "url": "https://distribution.districtliferp.fr/mods/VEB-1.1.11-1.16.5up.jar",
-                        "path": "mods/VEB-1.1.11-1.16.5up.jar"
-                    },
-                    "required": {
-                        "value": true
-                    }
-                },
-                {
-                    "id": "districtlife:mts-caterpillar-pack:pre-2.3.0",
-                    "name": "MTS Caterpillar Pack (MTS pack)",
-                    "type": "File",
-                    "artifact": {
-                        "size": 10123775,
-                        "MD5": "0865b912947a86cb6846af88528db503",
-                        "url": "https://distribution.districtliferp.fr/mods/1.16.5-1.19.2_mts_caterpillar_pack-pre-2.3.0.jar",
-                        "path": "mods/1.16.5-1.19.2_mts_caterpillar_pack-pre-2.3.0.jar"
-                    },
-                    "required": {
-                        "value": true
-                    }
-                },
-                {
-                    "id": "districtlife:blus-sign-pack:1.2.2",
-                    "name": "Blu's Sign Pack (MTS pack)",
-                    "type": "File",
-                    "artifact": {
-                        "size": 3704844,
-                        "MD5": "705aa459167f3439cdd9bd8fd1134daf",
-                        "url": "https://distribution.districtliferp.fr/mods/Blu%27s%20Sign%20Pack-1.16.5-1.2.2.jar",
-                        "path": "mods/Blu's Sign Pack-1.16.5-1.2.2.jar"
-                    },
-                    "required": {
-                        "value": true
-                    }
-                },
-                {
-                    "id": "curse:backpacked:2.1.13",
-                    "name": "Backpacked",
-                    "type": "File",
-                    "artifact": {
-                        "size": 384534,
-                        "MD5": "429331ff8df86399bdd5ec250ca391b3",
-                        "url": "https://distribution.districtliferp.fr/mods/backpacked-forge-1.16.5-2.1.13.jar",
-                        "path": "mods/backpacked-forge-1.16.5-2.1.13.jar"
-                    },
-                    "required": {
-                        "value": true
-                    }
-                },
-                {
-                    "id": "curse:cfm:7.0.0pre22",
-                    "name": "MrCrayfish's Furniture Mod",
-                    "type": "File",
-                    "artifact": {
-                        "size": 2033912,
-                        "MD5": "b2a5f7a361279de6bb5f51246ad36484",
-                        "url": "https://distribution.districtliferp.fr/mods/cfm-7.0.0pre22-1.16.3.jar",
-                        "path": "mods/cfm-7.0.0pre22-1.16.3.jar"
-                    },
-                    "required": {
-                        "value": true
-                    }
-                },
-                {
-                    "id": "curse:mcw-doors:1.1.5",
-                    "name": "Macaw's Doors",
-                    "type": "File",
-                    "artifact": {
-                        "size": 1054169,
-                        "MD5": "80241e41e4f6f380af5abc64ec752ee1",
-                        "url": "https://distribution.districtliferp.fr/mods/mcw-doors-1.1.5-mc1.16.5forge.jar",
-                        "path": "mods/mcw-doors-1.1.5-mc1.16.5forge.jar"
-                    },
-                    "required": {
-                        "value": true
-                    }
-                },
-                {
-                    "id": "curse:modernfurniture:e5",
-                    "name": "Modern Furniture",
-                    "type": "File",
-                    "artifact": {
-                        "size": 5675817,
-                        "MD5": "b1d07366bdd9814a7353c16fb0e8747b",
-                        "url": "https://distribution.districtliferp.fr/mods/modernfurniture-e5-x128-forge-1.16.5.jar",
-                        "path": "mods/modernfurniture-e5-x128-forge-1.16.5.jar"
-                    },
-                    "required": {
-                        "value": true
-                    }
-                },
-                {
-                    "id": "curse:morecfm:1.3.1",
-                    "name": "More CFM",
-                    "type": "File",
-                    "artifact": {
-                        "size": 6132491,
-                        "MD5": "63dad3f9781dd8cdc7f0a3e104a09cf6",
-                        "url": "https://distribution.districtliferp.fr/mods/morecfm-1.3.1-1.16.3.jar",
-                        "path": "mods/morecfm-1.3.1-1.16.3.jar"
-                    },
-                    "required": {
-                        "value": true
-                    }
-                },
-                {
-                    "id": "curse:movingelevators:1.4.12",
-                    "name": "Moving Elevators",
-                    "type": "File",
-                    "artifact": {
-                        "size": 329882,
-                        "MD5": "5770c6f2ff457a47589e1b7e5ce20829",
-                        "url": "https://distribution.districtliferp.fr/mods/movingelevators-1.4.12-forge-mc1.16.jar",
-                        "path": "mods/movingelevators-1.4.12-forge-mc1.16.jar"
-                    },
-                    "required": {
-                        "value": true
-                    }
-                },
-                {
-                    "id": "curse:not-minecraft-combat-simulator:2.0.02",
-                    "name": "Not Minecraft Combat Simulator",
-                    "type": "File",
-                    "artifact": {
-                        "size": 16699333,
-                        "MD5": "acbb05ed3a5d7e50fb8935ef2edc4f8c",
-                        "url": "https://distribution.districtliferp.fr/mods/Not-Minecraft-Combat-Simulator-V2.0.02(1.16%2B)(2).jar",
-                        "path": "mods/Not-Minecraft-Combat-Simulator-V2.0.02(1.16+)(2).jar"
-                    },
-                    "required": {
-                        "value": true
-                    }
-                },
-                {
-                    "id": "curse:sowat-modern-mod:1.6",
-                    "name": "SoWatDiKhapVN's Modern Mod",
-                    "type": "File",
-                    "artifact": {
-                        "size": 50538037,
-                        "MD5": "007999e063a4923c5ca72919a5ea842a",
-                        "url": "https://distribution.districtliferp.fr/mods/SoWatDiKhapVN%27s%20Modern%20Mod%20v1.6%20(1.16.5).jar",
-                        "path": "mods/SoWatDiKhapVN's Modern Mod v1.6 (1.16.5).jar"
-                    },
-                    "required": {
-                        "value": true
-                    }
-                },
-                {
-                    "id": "curse:vdeco:1.1.1",
-                    "name": "VDeco",
-                    "type": "File",
-                    "artifact": {
-                        "size": 1470649,
-                        "MD5": "d4e87156c0349296378a1821fc149771",
-                        "url": "https://distribution.districtliferp.fr/mods/VDeco_1.1.1_1.16.5.jar",
-                        "path": "mods/VDeco_1.1.1_1.16.5.jar"
-                    },
-                    "required": {
-                        "value": true
-                    }
-                },
-                {
-                    "id": "curse:supermartijn642configlib:1.1.8",
-                    "name": "SuperMartijn642's Config Lib",
-                    "type": "File",
-                    "artifact": {
-                        "size": 205918,
-                        "MD5": "fc11974a83de833a017048251ca27b1b",
-                        "url": "https://distribution.districtliferp.fr/mods/supermartijn642configlib-1.1.8-forge-mc1.16.jar",
-                        "path": "mods/supermartijn642configlib-1.1.8-forge-mc1.16.jar"
-                    },
-                    "required": {
-                        "value": true
-                    }
-                },
-                {
-                    "id": "curse:supermartijn642corelib:1.1.21",
-                    "name": "SuperMartijn642's Core Lib",
-                    "type": "File",
-                    "artifact": {
-                        "size": 541853,
-                        "MD5": "9d3190510072b6ca03a13b8d37949cea",
-                        "url": "https://distribution.districtliferp.fr/mods/supermartijn642corelib-1.1.21-forge-mc1.16.jar",
-                        "path": "mods/supermartijn642corelib-1.1.21-forge-mc1.16.jar"
-                    },
-                    "required": {
-                        "value": true
-                    }
-                },
-                {
-                    "id": "curse:architectury:1.32.68",
-                    "name": "Architectury API",
-                    "type": "File",
-                    "artifact": {
-                        "size": 551889,
-                        "MD5": "74a431a4f1a32ec5bbb4bfeb120887c6",
-                        "url": "https://distribution.districtliferp.fr/mods/architectury-1.32.68.jar",
-                        "path": "mods/architectury-1.32.68.jar"
-                    },
-                    "required": {
-                        "value": true
-                    }
-                },
-                {
-                    "id": "districtlife:districtphone:1.1.7",
-                    "name": "DistrictPhone",
-                    "type": "File",
-                    "artifact": {
-                        "size": 36907243,
-                        "MD5": "ccd8a58541d92129283105bcb3cab272",
-                        "url": "https://distribution.districtliferp.fr/mods/districtlife_phone-1.1.7.jar",
-                        "path": "mods/districtlife_phone-1.1.7.jar"
-                    },
-                    "required": {
-                        "value": true
-                    }
-                },
-                {
-                    "id": "districtlife:camera:1.0.14",
-                    "name": "Camera Mod",
-                    "type": "File",
-                    "artifact": {
-                        "size": 273299,
-                        "MD5": "91f52f8feec00dfe0aed9a851c19b7ea",
-                        "url": "https://distribution.districtliferp.fr/mods/camera-1.16.5-1.0.14.jar",
-                        "path": "mods/camera-1.16.5-1.0.14.jar"
-                    },
-                    "required": {
-                        "value": true
-                    }
-                },
-                {
-                    "id": "districtlife:dlclient:1.5.6",
-                    "name": "DLClient",
-                    "type": "File",
-                    "artifact": {
-                        "size": 151995,
-                        "MD5": "457298ea516b908a28172d6ce80201c4",
-                        "url": "https://distribution.districtliferp.fr/mods/dlclient-1.5.6.jar",
-                        "path": "mods/dlclient-1.5.6.jar"
-                    },
-                    "required": {
-                        "value": true
-                    }
-                },
-                {
                     "id": "districtlife:lesraisinsadd:0.1.4.7",
                     "name": "LesRaisinsAdd",
                     "type": "File",
@@ -602,177 +406,16 @@
                     "required": {
                         "value": true
                     }
-                }
-            ]
-        },
-        {
-            "id": "Partenaire",
-            "name": "Partenaire",
-            "description": "Serveur Minecraft Partenaire",
-            "icon": "https://azuriom.com/assets/svg/logo-white.svg",
-            "version": "",
-            "address": "Partenaire",
-            "minecraftVersion": "1.21.10",
-            "discord": {
-                "shortId": "Partenaire",
-                "largeImageText": "Partenaire - Vanilla 1.21.10",
-                "largeImageKey": "server-partenaire"
-            },
-            "mainServer": false,
-            "autoconnect": false,
-            "javaOptions": {
-                "supported": "21.x",
-                "suggestedMajor": 21,
-                "ram": {
-                    "recommended": 4096,
-                    "minimum": 2048
-                }
-            },
-            "modules": []
-        },
-        {
-            "id": "Dev",
-            "name": "Serveur de Dev",
-            "description": "Serveur Minecraft de développement - Forge 1.16.5",
-            "icon": "https://www.districtliferp.fr/storage/img/districtlifeicon.svg",
-            "version": "1.0.0",
-            "address": "dev.noah-sagot.dev:25566",
-            "minecraftVersion": "1.16.5",
-            "discord": {
-                "shortId": "Dev",
-                "largeImageText": "DistrictLife Dev - Forge 1.16.5",
-                "largeImageKey": "server-districtlife"
-            },
-            "mainServer": false,
-            "autoconnect": false,
-            "javaOptions": {
-                "supported": "11.x",
-                "suggestedMajor": 11,
-                "ram": {
-                    "recommended": 3072,
-                    "minimum": 2048
-                }
-            },
-            "modules": [
-                {
-                    "id": "net.minecraftforge:forge:1.16.5-36.2.34",
-                    "name": "Minecraft Forge 36.2.34",
-                    "type": "ForgeHosted",
-                    "artifact": {
-                        "size": 8030981,
-                        "MD5": "2a913cd5db01cd4f0b767bb5dbb9abd2",
-                        "path": "net/minecraftforge/forge/1.16.5-36.2.34/forge-1.16.5-36.2.34-installer.jar",
-                        "url": "https://maven.minecraftforge.net/net/minecraftforge/forge/1.16.5-36.2.34/forge-1.16.5-36.2.34-installer.jar"
-                    },
-                    "subModules": [
-                        {
-                            "id": "1.16.5-forge-36.2.34",
-                            "name": "Forge Version Manifest",
-                            "type": "VersionManifest",
-                            "artifact": {
-                                "size": 13582,
-                                "MD5": "93aa0f2e00a522ec8ef77b83b5fbe6cf",
-                                "url": "https://distribution.districtliferp.fr/forge-1.16.5-36.2.34-version.json"
-                            }
-                        }
-                    ],
-                    "required": {
-                        "value": true
-                    }
                 },
                 {
-                    "id": "districtlife:districtphone:1.6.0",
-                    "name": "DistrictPhone",
+                    "id": "districtlife:mapperbase:2.4.0.0",
+                    "name": "MapperBase",
                     "type": "File",
                     "artifact": {
-                        "size": 36908929,
-                        "MD5": "60ee7a3e586a0e762e9a1b239e3502cf",
-                        "url": "https://distribution.districtliferp.fr/mods/districtlife_phone-1.6.0.jar",
-                        "path": "mods/districtlife_phone-1.6.0.jar"
-                    },
-                    "required": {
-                        "value": true
-                    }
-                },
-                {
-                    "id": "curse:voicechat-forge:2.6.15",
-                    "name": "Simple Voice Chat",
-                    "type": "File",
-                    "artifact": {
-                        "size": 4899850,
-                        "MD5": "bba7ec6a0052d069c108209eb924a9ec",
-                        "url": "https://distribution.districtliferp.fr/mods/voicechat-forge-1.16.5-2.6.15.jar",
-                        "path": "mods/voicechat-forge-1.16.5-2.6.15.jar"
-                    },
-                    "required": {
-                        "value": true
-                    }
-                },
-                {
-                    "id": "districtlife:camera:1.0.14",
-                    "name": "Camera Mod",
-                    "type": "File",
-                    "artifact": {
-                        "size": 273299,
-                        "MD5": "91f52f8feec00dfe0aed9a851c19b7ea",
-                        "url": "https://distribution.districtliferp.fr/mods/camera-1.16.5-1.0.14.jar",
-                        "path": "mods/camera-1.16.5-1.0.14.jar"
-                    },
-                    "required": {
-                        "value": true
-                    }
-                },
-                {
-                    "id": "districtlife:dlclient:1.6.0",
-                    "name": "DLClient",
-                    "type": "File",
-                    "artifact": {
-                        "size": 151997,
-                        "MD5": "faaad2cadbca8e72fbb4b5e6ade3dcf6",
-                        "url": "https://distribution.districtliferp.fr/mods/dlclient-1.6.0.jar",
-                        "path": "mods/dlclient-1.6.0.jar"
-                    },
-                    "required": {
-                        "value": true
-                    }
-                },
-                {
-                    "id": "curse:chiseled:0.4.3",
-                    "name": "Chiseled",
-                    "type": "File",
-                    "artifact": {
-                        "size": 3617511,
-                        "MD5": "a5990b7434e1ddf8ce5034348606d1fd",
-                        "url": "https://distribution.districtliferp.fr/mods/chiseled0.4.3.jar",
-                        "path": "mods/chiseled0.4.3.jar"
-                    },
-                    "required": {
-                        "value": true
-                    }
-                },
-                {
-                    "id": "curse:ctm:1.1.2.6",
-                    "name": "CTM",
-                    "type": "File",
-                    "artifact": {
-                        "size": 186068,
-                        "MD5": "758f81bde7ee49b21b8ed2c0e1ef3567",
-                        "url": "https://distribution.districtliferp.fr/mods/CTM-MC1.16.1-1.1.2.6.jar",
-                        "path": "mods/CTM-MC1.16.1-1.1.2.6.jar"
-                    },
-                    "required": {
-                        "value": true
-                    }
-                },
-                {
-                    "id": "districtlife:lesraisinsadd:0.1.4.7",
-                    "name": "LesRaisinsAdd",
-                    "type": "File",
-                    "artifact": {
-                        "size": 24723782,
-                        "MD5": "2cd9424f57f7e9d2fb6322da74f04fa3",
-                        "url": "https://distribution.districtliferp.fr/mods/lesraisinsadd-0.1.4.7.jar",
-                        "path": "mods/lesraisinsadd-0.1.4.7.jar"
+                        "size": 222545,
+                        "MD5": "1b727e33ef0abe0b2559b267eef9cefe",
+                        "url": "https://distribution.districtliferp.fr/mods/mapperbase-1.16.5-2.4.0.0.jar",
+                        "path": "mods/mapperbase-1.16.5-2.4.0.0.jar"
                     },
                     "required": {
                         "value": true
@@ -905,6 +548,48 @@
                     }
                 },
                 {
+                    "id": "curse:movingelevators:1.4.12",
+                    "name": "Moving Elevators",
+                    "type": "File",
+                    "artifact": {
+                        "size": 329882,
+                        "MD5": "5770c6f2ff457a47589e1b7e5ce20829",
+                        "url": "https://distribution.districtliferp.fr/mods/movingelevators-1.4.12-forge-mc1.16.jar",
+                        "path": "mods/movingelevators-1.4.12-forge-mc1.16.jar"
+                    },
+                    "required": {
+                        "value": true
+                    }
+                },
+                {
+                    "id": "districtlife:mts-official-pack:V28.2",
+                    "name": "MTS Official Pack",
+                    "type": "File",
+                    "artifact": {
+                        "size": 89595481,
+                        "MD5": "e72cb47feed450ffd8566dd4410a6166",
+                        "url": "https://distribution.districtliferp.fr/mods/MTS%20Official%20Pack-1.16.5-V28.2.jar",
+                        "path": "mods/MTS Official Pack-1.16.5-V28.2.jar"
+                    },
+                    "required": {
+                        "value": true
+                    }
+                },
+                {
+                    "id": "districtlife:new-cars:4.4",
+                    "name": "New Cars (MTS pack)",
+                    "type": "File",
+                    "artifact": {
+                        "size": 512899903,
+                        "MD5": "ea3552d83b8bb9d3cb40ba409346edb9",
+                        "url": "https://distribution.districtliferp.fr/mods/New_Cars4.4(1.16-1.20).jar",
+                        "path": "mods/New_Cars4.4(1.16-1.20).jar"
+                    },
+                    "required": {
+                        "value": true
+                    }
+                },
+                {
                     "id": "curse:obfuscate:0.6.3",
                     "name": "Obfuscate",
                     "type": "File",
@@ -919,6 +604,62 @@
                     }
                 },
                 {
+                    "id": "districtlife:rage:2.3",
+                    "name": "R.A.G.E (MTS pack)",
+                    "type": "File",
+                    "artifact": {
+                        "size": 27819462,
+                        "MD5": "60b027ae860c4a08434af046f54b9e50",
+                        "url": "https://distribution.districtliferp.fr/mods/R.A.G.E-V2.3_1.16.5.jar",
+                        "path": "mods/R.A.G.E-V2.3_1.16.5.jar"
+                    },
+                    "required": {
+                        "value": true
+                    }
+                },
+                {
+                    "id": "curse:roadstuff:4.3.0",
+                    "name": "Road Stuff",
+                    "type": "File",
+                    "artifact": {
+                        "size": 3919117,
+                        "MD5": "50f59414da4c293926e616d6c114cc9c",
+                        "url": "https://distribution.districtliferp.fr/mods/roadstuff-1.16.5-4.3.0.jar",
+                        "path": "mods/roadstuff-1.16.5-4.3.0.jar"
+                    },
+                    "required": {
+                        "value": true
+                    }
+                },
+                {
+                    "id": "curse:supermartijn642configlib:1.1.8",
+                    "name": "SuperMartijn642's Config Lib",
+                    "type": "File",
+                    "artifact": {
+                        "size": 205918,
+                        "MD5": "fc11974a83de833a017048251ca27b1b",
+                        "url": "https://distribution.districtliferp.fr/mods/supermartijn642configlib-1.1.8-forge-mc1.16.jar",
+                        "path": "mods/supermartijn642configlib-1.1.8-forge-mc1.16.jar"
+                    },
+                    "required": {
+                        "value": true
+                    }
+                },
+                {
+                    "id": "curse:supermartijn642corelib:1.1.21",
+                    "name": "SuperMartijn642's Core Lib",
+                    "type": "File",
+                    "artifact": {
+                        "size": 541853,
+                        "MD5": "9d3190510072b6ca03a13b8d37949cea",
+                        "url": "https://distribution.districtliferp.fr/mods/supermartijn642corelib-1.1.21-forge-mc1.16.jar",
+                        "path": "mods/supermartijn642corelib-1.1.21-forge-mc1.16.jar"
+                    },
+                    "required": {
+                        "value": true
+                    }
+                },
+                {
                     "id": "curse:tac:0.3.14.2",
                     "name": "TAC (The Armory Craft)",
                     "type": "File",
@@ -927,6 +668,188 @@
                         "MD5": "ad52fa4804a4600028c0b0b675ceca39",
                         "url": "https://distribution.districtliferp.fr/mods/tac-release-0.3.14.2-1.16.5.jar",
                         "path": "mods/tac-release-0.3.14.2-1.16.5.jar"
+                    },
+                    "required": {
+                        "value": true
+                    }
+                },
+                {
+                    "id": "curse:voicechat-forge:2.6.15",
+                    "name": "Simple Voice Chat",
+                    "type": "File",
+                    "artifact": {
+                        "size": 4899850,
+                        "MD5": "bba7ec6a0052d069c108209eb924a9ec",
+                        "url": "https://distribution.districtliferp.fr/mods/voicechat-forge-1.16.5-2.6.15.jar",
+                        "path": "mods/voicechat-forge-1.16.5-2.6.15.jar"
+                    },
+                    "required": {
+                        "value": true
+                    }
+                },
+                {
+                    "id": "districtlife:config-mainmenu:1.0.0",
+                    "name": "Config - DistrictLife Main Menu",
+                    "type": "File",
+                    "artifact": {
+                        "size": 1102,
+                        "MD5": "64b987247907e984497ec01b72f7de84",
+                        "url": "https://distribution.districtliferp.fr/config/districtlife-mainmenu.toml",
+                        "path": "config/districtlife-mainmenu.toml"
+                    },
+                    "required": {
+                        "value": true
+                    }
+                },
+                {
+                    "id": "forge:config-fml:1.0.0",
+                    "name": "Config - FML",
+                    "type": "File",
+                    "artifact": {
+                        "size": 242,
+                        "MD5": "5961f97ddaa04677acd58a89aaf3826c",
+                        "url": "https://distribution.districtliferp.fr/config/fml.toml",
+                        "path": "config/fml.toml"
+                    },
+                    "required": {
+                        "value": true
+                    }
+                },
+                {
+                    "id": "forge:config-client:1.0.0",
+                    "name": "Config - Forge Client",
+                    "type": "File",
+                    "artifact": {
+                        "size": 1359,
+                        "MD5": "c352e2faa854312ac4bf44773720b53f",
+                        "url": "https://distribution.districtliferp.fr/config/forge-client.toml",
+                        "path": "config/forge-client.toml"
+                    },
+                    "required": {
+                        "value": true
+                    }
+                },
+                {
+                    "id": "forge:config-common:1.0.0",
+                    "name": "Config - Forge Common",
+                    "type": "File",
+                    "artifact": {
+                        "size": 310,
+                        "MD5": "94977d1b9c60ebe6f0cfc34c0bbaa8c8",
+                        "url": "https://distribution.districtliferp.fr/config/forge-common.toml",
+                        "path": "config/forge-common.toml"
+                    },
+                    "required": {
+                        "value": true
+                    }
+                },
+                {
+                    "id": "curse:chipped:1.2.1",
+                    "name": "Chipped",
+                    "type": "File",
+                    "artifact": {
+                        "size": 6169900,
+                        "MD5": "6ce55717e0a448300790a9aa8ee6177f",
+                        "url": "https://distribution.districtliferp.fr/mods/chipped-1.16.5-1.2.1-forge.jar",
+                        "path": "mods/chipped-1.16.5-1.2.1-forge.jar"
+                    },
+                    "required": {
+                        "value": true
+                    }
+                },
+                {
+                    "id": "curse:decorative-blocks:1.7.2",
+                    "name": "Decorative Blocks",
+                    "type": "File",
+                    "artifact": {
+                        "size": 576443,
+                        "MD5": "1b6222ecb3d24ef21b840ef0e5d98702",
+                        "url": "https://distribution.districtliferp.fr/mods/decorative_blocks-1.16.4-1.7.2.jar",
+                        "path": "mods/decorative_blocks-1.16.4-1.7.2.jar"
+                    },
+                    "required": {
+                        "value": true
+                    }
+                },
+                {
+                    "id": "curse:exlinefurniture:2.0",
+                    "name": "ExLine Furniture",
+                    "type": "File",
+                    "artifact": {
+                        "size": 1022962,
+                        "MD5": "48ca9bb3a14f949161736cef2e828001",
+                        "url": "https://distribution.districtliferp.fr/mods/exlinefurniture-1.16.5-2.0.jar",
+                        "path": "mods/exlinefurniture-1.16.5-2.0.jar"
+                    },
+                    "required": {
+                        "value": true
+                    }
+                },
+                {
+                    "id": "curse:mcw-bridges:3.1.2",
+                    "name": "Macaw's Bridges",
+                    "type": "File",
+                    "artifact": {
+                        "size": 603946,
+                        "MD5": "a3167e144814379c4dd2a250f1bd2a74",
+                        "url": "https://distribution.districtliferp.fr/mods/mcw-bridges-3.1.2-mc1.16.5forge.jar",
+                        "path": "mods/mcw-bridges-3.1.2-mc1.16.5forge.jar"
+                    },
+                    "required": {
+                        "value": true
+                    }
+                },
+                {
+                    "id": "curse:mcw-doors:1.1.5",
+                    "name": "Macaw's Doors",
+                    "type": "File",
+                    "artifact": {
+                        "size": 1054169,
+                        "MD5": "80241e41e4f6f380af5abc64ec752ee1",
+                        "url": "https://distribution.districtliferp.fr/mods/mcw-doors-1.1.5-mc1.16.5forge.jar",
+                        "path": "mods/mcw-doors-1.1.5-mc1.16.5forge.jar"
+                    },
+                    "required": {
+                        "value": true
+                    }
+                },
+                {
+                    "id": "curse:mcw-windows:2.4.2",
+                    "name": "Macaw's Windows",
+                    "type": "File",
+                    "artifact": {
+                        "size": 1173801,
+                        "MD5": "898e17d97c8a1db963c957f6cad61713",
+                        "url": "https://distribution.districtliferp.fr/mods/mcw-mcwwindows-2.4.2-mc1.16.5forge.jar",
+                        "path": "mods/mcw-mcwwindows-2.4.2-mc1.16.5forge.jar"
+                    },
+                    "required": {
+                        "value": true
+                    }
+                },
+                {
+                    "id": "curse:simplylight:1.4.2",
+                    "name": "Simply Light",
+                    "type": "File",
+                    "artifact": {
+                        "size": 548669,
+                        "MD5": "0a98756eedbbfaf5c8e4f8f34b821ce8",
+                        "url": "https://distribution.districtliferp.fr/mods/simplylight-1.16.5-1.4.2-build.32.jar",
+                        "path": "mods/simplylight-1.16.5-1.4.2-build.32.jar"
+                    },
+                    "required": {
+                        "value": true
+                    }
+                },
+                {
+                    "id": "curse:stable3:1.16",
+                    "name": "Stable",
+                    "type": "File",
+                    "artifact": {
+                        "size": 1094913,
+                        "MD5": "8b21317ae9ecdff4db8eb03f2b74ed3b",
+                        "url": "https://distribution.districtliferp.fr/mods/stable3-1.16.jar",
+                        "path": "mods/stable3-1.16.jar"
                     },
                     "required": {
                         "value": true

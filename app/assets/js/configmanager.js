@@ -561,7 +561,8 @@ function defaultJavaConfig17(ram) {
             '-XX:G1NewSizePercent=20',
             '-XX:G1ReservePercent=20',
             '-XX:MaxGCPauseMillis=50',
-            '-XX:G1HeapRegionSize=32M'
+            '-XX:G1HeapRegionSize=32M',
+            '-XX:MaxDirectMemorySize=2G'
         ],
     }
 }
