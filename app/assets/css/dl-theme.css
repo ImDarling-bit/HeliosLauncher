@@ -430,8 +430,15 @@ body {
     top: 0 !important;
 }
 
-/* Bouton JOUER — pill or, pleine largeur */
+/* Bouton JOUER — pill or, pleine largeur, mis en avant : plus grand, icône ▶,
+   halo doré qui pulse et reflet qui balaie le bouton toutes les ~4 s. */
 #launch_button {
+    position: relative !important;
+    overflow: hidden !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 10px !important;
     width: 100% !important;
     background: linear-gradient(
         90deg,
@@ -442,34 +449,73 @@ body {
     color: #1A1E2E !important;
     border: none !important;
     border-radius: var(--r-pill) !important;
-    padding: 11px 16px !important;
-    font-size: 11px !important;
+    padding: 16px 16px !important;
+    font-size: 15px !important;
     font-weight: 900 !important;
-    letter-spacing: 0.28em !important;
+    letter-spacing: 0.24em !important;
     text-transform: uppercase !important;
     cursor: pointer !important;
     text-shadow: none !important;
-    box-shadow: 0 4px 18px var(--dl-gold-glow) !important;
-    transition: transform 0.15s ease, box-shadow 0.2s ease !important;
+    box-shadow: 0 6px 22px var(--dl-gold-glow), 0 0 0 0 rgba(227, 187, 106, 0.55) !important;
+    animation: dl-play-pulse 2.4s ease-out infinite !important;
+    transition: transform 0.15s ease, box-shadow 0.2s ease, filter 0.2s ease !important;
+}
+/* Icône ▶ (triangle CSS, couleur du texte) */
+#launch_button::before {
+    content: '';
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 7px 0 7px 11px;
+    border-color: transparent transparent transparent currentColor;
+    flex-shrink: 0;
+}
+/* Reflet qui traverse le bouton */
+#launch_button::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -60%;
+    width: 40%;
+    height: 100%;
+    background: linear-gradient(100deg, transparent 0%, rgba(255, 255, 255, 0.55) 50%, transparent 100%);
+    transform: skewX(-20deg);
+    animation: dl-play-shine 4s ease-in-out infinite;
+    pointer-events: none;
+}
+@keyframes dl-play-pulse {
+    0%   { box-shadow: 0 6px 22px var(--dl-gold-glow), 0 0 0 0 rgba(227, 187, 106, 0.55); }
+    70%  { box-shadow: 0 6px 22px var(--dl-gold-glow), 0 0 0 10px rgba(227, 187, 106, 0); }
+    100% { box-shadow: 0 6px 22px var(--dl-gold-glow), 0 0 0 0 rgba(227, 187, 106, 0); }
+}
+@keyframes dl-play-shine {
+    0%, 60% { left: -60%; }
+    100%    { left: 130%; }
 }
 
 #launch_button:hover {
-    transform: translateY(-2px) !important;
-    box-shadow: 0 7px 28px rgba(227,187,106,0.55) !important;
+    transform: translateY(-2px) scale(1.02) !important;
+    filter: brightness(1.05) !important;
 }
 
 #launch_button:active {
-    transform: translateY(0) !important;
-    box-shadow: 0 3px 10px var(--dl-gold-glow) !important;
+    transform: translateY(0) scale(0.98) !important;
 }
 
 #launch_button:disabled {
     background: linear-gradient(90deg, #3a3a3a 0%, #4a4a4a 50%, #3a3a3a 100%) !important;
     color: #888888 !important;
     box-shadow: none !important;
+    animation: none !important;
     cursor: not-allowed !important;
     transform: none !important;
+    filter: none !important;
     opacity: 0.6 !important;
+}
+#launch_button:disabled::after { display: none; }
+
+@media (prefers-reduced-motion: reduce) {
+    #launch_button, #launch_button::after { animation: none !important; }
 }
 
 /* Bouton sélecteur serveur — pill outline */
