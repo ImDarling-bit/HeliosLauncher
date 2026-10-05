@@ -306,6 +306,10 @@ mandatoryUpdateTitle = "Mandatory Update"
 mandatoryUpdateDesc = "A new launcher version ({version}) is available. It is required to keep playing on DistrictLife.<br><br>If you decline, the launcher will close."
 mandatoryUpdateConfirm = "Update Now"
 mandatoryUpdateQuit = "Quit Launcher"
+downloadingTitle = "Updating"
+downloadingDesc = "A new launcher version is available and is being downloaded, please wait."
+installingTitle = "Installing Update"
+installingDesc = "The launcher will close for a moment and restart automatically once up to date."
 
 [js.auth.microsoft.error]
 noProfileTitle = "Error During Login:<br>Profile Not Set Up"

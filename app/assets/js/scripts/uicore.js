@@ -38,11 +38,13 @@ webFrame.setVisualZoomLevelLimits(1, 1)
 // Initialize auto updates in production environments.
 let updateCheckListener
 // GUIDE — Mise à jour obligatoire au démarrage : seule la TOUTE PREMIÈRE vérification
-// (celle lancée au lancement du launcher, cas 'ready' ci-dessous), une fois la mise à
-// jour téléchargée, affiche une pop-up bloquante proposant d'installer — refuser ferme
-// le launcher (voir showMandatoryUpdatePrompt). Les vérifications suivantes (toutes les
-// 30 min en tâche de fond, ou via le bouton "Vérifier les mises à jour") redeviennent
-// manuelles : on ne force jamais la fermeture du launcher pendant qu'il est déjà utilisé.
+// (celle lancée au lancement du launcher, cas 'ready' ci-dessous) affiche la page de
+// mise à jour (update.ejs) : progression du téléchargement, puis choix d'installer —
+// refuser ferme le launcher. Les vérifications suivantes (toutes les 30 min en tâche
+// de fond, ou via le bouton "Vérifier les mises à jour") redeviennent manuelles : on
+// ne force jamais la fermeture du launcher pendant qu'il est déjà utilisé. Dans tous
+// les cas l'installation passe par la page (état 'installing'), jamais par
+// l'assistant d'installation natif.
 let isInitialUpdateCheck = true
 if(!isDev){
     ipcRenderer.on('autoUpdateNotification', (event, arg, info) => {
@@ -57,19 +59,27 @@ if(!isDev){
                 if(process.platform === 'darwin'){
                     info.darwindownload = `https://github.com/ImDarling-bit/HeliosLauncher/releases/download/v${info.version}/DistrictLife-Launcher-setup-${info.version}-${process.arch === 'arm64' ? 'arm64' : 'x64'}.dmg`
                     showUpdateUI(info)
+                } else if(isInitialUpdateCheck){
+                    // Démarrage : la page de mise à jour suit le téléchargement.
+                    showUpdatePage('downloading', info.version)
                 }
 
                 populateSettingsUpdateInformation(info)
+                break
+            case 'download-progress':
+                if(isUpdatePageVisible()){
+                    setUpdatePageProgress(info)
+                }
                 break
             case 'update-downloaded':
                 loggerAutoUpdater.info('Update ' + info.version + ' ready to be installed.')
                 if(isInitialUpdateCheck){
                     // Démarrage : mise à jour obligatoire avant de pouvoir continuer.
                     isInitialUpdateCheck = false
-                    showMandatoryUpdatePrompt(info.version)
+                    showUpdatePage('ready', info.version)
                 } else {
                     settingsUpdateButtonStatus(Lang.queryJS('uicore.autoUpdate.installNowButton'), false, () => {
-                        ipcRenderer.send('autoUpdateAction', 'installUpdateNow')
+                        installUpdateNow(info.version)
                     })
                     showUpdateUI(info)
                 }
@@ -88,6 +98,10 @@ if(!isDev){
                 break
             case 'realerror':
                 isInitialUpdateCheck = false
+                // Échec pendant le téléchargement initial : on ne bloque pas le launcher.
+                if(isUpdatePageVisible() && $('#updateContainer').attr('state') === 'downloading'){
+                    hideUpdatePage()
+                }
                 if(info != null && info.code != null){
                     if(info.code === 'ERR_UPDATER_INVALID_RELEASE_FEED'){
                         loggerAutoUpdater.info('No suitable releases found.')
@@ -119,27 +133,90 @@ function changeAllowPrerelease(val){
 }
 
 /**
- * Affiche la pop-up de mise à jour obligatoire au démarrage (réutilise l'overlay
- * générique de confirmation, voir overlay.js). "Mettre à jour" lance l'installation
- * (le launcher redémarre seul une fois à jour) ; "Quitter" (ou Échap) ferme le
- * launcher — aucune autre façon de continuer sans la mise à jour.
+ * Affiche la page de mise à jour (update.ejs) dans l'état demandé :
+ * - 'downloading' : téléchargement en cours, barre de progression (seul « Quitter » est proposé) ;
+ * - 'ready'       : mise à jour téléchargée, obligatoire — « Mettre à jour » l'installe,
+ *                   « Quitter » ferme le launcher (aucune autre façon de continuer) ;
+ * - 'installing'  : installation en cours, le launcher va se fermer puis redémarrer.
  *
- * @param {string} version La version disponible, affichée dans le message.
+ * @param {'downloading'|'ready'|'installing'} state L'état à afficher.
+ * @param {string} version La version installée, affichée sous le titre.
  */
-function showMandatoryUpdatePrompt(version){
-    setOverlayContent(
-        Lang.queryJS('uicore.autoUpdate.mandatoryUpdateTitle'),
-        Lang.queryJS('uicore.autoUpdate.mandatoryUpdateDesc', { version }),
-        Lang.queryJS('uicore.autoUpdate.mandatoryUpdateConfirm'),
-        Lang.queryJS('uicore.autoUpdate.mandatoryUpdateQuit')
-    )
-    setOverlayHandler(() => {
+function showUpdatePage(state, version){
+    const titles = {
+        downloading: 'uicore.autoUpdate.downloadingTitle',
+        ready: 'uicore.autoUpdate.mandatoryUpdateTitle',
+        installing: 'uicore.autoUpdate.installingTitle'
+    }
+    const descs = {
+        downloading: 'uicore.autoUpdate.downloadingDesc',
+        ready: 'uicore.autoUpdate.mandatoryUpdateDesc',
+        installing: 'uicore.autoUpdate.installingDesc'
+    }
+    const container = document.getElementById('updateContainer')
+    container.setAttribute('state', state)
+    document.getElementById('updateTitle').textContent = Lang.queryJS(titles[state])
+    document.getElementById('updateVersion').textContent = `v${version}`
+    document.getElementById('updateDesc').innerHTML = Lang.queryJS(descs[state], { version })
+
+    const installButton = document.getElementById('updateInstallButton')
+    installButton.textContent = Lang.queryJS('uicore.autoUpdate.mandatoryUpdateConfirm')
+    installButton.onclick = () => installUpdateNow(version)
+
+    const quitButton = document.getElementById('updateQuitButton')
+    quitButton.textContent = Lang.queryJS('uicore.autoUpdate.mandatoryUpdateQuit')
+    quitButton.onclick = () => remote.getCurrentWindow().close()
+
+    if(state === 'downloading'){
+        setUpdatePageProgress({ percent: 0 })
+    } else if(state === 'installing'){
+        document.getElementById('updateProgressText').textContent = ''
+    }
+
+    if(container.style.display === 'none'){
+        $(container).fadeIn(250)
+    }
+    document.activeElement.blur()
+}
+
+/**
+ * Met à jour la barre de progression de la page de mise à jour.
+ *
+ * @param {{percent: number, bytesPerSecond?: number, transferred?: number, total?: number}} progress
+ * L'objet 'download-progress' d'electron-updater.
+ */
+function setUpdatePageProgress(progress){
+    const percent = Math.max(0, Math.min(100, progress.percent || 0))
+    document.getElementById('updateProgressBar').style.width = `${percent}%`
+    let text = `${Math.floor(percent)} %`
+    if(progress.total){
+        const mb = (bytes) => (bytes / 1048576).toFixed(1)
+        text += ` — ${mb(progress.transferred)} / ${mb(progress.total)} Mo`
+    }
+    document.getElementById('updateProgressText').textContent = text
+}
+
+function isUpdatePageVisible(){
+    return document.getElementById('updateContainer').style.display !== 'none'
+}
+
+function hideUpdatePage(){
+    $('#updateContainer').fadeOut(250)
+}
+
+/**
+ * Passe la page de mise à jour en état 'installing' puis demande au processus
+ * principal d'installer (silencieusement) et de relancer le launcher. Le court délai
+ * laisse le temps à l'utilisateur de voir que l'installation démarre avant que la
+ * fenêtre ne se ferme.
+ *
+ * @param {string} version La version installée.
+ */
+function installUpdateNow(version){
+    showUpdatePage('installing', version)
+    setTimeout(() => {
         ipcRenderer.send('autoUpdateAction', 'installUpdateNow')
-    })
-    setDismissHandler(() => {
-        remote.getCurrentWindow().close()
-    })
-    toggleOverlay(true, true)
+    }, 1200)
 }
 
 function showUpdateUI(info){

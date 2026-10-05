@@ -36,6 +36,9 @@ function initAutoUpdater(event, data) {
     autoUpdater.on('update-available', (info) => {
         event.sender.send('autoUpdateNotification', 'update-available', info)
     })
+    autoUpdater.on('download-progress', (progress) => {
+        event.sender.send('autoUpdateNotification', 'download-progress', progress)
+    })
     autoUpdater.on('update-downloaded', (info) => {
         event.sender.send('autoUpdateNotification', 'update-downloaded', info)
     })
@@ -77,7 +80,10 @@ ipcMain.on('autoUpdateAction', (event, arg, data) => {
             }
             break
         case 'installUpdateNow':
-            autoUpdater.quitAndInstall()
+            // Installation silencieuse : l'assistant NSIS natif n'est pas affiché, c'est la
+            // page de mise à jour du launcher (update.ejs) qui informe l'utilisateur. Le
+            // launcher est relancé automatiquement une fois l'installation terminée.
+            autoUpdater.quitAndInstall(true, true)
             break
         default:
             console.log('Unknown argument', arg)
@@ -229,6 +235,9 @@ function createWindow() {
         height: 720,
         icon: getPlatformIcon('district_life_icon_v1_4092x4092'),
         frame: false,
+        // Fenêtre transparente : les coins arrondis sont dessinés en CSS (voir
+        // « Fenêtre arrondie » dans dl-theme.css), les coins restent donc invisibles.
+        transparent: true,
         resizable: false,
         maximizable: false,
         fullscreenable: false,
@@ -237,7 +246,7 @@ function createWindow() {
             nodeIntegration: true,
             contextIsolation: false
         },
-        backgroundColor: '#171614'
+        backgroundColor: '#00000000'
     })
     remoteMain.enable(win.webContents)
 

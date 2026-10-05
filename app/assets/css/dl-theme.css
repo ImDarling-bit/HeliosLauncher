@@ -2950,3 +2950,156 @@ input:checked + .toggleSwitchSlider::before {
     font-size: 14px !important;
 }
 
+
+/* ─────────────────────────────────────────────
+   FENÊTRE ARRONDIE
+   La BrowserWindow est transparente (index.js) : on arrondit ici le contenu.
+   - clip-path sur body découpe aussi les enfants en position absolute/fixed
+     (overlays, page de mise à jour…), contrairement à border-radius + overflow.
+   - html reçoit un background-image transparent : sans ça, le fond du body
+     (couleur + image d'arrière-plan) est propagé au canvas par le navigateur
+     et repeint les coins, que le clip-path ne touche pas.
+───────────────────────────────────────────── */
+html {
+    height: 100% !important;
+    background: linear-gradient(transparent, transparent) !important;
+}
+body {
+    height: 100% !important;
+    clip-path: inset(0 round var(--r-sm)) !important;
+}
+
+/* ─────────────────────────────────────────────
+   PAGE DE MISE À JOUR (update.ejs)
+───────────────────────────────────────────── */
+#updateContainer {
+    position: absolute;
+    z-index: 600;
+    top: 22px;
+    left: 0;
+    width: 100%;
+    height: calc(100% - 22px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(31, 37, 47, 0.72);
+    backdrop-filter: blur(6px);
+    animation: dl-update-fade .25s ease;
+}
+@keyframes dl-update-fade {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+#updateContent {
+    width: 440px;
+    padding: 36px 40px 32px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    background: var(--dl-surface);
+    border-radius: var(--r-xl);
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+}
+#updateLogo {
+    width: 64px;
+    height: 64px;
+    margin-bottom: 18px;
+}
+#updateTitle {
+    font: 900 22px var(--font);
+    color: var(--dl-text);
+}
+#updateVersion {
+    margin-top: 8px;
+    padding: 3px 12px;
+    border-radius: var(--r-pill);
+    background: var(--dl-gold-dim);
+    color: var(--dl-gold-dark);
+    font: 700 12px var(--font);
+    letter-spacing: .04em;
+}
+#updateDesc {
+    margin-top: 16px;
+    font: 400 14px/1.5 var(--font);
+    color: var(--dl-text-soft);
+}
+#updateProgress {
+    width: 100%;
+    margin-top: 22px;
+}
+#updateProgressTrack {
+    position: relative;
+    width: 100%;
+    height: 8px;
+    overflow: hidden;
+    border-radius: var(--r-pill);
+    background: var(--dl-surface-2);
+}
+#updateProgressBar {
+    width: 0%;
+    height: 100%;
+    border-radius: var(--r-pill);
+    background: linear-gradient(90deg, var(--dl-gold-dark), var(--dl-gold));
+    transition: width .3s ease;
+}
+#updateProgressText {
+    display: block;
+    margin-top: 8px;
+    font: 500 12px var(--font);
+    color: var(--dl-text-muted);
+}
+#updateActions {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-top: 26px;
+    width: 100%;
+}
+#updateInstallButton,
+#updateQuitButton {
+    border: none;
+    cursor: pointer;
+    font: 700 14px var(--font);
+    transition: background .15s, color .15s, box-shadow .15s, transform .1s;
+}
+#updateInstallButton {
+    width: 100%;
+    padding: 12px 0;
+    border-radius: var(--r-pill);
+    background: var(--dl-gold);
+    color: var(--dl-navy);
+}
+#updateInstallButton:hover {
+    background: var(--dl-gold-light);
+    box-shadow: 0 0 0 4px var(--dl-gold-glow);
+}
+#updateInstallButton:active {
+    transform: scale(.97);
+}
+#updateQuitButton {
+    padding: 4px 8px;
+    background: none;
+    color: var(--dl-text-muted);
+}
+#updateQuitButton:hover {
+    color: var(--dl-offline);
+}
+
+/* États : downloading → ready → installing */
+#updateContainer[state="downloading"] #updateInstallButton,
+#updateContainer[state="ready"] #updateProgress,
+#updateContainer[state="installing"] #updateActions {
+    display: none;
+}
+#updateContainer[state="installing"] #updateProgressBar {
+    position: absolute;
+    width: 35% !important;
+    transition: none;
+    animation: dl-update-indeterminate 1.2s ease-in-out infinite;
+}
+@keyframes dl-update-indeterminate {
+    from { left: -35%; }
+    to   { left: 100%; }
+}

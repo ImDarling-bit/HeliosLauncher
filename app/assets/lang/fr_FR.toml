@@ -344,6 +344,10 @@ mandatoryUpdateTitle = "Mise à jour obligatoire"
 mandatoryUpdateDesc = "Une nouvelle version du launcher ({version}) est disponible. Elle est obligatoire pour continuer à jouer sur DistrictLife.<br><br>Si vous refusez, le launcher va se fermer."
 mandatoryUpdateConfirm = "Mettre à jour"
 mandatoryUpdateQuit = "Quitter le launcher"
+downloadingTitle = "Mise à jour en cours"
+downloadingDesc = "Une nouvelle version du launcher est disponible. Elle est en cours de téléchargement, merci de patienter."
+installingTitle = "Installation en cours"
+installingDesc = "Le launcher va se fermer quelques instants puis redémarrer automatiquement une fois à jour."
 
 [js.auth.microsoft.error]
 noProfileTitle = "Erreur de connexion :<br>Profil non configuré"

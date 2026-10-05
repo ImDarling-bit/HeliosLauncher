@@ -1,0 +1,24 @@
+<!--
+    Page de mise à jour du launcher. Remplace l'assistant d'installation natif :
+    l'installation se fait en mode silencieux (voir 'installUpdateNow' dans index.js)
+    et c'est cette page qui affiche le téléchargement puis l'installation.
+    Pilotée par showUpdatePage() / setUpdatePageProgress() dans uicore.js.
+-->
+<div id="updateContainer" style="display: none;" state="downloading">
+    <div id="updateContent">
+        <img id="updateLogo" src="./assets/images/icons/district_life_icon_v1.svg" alt="">
+        <span id="updateTitle"></span>
+        <span id="updateVersion"></span>
+        <span id="updateDesc"></span>
+        <div id="updateProgress">
+            <div id="updateProgressTrack">
+                <div id="updateProgressBar"></div>
+            </div>
+            <span id="updateProgressText"></span>
+        </div>
+        <div id="updateActions">
+            <button id="updateInstallButton"></button>
+            <button id="updateQuitButton"></button>
+        </div>
+    </div>
+</div>
