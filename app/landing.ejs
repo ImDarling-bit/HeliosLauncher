@@ -92,9 +92,22 @@
                             <div id="dl-bc-status-avatars" class="dl-bc-status-avatars"></div>
                         </div>
                         <div class="dl-bc-status-fill"><div id="dl-bc-status-fill-bar"></div></div>
-                        <div class="dl-bc-status-mini">
-                            <div class="dl-bc-mini"><span class="dl-bc-mini-label">PING</span><span id="dl-bc-status-ping" class="dl-bc-mini-val dl-ok">– <small>ms</small></span></div>
-                            <div class="dl-bc-mini dl-bc-mini-wide"><span class="dl-bc-mini-label">MESSAGE DU SERVEUR</span><span id="dl-bc-status-motd" class="dl-bc-mini-val dl-bc-mini-text">—</span></div>
+                        <!-- Qualité de connexion : latence actuelle + historique des 5 dernières
+                             minutes (échantillonné par sampleServerLatency, landing.js). -->
+                        <div class="dl-bc-status-mini" id="dl-bc-conn" data-quality="good">
+                            <div class="dl-bc-mini dl-bc-conn-now">
+                                <span class="dl-bc-mini-label">LATENCE</span>
+                                <span id="dl-bc-status-ping" class="dl-bc-mini-val">– <small>ms</small></span>
+                                <span id="dl-bc-conn-quality" class="dl-bc-conn-quality"><span class="dl-bc-conn-dot"></span><span id="dl-bc-conn-quality-text">—</span></span>
+                            </div>
+                            <div class="dl-bc-mini dl-bc-conn-history">
+                                <div class="dl-bc-conn-head">
+                                    <span class="dl-bc-mini-label">CONNEXION · 5 DERNIÈRES MIN</span>
+                                    <span id="dl-bc-conn-verdict" class="dl-bc-conn-verdict">—</span>
+                                </div>
+                                <div id="dl-bc-conn-spark" class="dl-bc-conn-spark"></div>
+                                <div id="dl-bc-conn-stats" class="dl-bc-conn-stats">—</div>
+                            </div>
                         </div>
                     </div>
                 </div>

@@ -2125,15 +2125,49 @@ input:checked + .toggleSwitchSlider::before {
 .dl-bc-mini-val { font: 800 18px var(--font); color: var(--ink); }
 .dl-bc-mini-val small { font-size: 11px; color: var(--ink-3); font-weight: 600; }
 .dl-bc-mini-val.dl-ok { color: var(--ok); }
-/* Message du serveur (MOTD) — texte libre, pas un chiffre : police plus petite, tronqué sur 1 ligne */
-.dl-bc-mini-wide { justify-content: center; }
-.dl-bc-mini-text {
-    font: 600 12px var(--font) !important;
-    color: var(--ink-2) !important;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+
+/* Qualité de connexion (ligne du bas de la carte statut) — la couleur suit
+   data-quality sur #dl-bc-conn : good / fair / poor. */
+#dl-bc-conn { --q: var(--ok); }
+#dl-bc-conn[data-quality="fair"] { --q: var(--warn); }
+#dl-bc-conn[data-quality="poor"] { --q: var(--dl-offline); }
+.dl-bc-conn-now { min-width: 104px; }
+.dl-bc-conn-now .dl-bc-mini-val { color: var(--q); line-height: 1.1; }
+.dl-bc-conn-quality {
+    display: flex; align-items: center; gap: 5px;
+    font: 700 10px var(--font); color: var(--ink-2);
 }
+.dl-bc-conn-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--q); box-shadow: 0 0 6px var(--q);
+}
+.dl-bc-conn-history { gap: 5px; }
+.dl-bc-conn-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.dl-bc-conn-verdict {
+    padding: 1px 8px; border-radius: 100px;
+    font: 700 9px var(--font); letter-spacing: .08em; text-transform: uppercase;
+    color: var(--ok); background: rgba(255, 255, 255, .06);
+    white-space: nowrap;
+}
+.dl-bc-conn-verdict[data-q="fair"] { color: var(--warn); }
+.dl-bc-conn-verdict[data-q="poor"] { color: var(--dl-offline); }
+.dl-bc-conn-spark {
+    display: flex; align-items: flex-end; gap: 3px;
+    height: 24px;
+}
+.dl-bc-conn-bar {
+    flex: 1; min-width: 0; min-height: 3px;
+    border-radius: 2px;
+    background: var(--ok);
+    opacity: .85;
+    transition: height .3s ease;
+}
+.dl-bc-conn-bar[data-q="fair"] { background: var(--warn); }
+.dl-bc-conn-bar[data-q="poor"] { background: var(--dl-offline); }
+.dl-bc-conn-bar[data-q="lost"] { height: 100% !important; background: repeating-linear-gradient(180deg, var(--dl-offline) 0 3px, transparent 3px 6px); opacity: .6; }
+.dl-bc-conn-bar[data-q="empty"] { height: 3px !important; background: rgba(255, 255, 255, .08); }
+.dl-bc-conn-bar:last-child { opacity: 1; }
+.dl-bc-conn-stats { font: 600 10px var(--font); color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* Carte événement */
 #dl-bc-event { grid-column: span 2 !important; cursor: pointer; }

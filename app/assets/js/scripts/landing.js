@@ -452,6 +452,113 @@ const SERVER_STATUS_TIMEOUT_MS = 6000
 const SERVER_STATUS_RETRY_MS = 30000
 let serverStatusRetryTimer = null
 
+function renderStatusPlayers(servStat){
+    document.getElementById('dl-bc-players').textContent = servStat.players.online
+    document.getElementById('dl-bc-players-max').textContent = servStat.players.max
+    const fillPct = servStat.players.max > 0 ? Math.min(100, (servStat.players.online / servStat.players.max) * 100) : 0
+    document.getElementById('dl-bc-status-fill-bar').style.width = fillPct + '%'
+    renderStatusAvatars(servStat.players.sample)
+}
+
+// Qualité de connexion (ligne du bas de la carte statut). Un ping léger est envoyé
+// toutes les 15 s tant que le serveur est en ligne : on garde les 20 derniers
+// échantillons (= 5 min) pour afficher l'historique, la moyenne, le pic et les pertes.
+// Un échantillon null = le serveur n'a pas répondu (perte). Les joueurs connectés sont
+// rafraîchis au passage.
+const LATENCY_SAMPLE_MS = 15000
+const LATENCY_HISTORY_SIZE = 20
+const latencyHistory = []
+let latencySampling = false
+let latencyServerId = null
+
+function latencyQuality(ms){
+    if(ms == null) return 'lost'
+    if(ms < 80) return 'good'
+    if(ms < 150) return 'fair'
+    return 'poor'
+}
+
+function recordLatencySample(ms){
+    latencyHistory.push(ms)
+    if(latencyHistory.length > LATENCY_HISTORY_SIZE) latencyHistory.shift()
+    renderLatency()
+}
+
+function renderLatency(){
+    const conn = document.getElementById('dl-bc-conn')
+    if(!conn) return
+    const received = latencyHistory.filter(v => v != null)
+    const lost = latencyHistory.length - received.length
+    const last = received.length ? received[received.length - 1] : null
+
+    // Latence actuelle + qualité
+    const quality = latencyQuality(last)
+    conn.setAttribute('data-quality', quality === 'lost' ? 'poor' : quality)
+    document.getElementById('dl-bc-status-ping').innerHTML = last != null ? `${last} <small>ms</small>` : '– <small>ms</small>'
+    document.getElementById('dl-bc-conn-quality-text').textContent =
+        { good: 'Excellente', fair: 'Correcte', poor: 'Élevée', lost: 'Aucune réponse' }[quality]
+
+    // Historique (barres) — complété à gauche par des emplacements vides
+    const max = Math.max(100, ...received)
+    const spark = document.getElementById('dl-bc-conn-spark')
+    spark.innerHTML = ''
+    for(let i = 0; i < LATENCY_HISTORY_SIZE; i++){
+        const v = latencyHistory[i - (LATENCY_HISTORY_SIZE - latencyHistory.length)]
+        const bar = document.createElement('div')
+        bar.className = 'dl-bc-conn-bar'
+        if(v === undefined){
+            bar.setAttribute('data-q', 'empty')
+        } else {
+            bar.setAttribute('data-q', latencyQuality(v))
+            if(v != null) bar.style.height = `${Math.max(12, Math.round((v / max) * 100))}%`
+            bar.title = v != null ? `${v} ms` : 'Pas de réponse'
+        }
+        spark.appendChild(bar)
+    }
+
+    // Verdict + stats
+    let verdict = '—'
+    let verdictQuality = 'good'
+    let stats = 'Mesure en cours…'
+    if(received.length){
+        const avg = Math.round(received.reduce((a, b) => a + b, 0) / received.length)
+        const peak = Math.max(...received)
+        const jitter = Math.round(Math.sqrt(received.reduce((a, v) => a + (v - avg) ** 2, 0) / received.length))
+        if(lost > 0){
+            verdict = 'Instable'
+            verdictQuality = 'poor'
+        } else if(jitter > 25 || peak > avg * 2.5){
+            verdict = 'Variable'
+            verdictQuality = 'fair'
+        } else {
+            verdict = 'Stable'
+        }
+        stats = `Moy. ${avg} ms · Pic ${peak} ms · ` + (lost > 0 ? `${lost} sans réponse` : 'Aucune perte')
+    }
+    const verdictEl = document.getElementById('dl-bc-conn-verdict')
+    verdictEl.textContent = verdict
+    verdictEl.setAttribute('data-q', verdictQuality)
+    document.getElementById('dl-bc-conn-stats').textContent = stats
+}
+
+async function sampleServerLatency(){
+    const statusCard = document.getElementById('dl-bc-status')
+    if(latencySampling || !statusCard || statusCard.getAttribute('data-state') !== 'ok') return
+    latencySampling = true
+    try {
+        const serv = (await DistroAPI.getDistribution()).getServerById(ConfigManager.getSelectedServer())
+        const start = Date.now()
+        const servStat = await withTimeout(getServerStatus(47, serv.hostname, serv.port), SERVER_STATUS_TIMEOUT_MS)
+        recordLatencySample(Date.now() - start)
+        renderStatusPlayers(servStat)
+    } catch (err) {
+        recordLatencySample(null)
+    } finally {
+        latencySampling = false
+    }
+}
+setInterval(sampleServerLatency, LATENCY_SAMPLE_MS)
+
 function withTimeout(promise, ms){
     return Promise.race([
         promise,
@@ -465,6 +572,12 @@ const refreshServerStatus = async (fade = false) => {
 
     let pLabel = Lang.queryJS('landing.serverStatus.server')
     let pVal = Lang.queryJS('landing.serverStatus.offline')
+
+    // Changement de serveur : l'historique de latence ne le concerne plus.
+    if(serv.rawServer.id !== latencyServerId){
+        latencyServerId = serv.rawServer.id
+        latencyHistory.length = 0
+    }
 
     const statusCard = document.getElementById('dl-bc-status')
     if(serverStatusRetryTimer){
@@ -486,24 +599,14 @@ const refreshServerStatus = async (fade = false) => {
             statusCard.setAttribute('data-state', 'ok')
             const sub = document.querySelector('#dl-bc-status-ok .dl-bc-status-sub')
             if(sub) sub.textContent = `${serv.rawServer.name} · Forge ${serv.rawServer.minecraftVersion}`.toUpperCase()
-            document.getElementById('dl-bc-players').textContent = servStat.players.online
-            document.getElementById('dl-bc-players-max').textContent = servStat.players.max
-            document.getElementById('dl-bc-status-ping').innerHTML = `${pingMs} <small>ms</small>`
-            const fillPct = servStat.players.max > 0 ? Math.min(100, (servStat.players.online / servStat.players.max) * 100) : 0
-            document.getElementById('dl-bc-status-fill-bar').style.width = fillPct + '%'
-            renderStatusAvatars(servStat.players.sample)
-            // Message du serveur (MOTD, description.text du ping SLP) à la place
-            // d'UPTIME / DERNIER REDÉM. (aucune source) et de VERSION / MODS CHARGÉS
-            // (redondant pour le joueur, déjà visible/géré dans le launcher) — le MOTD
-            // est le seul champ restant à la fois disponible gratuitement et réellement
-            // utile (message promo/annonce que l'admin peut changer côté serveur).
-            const motdEl = document.getElementById('dl-bc-status-motd')
-            if(motdEl) motdEl.textContent = servStat.description?.text?.trim() || '—'
+            renderStatusPlayers(servStat)
+            recordLatencySample(pingMs)
         }
 
     } catch (err) {
         loggerLanding.warn(`Unable to refresh server status (${serv.hostname}:${serv.port}), assuming offline.`)
         loggerLanding.debug(err)
+        recordLatencySample(null)
         if(statusCard){
             statusCard.setAttribute('data-state', 'error')
             const desc = document.getElementById('dl-bc-status-error-desc')
