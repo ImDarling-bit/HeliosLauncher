@@ -340,6 +340,10 @@ selectAnotherAccountButton = "Choisir un autre compte"
 checkingForUpdateButton = "Vérification des mises à jour..."
 installNowButton = "Installer maintenant"
 checkForUpdatesButton = "Vérifier les mises à jour"
+mandatoryUpdateTitle = "Mise à jour obligatoire"
+mandatoryUpdateDesc = "Une nouvelle version du launcher ({version}) est disponible. Elle est obligatoire pour continuer à jouer sur DistrictLife.<br><br>Si vous refusez, le launcher va se fermer."
+mandatoryUpdateConfirm = "Mettre à jour"
+mandatoryUpdateQuit = "Quitter le launcher"
 
 [js.auth.microsoft.error]
 noProfileTitle = "Erreur de connexion :<br>Profil non configuré"

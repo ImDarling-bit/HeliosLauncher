@@ -302,6 +302,10 @@ selectAnotherAccountButton = "Select Another Account"
 checkingForUpdateButton = "Checking for Updates..."
 installNowButton = "Install Now"
 checkForUpdatesButton = "Check for Updates"
+mandatoryUpdateTitle = "Mandatory Update"
+mandatoryUpdateDesc = "A new launcher version ({version}) is available. It is required to keep playing on DistrictLife.<br><br>If you decline, the launcher will close."
+mandatoryUpdateConfirm = "Update Now"
+mandatoryUpdateQuit = "Quit Launcher"
 
 [js.auth.microsoft.error]
 noProfileTitle = "Error During Login:<br>Profile Not Set Up"

@@ -37,12 +37,12 @@ webFrame.setVisualZoomLevelLimits(1, 1)
 
 // Initialize auto updates in production environments.
 let updateCheckListener
-// GUIDE — Mise à jour auto au démarrage : seule la TOUTE PREMIÈRE vérification (celle
-// lancée au lancement du launcher, cas 'ready' ci-dessous) installe automatiquement une
-// mise à jour trouvée, sans action du joueur — avant qu'il n'ait commencé à jouer/cliquer.
-// Les vérifications suivantes (toutes les 30 min en tâche de fond, ou via le bouton
-// "Vérifier les mises à jour") redeviennent manuelles : on ne force jamais la fermeture
-// du launcher pendant qu'il est utilisé activement.
+// GUIDE — Mise à jour obligatoire au démarrage : seule la TOUTE PREMIÈRE vérification
+// (celle lancée au lancement du launcher, cas 'ready' ci-dessous), une fois la mise à
+// jour téléchargée, affiche une pop-up bloquante proposant d'installer — refuser ferme
+// le launcher (voir showMandatoryUpdatePrompt). Les vérifications suivantes (toutes les
+// 30 min en tâche de fond, ou via le bouton "Vérifier les mises à jour") redeviennent
+// manuelles : on ne force jamais la fermeture du launcher pendant qu'il est déjà utilisé.
 let isInitialUpdateCheck = true
 if(!isDev){
     ipcRenderer.on('autoUpdateNotification', (event, arg, info) => {
@@ -64,11 +64,9 @@ if(!isDev){
             case 'update-downloaded':
                 loggerAutoUpdater.info('Update ' + info.version + ' ready to be installed.')
                 if(isInitialUpdateCheck){
-                    // Démarrage : on installe immédiatement, en silence, avant d'afficher
-                    // quoi que ce soit au joueur. Le launcher redémarre seul une fois à jour.
-                    loggerAutoUpdater.info('Installation automatique de la mise à jour au démarrage.')
+                    // Démarrage : mise à jour obligatoire avant de pouvoir continuer.
                     isInitialUpdateCheck = false
-                    ipcRenderer.send('autoUpdateAction', 'installUpdateNow')
+                    showMandatoryUpdatePrompt(info.version)
                 } else {
                     settingsUpdateButtonStatus(Lang.queryJS('uicore.autoUpdate.installNowButton'), false, () => {
                         ipcRenderer.send('autoUpdateAction', 'installUpdateNow')
@@ -118,6 +116,30 @@ if(!isDev){
  */
 function changeAllowPrerelease(val){
     ipcRenderer.send('autoUpdateAction', 'allowPrereleaseChange', val)
+}
+
+/**
+ * Affiche la pop-up de mise à jour obligatoire au démarrage (réutilise l'overlay
+ * générique de confirmation, voir overlay.js). "Mettre à jour" lance l'installation
+ * (le launcher redémarre seul une fois à jour) ; "Quitter" (ou Échap) ferme le
+ * launcher — aucune autre façon de continuer sans la mise à jour.
+ *
+ * @param {string} version La version disponible, affichée dans le message.
+ */
+function showMandatoryUpdatePrompt(version){
+    setOverlayContent(
+        Lang.queryJS('uicore.autoUpdate.mandatoryUpdateTitle'),
+        Lang.queryJS('uicore.autoUpdate.mandatoryUpdateDesc', { version }),
+        Lang.queryJS('uicore.autoUpdate.mandatoryUpdateConfirm'),
+        Lang.queryJS('uicore.autoUpdate.mandatoryUpdateQuit')
+    )
+    setOverlayHandler(() => {
+        ipcRenderer.send('autoUpdateAction', 'installUpdateNow')
+    })
+    setDismissHandler(() => {
+        remote.getCurrentWindow().close()
+    })
+    toggleOverlay(true, true)
 }
 
 function showUpdateUI(info){
