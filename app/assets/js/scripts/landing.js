@@ -424,9 +424,15 @@ const refreshMojangStatuses = async function(){
 
 // Avatar des joueurs en ligne dans la carte statut (héros) — têtes empilées,
 // construites à partir de players.sample (fourni par le Server List Ping vanilla).
+// Le statut est rafraîchi toutes les 15 s : on ne reconstruit les têtes que si la liste
+// des joueurs a changé, sinon elles clignoteraient à chaque rafraîchissement.
+let lastAvatarNames = null
 function renderStatusAvatars(sample){
     const el = document.getElementById('dl-bc-status-avatars')
     if(!el) return
+    const names = (sample || []).map(p => p.name).join(',')
+    if(names === lastAvatarNames) return
+    lastAvatarNames = names
     el.innerHTML = ''
     const shown = (sample || []).slice(0, 4)
     shown.forEach(p => {
