@@ -1447,7 +1447,7 @@ let nextEventTimer = null
 let nextEventData  = null
 
 // Compte à rebours mis à jour chaque seconde. Les 4 cases sont créées une seule fois ;
-// seules les valeurs qui changent sont réécrites, avec une petite animation (.dl-tick).
+// seuls les chiffres qui changent sont réécrits, avec une petite animation (.dl-tick).
 const EVENT_COUNTDOWN_UNITS = ['JOURS', 'HEURES', 'MIN', 'SEC']
 function renderEventCountdown(){
     const el = document.getElementById('dl-bc-event-countdown')
@@ -1470,15 +1470,23 @@ function renderEventCountdown(){
         el.innerHTML = EVENT_COUNTDOWN_UNITS.map(u =>
             `<div class="dl-bc-cd-cell"><span class="dl-bc-cd-val"></span><span class="dl-bc-cd-unit">${u}</span></div>`).join('')
     }
+    // Chiffre par chiffre : seuls les chiffres qui changent sont réécrits et animés
+    // (11 → 10 : seul le « 0 » bouge ; 10 → 09 : les deux bougent).
     Array.from(el.querySelectorAll('.dl-bc-cd-val')).forEach((valEl, i) => {
-        if(valEl.textContent === values[i]) return
-        const animate = valEl.textContent !== ''
-        valEl.textContent = values[i]
-        if(animate){
-            valEl.classList.remove('dl-tick')
-            void valEl.offsetWidth
-            valEl.classList.add('dl-tick')
+        const digits = values[i].split('')
+        const first = valEl.children.length === 0
+        if(valEl.children.length !== digits.length){
+            valEl.innerHTML = digits.map(() => '<span class="dl-bc-cd-digit"></span>').join('')
         }
+        Array.from(valEl.children).forEach((digitEl, j) => {
+            if(digitEl.textContent === digits[j]) return
+            digitEl.textContent = digits[j]
+            if(!first){
+                digitEl.classList.remove('dl-tick')
+                void digitEl.offsetWidth
+                digitEl.classList.add('dl-tick')
+            }
+        })
     })
 }
 

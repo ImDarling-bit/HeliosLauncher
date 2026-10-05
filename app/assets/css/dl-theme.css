@@ -2199,7 +2199,7 @@ input:checked + .toggleSwitchSlider::before {
 }
 #dl-bc-event #dl-bc-event-ok { flex: 1; min-height: 0; height: auto; gap: 6px; padding-top: 12px; }
 /* Compte à rebours à la seconde : 4 cases égales, chiffre au-dessus, unité en dessous.
-   Chaque chiffre qui change glisse vers le haut (classe .dl-tick posée par landing.js). */
+   Seul le chiffre qui change glisse vers le haut (classe .dl-tick posée par landing.js). */
 .dl-bc-event-countdown {
     display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px;
     margin-top: auto;
@@ -2216,7 +2216,8 @@ input:checked + .toggleSwitchSlider::before {
     font: 800 18px/1 var(--font); color: #ffffff;
     font-variant-numeric: tabular-nums;
 }
-.dl-bc-cd-val.dl-tick { animation: dl-cd-tick .35s ease-out; }
+.dl-bc-cd-digit { display: inline-block; }
+.dl-bc-cd-digit.dl-tick { animation: dl-cd-tick .35s ease-out; }
 .dl-bc-cd-cell:last-child .dl-bc-cd-val { color: var(--gold); }
 .dl-bc-cd-unit { font: 700 8px var(--font); letter-spacing: .12em; color: var(--ink-3); }
 @keyframes dl-cd-tick {
