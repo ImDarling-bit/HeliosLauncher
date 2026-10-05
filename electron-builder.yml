@@ -1,6 +1,10 @@
 appId: 'districtlifelauncher'
 productName: 'DistrictLife Launcher'
-artifactName: '${productName}-setup-${version}.${ext}'
+# Pas d'espace dans le nom de fichier : electron-builder sanitise l'espace de
+# ${productName} en "-" pour latest.yml, mais GitHub renomme l'espace en "." sur le
+# fichier réellement uploadé → les deux noms ne correspondent plus et electron-updater
+# télécharge un fichier inexistant en boucle. On fixe le nom sans espace à la source.
+artifactName: 'DistrictLife-Launcher-setup-${version}.${ext}'
 
 copyright: 'Copyright © 2018-2026 Daniel Scalzi'
 
@@ -34,7 +38,7 @@ mac:
       arch:
         - 'x64'
         - 'arm64'
-  artifactName: '${productName}-setup-${version}-${arch}.${ext}'
+  artifactName: 'DistrictLife-Launcher-setup-${version}-${arch}.${ext}'
   category: 'public.app-category.games'
 
 # Linux Configuration
