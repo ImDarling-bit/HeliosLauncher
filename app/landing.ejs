@@ -92,21 +92,32 @@
                             <div id="dl-bc-status-avatars" class="dl-bc-status-avatars"></div>
                         </div>
                         <div class="dl-bc-status-fill"><div id="dl-bc-status-fill-bar"></div></div>
-                        <!-- Qualité de connexion : latence actuelle + historique des 5 dernières
-                             minutes (échantillonné par sampleServerLatency, landing.js). -->
-                        <div class="dl-bc-status-mini" id="dl-bc-conn" data-quality="good">
-                            <div class="dl-bc-mini dl-bc-conn-now">
+                        <!-- Qualité de connexion en temps réel : latence actuelle, courbe
+                             défilante sur 60 s et verdict (sampleServerLatency, landing.js). -->
+                        <div id="dl-bc-conn" data-quality="good" data-verdict="good">
+                            <div class="dl-bc-conn-now">
                                 <span class="dl-bc-mini-label">LATENCE</span>
-                                <span id="dl-bc-status-ping" class="dl-bc-mini-val">– <small>ms</small></span>
-                                <span id="dl-bc-conn-quality" class="dl-bc-conn-quality"><span class="dl-bc-conn-dot"></span><span id="dl-bc-conn-quality-text">—</span></span>
+                                <span class="dl-bc-conn-ping"><span id="dl-bc-status-ping">–</span><small>ms</small></span>
                             </div>
-                            <div class="dl-bc-mini dl-bc-conn-history">
-                                <div class="dl-bc-conn-head">
-                                    <span class="dl-bc-mini-label">CONNEXION · 5 DERNIÈRES MIN</span>
-                                    <span id="dl-bc-conn-verdict" class="dl-bc-conn-verdict">—</span>
-                                </div>
-                                <div id="dl-bc-conn-spark" class="dl-bc-conn-spark"></div>
-                                <div id="dl-bc-conn-stats" class="dl-bc-conn-stats">—</div>
+                            <div class="dl-bc-conn-chart">
+                                <svg id="dl-bc-conn-svg" preserveAspectRatio="none">
+                                    <defs>
+                                        <linearGradient id="dl-bc-conn-grad" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stop-color="currentColor" stop-opacity=".45"/>
+                                            <stop offset="100%" stop-color="currentColor" stop-opacity="0"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <g id="dl-bc-conn-scroll">
+                                        <path id="dl-bc-conn-area" fill="url(#dl-bc-conn-grad)"/>
+                                        <path id="dl-bc-conn-line" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+                                        <g id="dl-bc-conn-losses"></g>
+                                        <circle id="dl-bc-conn-head" r="2.6" fill="currentColor"/>
+                                    </g>
+                                </svg>
+                            </div>
+                            <div class="dl-bc-conn-side">
+                                <span id="dl-bc-conn-verdict" class="dl-bc-conn-verdict">MESURE…</span>
+                                <span id="dl-bc-conn-stats" class="dl-bc-conn-stats">&nbsp;</span>
                             </div>
                         </div>
                     </div>
@@ -118,10 +129,8 @@
                     <div id="dl-bc-event-ok" class="dl-bc-state">
                         <div id="dl-bc-event-title"></div>
                         <div id="dl-bc-event-meta"></div>
-                        <div class="dl-bc-event-footer">
-                            <div id="dl-bc-event-countdown" class="dl-bc-event-countdown"></div>
-                            <span class="dl-bc-cta" id="dl-bc-event-cta">S'inscrire &#8594;</span>
-                        </div>
+                        <span class="dl-bc-cta" id="dl-bc-event-cta">S'inscrire &#8594;</span>
+                        <div id="dl-bc-event-countdown" class="dl-bc-event-countdown"></div>
                     </div>
                     <div id="dl-bc-event-empty" class="dl-bc-state">
                         <div id="dl-bc-event-empty-text">Aucun événement prévu pour le moment.</div>

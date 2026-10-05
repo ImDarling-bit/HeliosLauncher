@@ -453,32 +453,54 @@ function renderStatusAvatars(sample){
 
 // Statut serveur (carte héros du bento). Le Server List Ping de helios-core n'a pas de
 // délai maximal sur la connexion TCP (un hôte injoignable bloque ~20 s côté Windows) :
-// on borne à 6 s, puis on bascule en erreur avec un nouvel essai auto toutes les 30 s.
+// on borne à 6 s, puis on bascule en erreur avec un nouvel essai auto toutes les 10 s.
 const SERVER_STATUS_TIMEOUT_MS = 6000
-const SERVER_STATUS_RETRY_MS = 30000
+const SERVER_STATUS_RETRY_MS = 10000
 let serverStatusRetryTimer = null
 
+// Anime un nombre affiché de sa valeur actuelle vers la nouvelle (≈ 400 ms), pour que
+// les rafraîchissements en temps réel restent fluides au lieu de « sauter ».
+function tweenNumber(el, to, duration = 400){
+    if(!el) return
+    const from = parseInt(el.textContent, 10)
+    if(isNaN(from) || from === to){
+        el.textContent = to
+        return
+    }
+    if(el._tween) cancelAnimationFrame(el._tween)
+    const start = performance.now()
+    const step = (now) => {
+        const t = Math.min(1, (now - start) / duration)
+        const eased = 1 - Math.pow(1 - t, 3)
+        el.textContent = Math.round(from + (to - from) * eased)
+        if(t < 1) el._tween = requestAnimationFrame(step)
+    }
+    el._tween = requestAnimationFrame(step)
+}
+
 function renderStatusPlayers(servStat){
-    document.getElementById('dl-bc-players').textContent = servStat.players.online
+    tweenNumber(document.getElementById('dl-bc-players'), servStat.players.online)
     document.getElementById('dl-bc-players-max').textContent = servStat.players.max
     const fillPct = servStat.players.max > 0 ? Math.min(100, (servStat.players.online / servStat.players.max) * 100) : 0
     document.getElementById('dl-bc-status-fill-bar').style.width = fillPct + '%'
     renderStatusAvatars(servStat.players.sample)
 }
 
-// Qualité de connexion (ligne du bas de la carte statut). Un ping léger est envoyé
-// toutes les 15 s tant que le serveur est en ligne : on garde les 20 derniers
-// échantillons (= 5 min) pour afficher l'historique, la moyenne, le pic et les pertes.
-// Un échantillon null = le serveur n'a pas répondu (perte). Les joueurs connectés sont
+// Qualité de connexion en temps réel (bandeau du bas de la carte statut).
+// Tant que le serveur est en ligne et la fenêtre visible, un ping léger (Server List
+// Ping) part toutes les 2 s ; les 30 derniers échantillons (= 60 s) forment la courbe.
+// La courbe défile en continu : chaque nouvel échantillon est dessiné un pas à droite
+// du cadre, puis tout le tracé glisse d'un pas vers la gauche pendant l'intervalle
+// suivant. Un échantillon null = pas de réponse (perte). Les joueurs connectés sont
 // rafraîchis au passage.
-const LATENCY_SAMPLE_MS = 15000
-const LATENCY_HISTORY_SIZE = 20
+const LATENCY_SAMPLE_MS = 2000
+const LATENCY_HISTORY_SIZE = 30
 const latencyHistory = []
 let latencySampling = false
 let latencyServerId = null
 
 function latencyQuality(ms){
-    if(ms == null) return 'lost'
+    if(ms == null) return 'poor'
     if(ms < 80) return 'good'
     if(ms < 150) return 'fair'
     return 'poor'
@@ -486,52 +508,102 @@ function latencyQuality(ms){
 
 function recordLatencySample(ms){
     latencyHistory.push(ms)
-    if(latencyHistory.length > LATENCY_HISTORY_SIZE) latencyHistory.shift()
+    if(latencyHistory.length > LATENCY_HISTORY_SIZE + 1) latencyHistory.shift()
     renderLatency()
+}
+
+// Tracé lissé (courbe de Catmull-Rom convertie en Béziers) d'une suite de points.
+function smoothPath(pts){
+    if(pts.length === 1) return `M${pts[0][0]},${pts[0][1]}`
+    let d = `M${pts[0][0]},${pts[0][1]}`
+    for(let i = 0; i < pts.length - 1; i++){
+        const p0 = pts[i - 1] || pts[i]
+        const p1 = pts[i]
+        const p2 = pts[i + 1]
+        const p3 = pts[i + 2] || p2
+        const c1x = p1[0] + (p2[0] - p0[0]) / 6
+        const c1y = p1[1] + (p2[1] - p0[1]) / 6
+        const c2x = p2[0] - (p3[0] - p1[0]) / 6
+        const c2y = p2[1] - (p3[1] - p1[1]) / 6
+        d += ` C${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`
+    }
+    return d
 }
 
 function renderLatency(){
     const conn = document.getElementById('dl-bc-conn')
-    if(!conn) return
-    const received = latencyHistory.filter(v => v != null)
-    const lost = latencyHistory.length - received.length
-    const last = received.length ? received[received.length - 1] : null
+    const svg = document.getElementById('dl-bc-conn-svg')
+    if(!conn || !svg) return
+    const windowSamples = latencyHistory.slice(-LATENCY_HISTORY_SIZE)
+    const received = windowSamples.filter(v => v != null)
+    const lost = windowSamples.length - received.length
+    const last = latencyHistory[latencyHistory.length - 1]
 
-    // Latence actuelle + qualité
-    const quality = latencyQuality(last)
-    conn.setAttribute('data-quality', quality === 'lost' ? 'poor' : quality)
-    document.getElementById('dl-bc-status-ping').innerHTML = last != null ? `${last} <small>ms</small>` : '– <small>ms</small>'
-    document.getElementById('dl-bc-conn-quality-text').textContent =
-        { good: 'Excellente', fair: 'Correcte', poor: 'Élevée', lost: 'Aucune réponse' }[quality]
+    // Latence actuelle
+    conn.setAttribute('data-quality', latencyQuality(last))
+    const pingEl = document.getElementById('dl-bc-status-ping')
+    if(last != null) tweenNumber(pingEl, last)
+    else pingEl.textContent = '–'
 
-    // Historique (barres) — complété à gauche par des emplacements vides
-    const max = Math.max(100, ...received)
-    const spark = document.getElementById('dl-bc-conn-spark')
-    spark.innerHTML = ''
-    for(let i = 0; i < LATENCY_HISTORY_SIZE; i++){
-        const v = latencyHistory[i - (LATENCY_HISTORY_SIZE - latencyHistory.length)]
-        const bar = document.createElement('div')
-        bar.className = 'dl-bc-conn-bar'
-        if(v === undefined){
-            bar.setAttribute('data-q', 'empty')
+    // Courbe
+    const w = svg.clientWidth || 300
+    const h = svg.clientHeight || 30
+    const stepX = w / (LATENCY_HISTORY_SIZE - 1)
+    const top = 4, bottom = h - 2
+    // Échelle : de 0 à 1,3× le pic (au moins 80 ms) pour garder de la marge en haut.
+    const scaleMax = Math.max(80, ...received) * 1.3
+    const y = (v) => bottom - (v / scaleMax) * (bottom - top)
+    // Le dernier point est placé un pas à droite du cadre (x = w + stepX), puis le
+    // groupe glisse de -stepX : il arrive pile au bord droit à la fin de l'intervalle.
+    const n = latencyHistory.length
+    const xAt = (i) => w + stepX - (n - 1 - i) * stepX
+    const segments = []
+    let current = []
+    const losses = document.getElementById('dl-bc-conn-losses')
+    losses.innerHTML = ''
+    latencyHistory.forEach((v, i) => {
+        if(v == null){
+            if(current.length) segments.push(current)
+            current = []
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line')
+            line.setAttribute('x1', xAt(i)); line.setAttribute('x2', xAt(i))
+            line.setAttribute('y1', top); line.setAttribute('y2', bottom)
+            losses.appendChild(line)
         } else {
-            bar.setAttribute('data-q', latencyQuality(v))
-            if(v != null) bar.style.height = `${Math.max(12, Math.round((v / max) * 100))}%`
-            bar.title = v != null ? `${v} ms` : 'Pas de réponse'
+            current.push([xAt(i), y(v)])
         }
-        spark.appendChild(bar)
+    })
+    if(current.length) segments.push(current)
+    const lineD = segments.map(smoothPath).join(' ')
+    const areaD = segments.filter(seg => seg.length > 1)
+        .map(seg => `${smoothPath(seg)} L${seg[seg.length - 1][0].toFixed(1)},${h} L${seg[0][0].toFixed(1)},${h} Z`).join(' ')
+    document.getElementById('dl-bc-conn-line').setAttribute('d', lineD)
+    document.getElementById('dl-bc-conn-area').setAttribute('d', areaD)
+    const head = document.getElementById('dl-bc-conn-head')
+    if(last != null){
+        head.setAttribute('cx', xAt(n - 1))
+        head.setAttribute('cy', y(last))
+        head.style.display = ''
+    } else {
+        head.style.display = 'none'
     }
+    const scroll = document.getElementById('dl-bc-conn-scroll')
+    scroll.style.transition = 'none'
+    scroll.style.transform = 'translateX(0)'
+    void scroll.getBoundingClientRect()
+    scroll.style.transition = `transform ${LATENCY_SAMPLE_MS}ms linear`
+    scroll.style.transform = `translateX(${-stepX}px)`
 
-    // Verdict + stats
-    let verdict = '—'
+    // Verdict + stats sur la fenêtre de 60 s
+    let verdict = 'Mesure…'
     let verdictQuality = 'good'
-    let stats = 'Mesure en cours…'
+    let stats = ' '
     if(received.length){
         const avg = Math.round(received.reduce((a, b) => a + b, 0) / received.length)
         const peak = Math.max(...received)
         const jitter = Math.round(Math.sqrt(received.reduce((a, v) => a + (v - avg) ** 2, 0) / received.length))
         if(lost > 0){
-            verdict = 'Instable'
+            verdict = `Instable · ${lost} perte${lost > 1 ? 's' : ''}`
             verdictQuality = 'poor'
         } else if(jitter > 25 || peak > avg * 2.5){
             verdict = 'Variable'
@@ -539,16 +611,17 @@ function renderLatency(){
         } else {
             verdict = 'Stable'
         }
-        stats = `Moy. ${avg} ms · Pic ${peak} ms · ` + (lost > 0 ? `${lost} sans réponse` : 'Aucune perte')
+        stats = `Moy. ${avg} · Pic ${peak} ms`
     }
-    const verdictEl = document.getElementById('dl-bc-conn-verdict')
-    verdictEl.textContent = verdict
-    verdictEl.setAttribute('data-q', verdictQuality)
+    conn.setAttribute('data-verdict', verdictQuality)
+    document.getElementById('dl-bc-conn-verdict').textContent = verdict
     document.getElementById('dl-bc-conn-stats').textContent = stats
 }
 
 async function sampleServerLatency(){
     const statusCard = document.getElementById('dl-bc-status')
+    // Pas de ping si la fenêtre est réduite / masquée (ex. pendant une partie).
+    if(document.hidden) return
     if(latencySampling || !statusCard || statusCard.getAttribute('data-state') !== 'ok') return
     latencySampling = true
     try {
@@ -616,7 +689,7 @@ const refreshServerStatus = async (fade = false) => {
         if(statusCard){
             statusCard.setAttribute('data-state', 'error')
             const desc = document.getElementById('dl-bc-status-error-desc')
-            if(desc) desc.textContent = `${serv.hostname}:${serv.port} ne répond pas (maintenance ou connexion interrompue). Nouvel essai automatique toutes les 30 s — ton installation reste prête.`
+            if(desc) desc.textContent = `${serv.hostname}:${serv.port} ne répond pas (maintenance ou connexion interrompue). Nouvel essai automatique toutes les 10 s — ton installation reste prête.`
         }
         serverStatusRetryTimer = setTimeout(() => refreshServerStatus(false), SERVER_STATUS_RETRY_MS)
     }
@@ -1373,6 +1446,9 @@ async function initPatchNotes() {
 let nextEventTimer = null
 let nextEventData  = null
 
+// Compte à rebours mis à jour chaque seconde. Les 4 cases sont créées une seule fois ;
+// seules les valeurs qui changent sont réécrites, avec une petite animation (.dl-tick).
+const EVENT_COUNTDOWN_UNITS = ['JOURS', 'HEURES', 'MIN', 'SEC']
 function renderEventCountdown(){
     const el = document.getElementById('dl-bc-event-countdown')
     if(!el || !nextEventData) return
@@ -1383,14 +1459,27 @@ function renderEventCountdown(){
         initNextEvent()
         return
     }
-    const totalMin = Math.floor(diffMs / 60000)
-    const days  = Math.floor(totalMin / 1440)
-    const hours = Math.floor((totalMin % 1440) / 60)
-    const mins  = totalMin % 60
-    el.innerHTML = `
-        <span>${days}<small> j</small></span>
-        <span>${String(hours).padStart(2, '0')}<small> h</small></span>
-        <span>${String(mins).padStart(2, '0')}<small> min</small></span>`
+    const totalSec = Math.floor(diffMs / 1000)
+    const values = [
+        Math.floor(totalSec / 86400),
+        Math.floor((totalSec % 86400) / 3600),
+        Math.floor((totalSec % 3600) / 60),
+        totalSec % 60
+    ].map((v, i) => i === 0 ? String(v) : String(v).padStart(2, '0'))
+    if(el.children.length !== EVENT_COUNTDOWN_UNITS.length){
+        el.innerHTML = EVENT_COUNTDOWN_UNITS.map(u =>
+            `<div class="dl-bc-cd-cell"><span class="dl-bc-cd-val"></span><span class="dl-bc-cd-unit">${u}</span></div>`).join('')
+    }
+    Array.from(el.querySelectorAll('.dl-bc-cd-val')).forEach((valEl, i) => {
+        if(valEl.textContent === values[i]) return
+        const animate = valEl.textContent !== ''
+        valEl.textContent = values[i]
+        if(animate){
+            valEl.classList.remove('dl-tick')
+            void valEl.offsetWidth
+            valEl.classList.add('dl-tick')
+        }
+    })
 }
 
 function renderNextEvent(evt){
@@ -1428,12 +1517,16 @@ function renderNextEvent(evt){
     card.onclick = () => { if(evt.signupUrl) shell.openExternal(evt.signupUrl) }
 
     renderEventCountdown()
-    nextEventTimer = setInterval(renderEventCountdown, 60000)
+    nextEventTimer = setInterval(renderEventCountdown, 1000)
 }
+
+// events.json est relu chaque minute : un événement ajouté ou modifié apparaît sans
+// avoir à relancer le launcher.
+setInterval(() => { if(!document.hidden) initNextEvent() }, 60000)
 
 async function initNextEvent(){
     try {
-        const resp = await fetch('https://distribution.districtliferp.fr/events.json')
+        const resp = await fetch('https://distribution.districtliferp.fr/events.json', { cache: 'no-store' })
         if(!resp.ok) throw new Error('HTTP ' + resp.status)
         const events = await resp.json()
         const now = Date.now()
