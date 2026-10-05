@@ -173,34 +173,171 @@ document.getElementById('launch_button').addEventListener('click', async e => {
 // Bind settings button
 document.getElementById('settingsMediaButton').onclick = async e => {
     await prepareSettings()
-    switchView(getCurrentView(), VIEWS.settings)
+    openSettingsModal()
 }
+
+// NOTE : URL non confirmée — à corriger si ce n'est pas la bonne.
+document.getElementById('wikiButton').onclick = () => shell.openExternal('https://www.districtliferp.fr/wiki')
 
 // Avatar overlay removed — no avatar display.
 
 // GUIDE UI/UX — Affichage du compte sélectionné (landing.ejs #user_content)
 // updateSelectedAccount() met à jour :
-//   - #user_text          → nom d'utilisateur affiché (span dans landing.ejs)
-//   - #avatarContainer    → background-image avec l'avatar Minecraft (mc-heads.net)
+//   - #user_text    → nom d'utilisateur affiché (span dans landing.ejs)
+//   - #avatarCanvas → rendu 3D du skin (skinview3d, 100% local)
 // Pour modifier le style : surcharger #user_text et #avatarContainer dans dl-theme.css
-// Pour changer la source des avatars : modifier l'URL skin-api ci-dessous
+
+// Rendu de skin 100% local via skinview3d (Three.js/WebGL, chargé en global via
+// assets/js/libs/skinview3d.bundle.js, voir landing.ejs). La texture brute (PNG 64x64)
+// est récupérée directement sur le site Azuriom du serveur, où les skins sont gérés
+// in-game par les joueurs — plus aucune dépendance à un service de rendu tiers.
+const DL_SKIN_API_BASE = 'https://www.districtliferp.fr/api/skin-api/skins/'
+function dlSkinUrl(username){
+    return `${DL_SKIN_API_BASE}${encodeURIComponent(username)}.png?t=${Date.now()}`
+}
+
+// Au tout premier lancement de la fenêtre, le service réseau d'Electron n'est parfois pas
+// encore pleinement prêt : la toute première requête HTTPS émise par le renderer peut
+// échouer alors que le reste de la session fonctionne normalement. On retente donc
+// systématiquement quelques fois avant d'abandonner, plutôt que de considérer un premier
+// échec comme définitif.
+async function _retryAsync(fn, attempts = 3, delayMs = 900){
+    let lastErr
+    for(let i = 0; i < attempts; i++){
+        try {
+            return await fn()
+        } catch(e) {
+            lastErr = e
+            if(i < attempts - 1) await new Promise(r => setTimeout(r, delayMs))
+        }
+    }
+    throw lastErr
+}
+
+// Cache des <img> de texture déjà chargées (évite de re-télécharger la même skin
+// plusieurs fois pour la carte statut + le podium lors d'un même rafraîchissement).
+const _dlSkinImgCache = new Map()
+function _loadSkinImage(username){
+    if(_dlSkinImgCache.has(username)) return _dlSkinImgCache.get(username)
+    const p = _retryAsync(() => new Promise((resolve, reject) => {
+        const img = new Image()
+        img.crossOrigin = 'anonymous'
+        img.onload = () => resolve(img)
+        img.onerror = () => reject(new Error('texture de skin introuvable'))
+        img.src = dlSkinUrl(username)
+    }))
+    // Un échec (réseau transitoire, timing au démarrage...) ne doit pas rester en cache
+    // indéfiniment : on retire l'entrée pour qu'un appel ultérieur retente un vrai fetch.
+    p.catch(() => _dlSkinImgCache.delete(username))
+    _dlSkinImgCache.set(username, p)
+    return p
+}
+
+// Découpe locale (canvas 2D) de la tête de face d'une skin (région 8,8 → 16,16 sur la
+// texture 64x64 standard) — utilisé pour les petites icônes (têtes empilées de la carte
+// statut, podium des votants) où une instance skinview3d/WebGL par tête serait superflue.
+// Si le joueur n'a pas de skin / le site est indisponible, bascule sur le sceau DistrictLife.
+async function renderSkinFaceImg(imgEl, username){
+    if(!imgEl) return
+    try {
+        const img = await _loadSkinImage(username)
+        const size = 64
+        const canvas = document.createElement('canvas')
+        canvas.width = size
+        canvas.height = size
+        const ctx = canvas.getContext('2d')
+        ctx.imageSmoothingEnabled = false
+        ctx.drawImage(img, 8, 8, 8, 8, 0, 0, size, size)
+        imgEl.src = canvas.toDataURL('image/png')
+    } catch(e) {
+        loggerLanding.debug(`Rendu local de la tête échoué pour "${username}": ${e.message}`)
+        imgEl.src = 'assets/images/SealCircle.png'
+    }
+}
+
+// Instance unique du SkinViewer 3D de la sidebar (#avatarCanvas) — créée une seule fois,
+// puis réutilisée à chaque changement de compte via loadSkin().
+let _dlSkinViewer = null
+function _getDlSkinViewer(){
+    const canvas = document.getElementById('avatarCanvas')
+    if(!canvas) return null
+    if(!_dlSkinViewer){
+        _dlSkinViewer = new window.skinview3d.SkinViewer({
+            canvas,
+            width: 82,
+            height: 91
+        })
+        _dlSkinViewer.autoRotate = false
+        _dlSkinViewer.animation = null
+        _dlSkinViewer.controls.enableZoom = false
+        _dlSkinViewer.controls.enableRotate = false
+        _dlSkinViewer.controls.enablePan = false
+    }
+    return _dlSkinViewer
+}
+
+// Ne garder que la tête affichée (reste du corps masqué) avec un cadrage en plan serré —
+// appliqué après un loadSkin() réussi plutôt qu'à la construction du viewer : le faire
+// avant le premier rendu complet du modèle laissait le canvas entièrement vide (bug
+// constaté en test). Le mesh de la tête est centré à y=4 dans le repère du modèle
+// (headMesh.position.y = 4), donc la caméra (qui regarde (0,0,0) par défaut) doit être
+// recentrée sur ce point pour cadrer correctement.
+function _applyHeadOnlyView(viewer){
+    const skinParts = viewer.playerObject.skin
+    skinParts.body.visible = false
+    skinParts.rightArm.visible = false
+    skinParts.leftArm.visible = false
+    skinParts.rightLeg.visible = false
+    skinParts.leftLeg.visible = false
+    // Zoom modéré (la distance caméra est bornée à 10 minimum par skinview3d) : un zoom
+    // trop fort combiné à l'angle trois-quarts coupait la tête sur les bords du cadre.
+    viewer.zoom = 3.2
+
+    // Vue plongeante trois-quarts : la cible reste le centre de la tête (0,4,0), mais la
+    // caméra est placée au-dessus et de côté plutôt que pile en face (ce qui montrait le
+    // dessous du menton). distance recalculée avec la même formule que skinview3d
+    // (adjustCameraDistance) pour rester cohérente avec le zoom choisi ci-dessus.
+    // La cible vise un peu plus haut que le centre géométrique réel de la tête (y=4) :
+    // viser pile le centre laissait trop d'espace vide sous la tête dans le cadre (elle
+    // paraissait "trop haute"). Viser au-dessus du centre la fait redescendre dans le cadre.
+    const target = { x: 0, y: 11, z: 0 }
+    let distance = 4.5 + 16.5 / Math.tan((viewer.fov / 180 * Math.PI) / 2) / viewer.zoom
+    distance = Math.min(256, Math.max(10, distance))
+    const elevation = 18 * Math.PI / 180  // caméra au-dessus du niveau de la tête
+    const azimuth = 20 * Math.PI / 180    // décalage latéral léger : garde le visage visible
+    const horizontal = distance * Math.cos(elevation)
+    viewer.camera.position.set(
+        target.x + horizontal * Math.sin(azimuth),
+        target.y + distance * Math.sin(elevation),
+        target.z + horizontal * Math.cos(azimuth)
+    )
+    viewer.controls.target.set(target.x, target.y, target.z)
+    viewer.camera.lookAt(target.x, target.y, target.z)
+    viewer.controls.update()
+
+    // La scène est entièrement statique (pas d'animation, caméra fixe) : on fait un seul
+    // rendu puis on coupe la boucle continue de skinview3d (requestAnimationFrame à ~60
+    // FPS). Sans ça, ce rendu WebGL continu entre en concurrence avec l'animation CSS de
+    // lévitation de la sidebar et la fait saccader.
+    viewer.render()
+    viewer.renderPaused = true
+}
+
 // Bind selected account
 function updateSelectedAccount(authUser){
     let username = Lang.queryJS('landing.selectedAccount.noAccountSelected')
-    const avatarImg = document.getElementById('avatarImg')
     if(authUser != null){
         if(authUser.displayName != null){
             username = authUser.displayName
         }
-        if(avatarImg) {
-            avatarImg.src = `https://www.districtliferp.fr/api/apiextender/images/head/full/${encodeURIComponent(username)}.png`
-            avatarImg.onerror = () => {
-                avatarImg.onerror = null
-                avatarImg.src = `https://www.districtliferp.fr/api/skin-api/avatars/face/${encodeURIComponent(username)}.png`
-            }
+        const viewer = _getDlSkinViewer()
+        if(viewer){
+            _retryAsync(() => viewer.loadSkin(dlSkinUrl(username)))
+                .then(() => _applyHeadOnlyView(viewer))
+                .catch(e => {
+                    loggerLanding.debug(`Rendu skin 3D échoué pour "${username}": ${e.message}`)
+                })
         }
-    } else {
-        if(avatarImg) avatarImg.src = ''
     }
     user_text.innerHTML = username
 }
@@ -208,14 +345,14 @@ updateSelectedAccount(ConfigManager.getSelectedAccount())
 
 // Bind selected server
 function updateSelectedServer(serv){
-    if(getCurrentView() === VIEWS.settings){
+    if(isSettingsModalOpen()){
         fullSettingsSave()
     }
     ConfigManager.setSelectedServer(serv != null ? serv.rawServer.id : null)
     ConfigManager.save()
     server_selection_button.innerHTML = '&#8226; ' + (serv != null ? serv.rawServer.name : Lang.queryJS('landing.noSelection'))
-    if(getCurrentView() === VIEWS.settings){
-        animateSettingsTabRefresh()
+    if(isSettingsModalOpen()){
+        refreshSettingsValues()
     }
     setLaunchEnabled(serv != null)
 }
@@ -285,6 +422,43 @@ const refreshMojangStatuses = async function(){
     document.getElementById('mojang_status_icon').style.color = MojangRestAPI.statusToHex(status)
 }
 
+// Avatar des joueurs en ligne dans la carte statut (héros) — têtes empilées,
+// construites à partir de players.sample (fourni par le Server List Ping vanilla).
+function renderStatusAvatars(sample){
+    const el = document.getElementById('dl-bc-status-avatars')
+    if(!el) return
+    el.innerHTML = ''
+    const shown = (sample || []).slice(0, 4)
+    shown.forEach(p => {
+        const img = document.createElement('img')
+        img.className = 'dl-bc-avatar-head'
+        img.alt = p.name
+        el.appendChild(img)
+        renderSkinFaceImg(img, p.name)
+    })
+    const remaining = (sample ? sample.length : 0) - shown.length
+    if(remaining > 0){
+        const more = document.createElement('div')
+        more.className = 'dl-bc-avatar-more'
+        more.textContent = '+' + remaining
+        el.appendChild(more)
+    }
+}
+
+// Statut serveur (carte héros du bento). Le Server List Ping de helios-core n'a pas de
+// délai maximal sur la connexion TCP (un hôte injoignable bloque ~20 s côté Windows) :
+// on borne à 6 s, puis on bascule en erreur avec un nouvel essai auto toutes les 30 s.
+const SERVER_STATUS_TIMEOUT_MS = 6000
+const SERVER_STATUS_RETRY_MS = 30000
+let serverStatusRetryTimer = null
+
+function withTimeout(promise, ms){
+    return Promise.race([
+        promise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error(`Délai dépassé (${ms} ms)`)), ms))
+    ])
+}
+
 const refreshServerStatus = async (fade = false) => {
     loggerLanding.info('Refreshing Server Status')
     const serv = (await DistroAPI.getDistribution()).getServerById(ConfigManager.getSelectedServer())
@@ -292,20 +466,54 @@ const refreshServerStatus = async (fade = false) => {
     let pLabel = Lang.queryJS('landing.serverStatus.server')
     let pVal = Lang.queryJS('landing.serverStatus.offline')
 
+    const statusCard = document.getElementById('dl-bc-status')
+    if(serverStatusRetryTimer){
+        clearTimeout(serverStatusRetryTimer)
+        serverStatusRetryTimer = null
+    }
+    // Premier chargement (ou réessai manuel depuis l'état erreur) : squelettes
+    if(statusCard && statusCard.getAttribute('data-state') !== 'ok') statusCard.setAttribute('data-state', 'loading')
+
     try {
 
-        const servStat = await getServerStatus(47, serv.hostname, serv.port)
-        console.log(servStat)
+        const pingStart = Date.now()
+        const servStat = await withTimeout(getServerStatus(47, serv.hostname, serv.port), SERVER_STATUS_TIMEOUT_MS)
+        const pingMs = Date.now() - pingStart
         pLabel = Lang.queryJS('landing.serverStatus.players')
         pVal = servStat.players.online + '/' + servStat.players.max
 
+        if(statusCard){
+            statusCard.setAttribute('data-state', 'ok')
+            const sub = document.querySelector('#dl-bc-status-ok .dl-bc-status-sub')
+            if(sub) sub.textContent = `${serv.rawServer.name} · Forge ${serv.rawServer.minecraftVersion}`.toUpperCase()
+            document.getElementById('dl-bc-players').textContent = servStat.players.online
+            document.getElementById('dl-bc-players-max').textContent = servStat.players.max
+            document.getElementById('dl-bc-status-ping').innerHTML = `${pingMs} <small>ms</small>`
+            const fillPct = servStat.players.max > 0 ? Math.min(100, (servStat.players.online / servStat.players.max) * 100) : 0
+            document.getElementById('dl-bc-status-fill-bar').style.width = fillPct + '%'
+            renderStatusAvatars(servStat.players.sample)
+            // Message du serveur (MOTD, description.text du ping SLP) à la place
+            // d'UPTIME / DERNIER REDÉM. (aucune source) et de VERSION / MODS CHARGÉS
+            // (redondant pour le joueur, déjà visible/géré dans le launcher) — le MOTD
+            // est le seul champ restant à la fois disponible gratuitement et réellement
+            // utile (message promo/annonce que l'admin peut changer côté serveur).
+            const motdEl = document.getElementById('dl-bc-status-motd')
+            if(motdEl) motdEl.textContent = servStat.description?.text?.trim() || '—'
+        }
+
     } catch (err) {
-        loggerLanding.warn('Unable to refresh server status, assuming offline.')
+        loggerLanding.warn(`Unable to refresh server status (${serv.hostname}:${serv.port}), assuming offline.`)
         loggerLanding.debug(err)
+        if(statusCard){
+            statusCard.setAttribute('data-state', 'error')
+            const desc = document.getElementById('dl-bc-status-error-desc')
+            if(desc) desc.textContent = `${serv.hostname}:${serv.port} ne répond pas (maintenance ou connexion interrompue). Nouvel essai automatique toutes les 30 s — ton installation reste prête.`
+        }
+        serverStatusRetryTimer = setTimeout(() => refreshServerStatus(false), SERVER_STATUS_RETRY_MS)
     }
     const updateBentoPlayers = () => {
         const el = document.getElementById('dl-bc-players')
-        if(el) el.textContent = pVal
+        if(el && statusCard && statusCard.getAttribute('data-state') !== 'ok') el.textContent = '–'
     }
     if(fade){
         $('#server_status_wrapper').fadeOut(250, () => {
@@ -319,7 +527,13 @@ const refreshServerStatus = async (fade = false) => {
         document.getElementById('player_count').innerHTML = pVal
         updateBentoPlayers()
     }
-    
+
+}
+
+document.getElementById('dl-bc-status-retry').onclick = () => refreshServerStatus(true)
+document.getElementById('dl-bc-status-discord-link').onclick = () => {
+    const discordUrl = window._dlLinks?.discord || document.getElementById('discordURL')?.href || 'https://discord.gg/7DR8YERnvz'
+    shell.openExternal(discordUrl)
 }
 
 refreshMojangStatuses()
@@ -1039,16 +1253,140 @@ async function initPatchNotes() {
     }
 }
 
+// ─────────────────────────────────────────────────────────
+//  PROCHAIN ÉVÉNEMENT — fichier JSON dédié, même principe que
+//  patch.json (voir initPatchNotes ci-dessus). Schéma attendu :
+//  [{ "title": "...", "date": "2026-10-15T20:30:00", "location": "...",
+//     "description": "...", "signupUrl": "https://..." }, ...]
+//  (un tableau, pas un objet seul — permet d'en préparer plusieurs à
+//  l'avance ; le launcher prend automatiquement le plus proche dans le futur)
+// ─────────────────────────────────────────────────────────
+let nextEventTimer = null
+let nextEventData  = null
+
+function renderEventCountdown(){
+    const el = document.getElementById('dl-bc-event-countdown')
+    if(!el || !nextEventData) return
+    const diffMs = new Date(nextEventData.date).getTime() - Date.now()
+    if(diffMs <= 0){
+        // L'événement est passé / en cours — on retombe sur l'état vide au prochain fetch.
+        clearInterval(nextEventTimer)
+        initNextEvent()
+        return
+    }
+    const totalMin = Math.floor(diffMs / 60000)
+    const days  = Math.floor(totalMin / 1440)
+    const hours = Math.floor((totalMin % 1440) / 60)
+    const mins  = totalMin % 60
+    el.innerHTML = `
+        <span>${days}<small> j</small></span>
+        <span>${String(hours).padStart(2, '0')}<small> h</small></span>
+        <span>${String(mins).padStart(2, '0')}<small> min</small></span>`
+}
+
+function renderNextEvent(evt){
+    const card = document.getElementById('dl-bc-event')
+    if(!card) return
+    clearInterval(nextEventTimer)
+
+    if(!evt){
+        nextEventData = null
+        card.setAttribute('data-state', 'empty')
+        return
+    }
+
+    nextEventData = evt
+    card.setAttribute('data-state', 'ok')
+
+    const title = document.getElementById('dl-bc-event-title')
+    const meta  = document.getElementById('dl-bc-event-meta')
+    const cta   = document.getElementById('dl-bc-event-cta')
+    if(title) title.textContent = evt.title || ''
+
+    const dateObj = new Date(evt.date)
+    // toLocaleString (pas toLocaleDateString) : nécessaire pour que les options heure/minute
+    // soient prises en compte de façon fiable avec les options de date combinées.
+    const dateStr = dateObj.toLocaleString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
+    if(meta) meta.textContent = [dateStr, evt.location].filter(Boolean).join(' · ')
+
+    if(cta){
+        cta.textContent = evt.signupUrl ? "S'inscrire →" : 'Détails →'
+        cta.onclick = (e) => {
+            e.stopPropagation()
+            if(evt.signupUrl) shell.openExternal(evt.signupUrl)
+        }
+    }
+    card.onclick = () => { if(evt.signupUrl) shell.openExternal(evt.signupUrl) }
+
+    renderEventCountdown()
+    nextEventTimer = setInterval(renderEventCountdown, 60000)
+}
+
+async function initNextEvent(){
+    try {
+        const resp = await fetch('https://distribution.districtliferp.fr/events.json')
+        if(!resp.ok) throw new Error('HTTP ' + resp.status)
+        const events = await resp.json()
+        const now = Date.now()
+        const upcoming = (Array.isArray(events) ? events : [])
+            .filter(e => e && e.date && new Date(e.date).getTime() > now)
+            .sort((a, b) => new Date(a.date) - new Date(b.date))
+        renderNextEvent(upcoming[0] || null)
+    } catch (e) {
+        loggerLanding.debug('Unable to load events.json, showing empty state.', e)
+        renderNextEvent(null)
+    }
+}
+
 // Bento link cells — open URLs in system browser
 ;(function bindBentoCells() {
-    const discordEl = document.getElementById('dl-bc-discord')
-    const voteEl    = document.getElementById('dl-bc-vote')
-    const storeEl   = document.getElementById('dl-bc-store')
+    const discordEl   = document.getElementById('dl-bc-discord')
+    const voteEl      = document.getElementById('dl-bc-vote')
+    const storeEl     = document.getElementById('dl-bc-store')
+    const reglementEl = document.getElementById('dl-bc-reglement')
     const discordUrl = document.getElementById('discordURL')?.href || 'https://discord.gg/7DR8YERnvz'
-    if(discordEl) discordEl.onclick = () => shell.openExternal(discordUrl)
-    if(voteEl)    voteEl.onclick    = () => shell.openExternal('https://www.districtliferp.fr/vote')
-    if(storeEl)   storeEl.onclick   = () => shell.openExternal('https://www.districtliferp.fr/shop')
+    // Repli synchrone immédiat (avant que link.json n'ait eu le temps de répondre) —
+    // initLinks() ci-dessous réassigne ces mêmes onclick dès que le fetch résout.
+    if(discordEl)   discordEl.onclick   = () => shell.openExternal(discordUrl)
+    if(voteEl)      voteEl.onclick      = () => shell.openExternal('https://www.districtliferp.fr/vote')
+    if(storeEl)      storeEl.onclick    = () => shell.openExternal('https://www.districtliferp.fr/shop')
+    if(reglementEl) reglementEl.onclick = () => shell.openExternal('https://www.districtliferp.fr/reglement')
 })()
+
+// ─────────────────────────────────────────────────────────
+//  LIENS DU LAUNCHER (Discord/Voter/Boutique/Règlement/Wiki) — pilotés par
+//  link.json, même principe que patch.json/events.json : modifiable sans
+//  reconstruire/republier le launcher. Les valeurs codées en dur ci-dessus
+//  (et sur le bouton Wiki de la sidebar) restent le repli si le fichier est
+//  absent/indisponible — rien ne casse si link.json n'existe pas encore.
+// ─────────────────────────────────────────────────────────
+async function initLinks(){
+    try {
+        const resp = await fetch('https://distribution.districtliferp.fr/link.json')
+        if(!resp.ok) throw new Error('HTTP ' + resp.status)
+        const links = await resp.json()
+
+        const bind = (el, url) => { if(el && url) el.onclick = () => shell.openExternal(url) }
+        bind(document.getElementById('dl-bc-discord'),   links.discord)
+        bind(document.getElementById('dl-bc-vote'),      links.vote)
+        bind(document.getElementById('dl-bc-store'),      links.shop)
+        bind(document.getElementById('dl-bc-reglement'), links.reglement)
+        bind(document.getElementById('wikiButton'),       links.wiki)
+        // Bouton "Support" de Paramètres > À propos — lien Discord statique rendu côté
+        // EJS (settings.ejs), jamais branché sur link.json jusqu'ici. On neutralise le
+        // href d'origine (lang('settings.supportLink')) et on bascule sur onclick.
+        const supportBtn = document.getElementById('settingsAboutSupportButton')
+        if(supportBtn && links.discord){
+            supportBtn.removeAttribute('href')
+            supportBtn.onclick = (e) => { e.preventDefault(); shell.openExternal(links.discord) }
+        }
+        // Le podium (état vide), la carte statut (lien Discord hors ligne) et l'actu vide
+        // ouvrent aussi Discord/Voter — on les aligne sur link.json s'il fournit une valeur.
+        window._dlLinks = links
+    } catch(e) {
+        loggerLanding.debug('Unable to load link.json, keeping hardcoded link defaults.', e)
+    }
+}
 
 // Bind retry button.
 newsErrorRetry.onclick = () => {
@@ -1130,6 +1468,8 @@ async function initNews(){
         const _bcExcerpt = document.getElementById('dl-bc-news-excerpt')
         const _bcThumb = document.getElementById('dl-bc-news-thumb')
         const _bcCta = document.querySelector('#dl-bc-news .dl-bc-cta')
+        const _bcNewsErr = document.getElementById('dl-bc-news')
+        if(_bcNewsErr) _bcNewsErr.setAttribute('data-state', 'error')
         if(_bcTitle) _bcTitle.textContent = 'Impossible de charger les actualités'
         if(_bcExcerpt) _bcExcerpt.textContent = 'Une erreur est survenue lors du chargement.'
         if(_bcThumb) _bcThumb.style.display = 'none'
@@ -1154,10 +1494,13 @@ async function initNews(){
         const _bcExcerpt = document.getElementById('dl-bc-news-excerpt')
         const _bcThumb = document.getElementById('dl-bc-news-thumb')
         const _bcCta = document.querySelector('#dl-bc-news .dl-bc-cta')
-        if(_bcTitle) _bcTitle.textContent = 'Pas d\'article pour le moment'
-        if(_bcExcerpt) _bcExcerpt.textContent = 'Aucune actualité disponible pour l\'instant.'
+        const _bcNews = document.getElementById('dl-bc-news')
+        if(_bcNews) _bcNews.setAttribute('data-state', 'empty')
+        if(_bcTitle) _bcTitle.textContent = 'Calme plat sur le District'
+        if(_bcExcerpt) _bcExcerpt.textContent = 'Rejoins Discord pour les annonces.'
         if(_bcThumb) _bcThumb.style.display = 'none'
-        if(_bcCta) _bcCta.style.display = 'none'
+        if(_bcCta) _bcCta.textContent = 'Ouvrir #annonces →'
+        if(_bcNews) _bcNews.onclick = () => shell.openExternal(window._dlLinks?.discord || document.getElementById('discordURL')?.href || 'https://discord.gg/7DR8YERnvz')
 
     } else {
         // Success
@@ -1219,6 +1562,7 @@ async function initNews(){
         // Populate bento news cell
         const bentoNews = document.getElementById('dl-bc-news')
         if(bentoNews && newsArr.length > 0) {
+            bentoNews.setAttribute('data-state', 'ok')
             const art = newsArr[0]
             const bcTitle   = document.getElementById('dl-bc-news-title')
             const bcExcerpt = document.getElementById('dl-bc-news-excerpt')
@@ -1388,44 +1732,61 @@ function _escHtml(s) {
 
 function renderVotePodium(players) {
     const wrap = document.getElementById('dl-bc-podium-wrap')
+    const card = document.getElementById('dl-bc-podium')
     if (!wrap) return
 
     if (!players || players.length === 0) {
-        wrap.innerHTML = '<span class="dl-bc-podium-empty">Aucun vote ce mois-ci</span>'
+        if(card) card.setAttribute('data-state', 'empty')
+        wrap.innerHTML = `
+            <div class="dl-bc-pod-ghost-stage">
+                <span class="dl-bc-pod-ghost"></span>
+                <span class="dl-bc-pod-ghost dl-bc-pod-ghost-tall"></span>
+                <span class="dl-bc-pod-ghost"></span>
+            </div>
+            <div class="dl-bc-podium-empty-title">Le podium est vide</div>
+            <div class="dl-bc-podium-empty-sub">Premier vote = tête du classement.</div>
+            <span class="dl-btn-chip dl-btn-chip-gold" id="dl-bc-podium-vote-cta">Voter maintenant</span>`
+        const cta = document.getElementById('dl-bc-podium-vote-cta')
+        if(cta) cta.onclick = () => shell.openExternal(window._dlLinks?.vote || 'https://www.districtliferp.fr/vote')
         return
     }
 
-    // Ordre visuel podium : #2 gauche · #1 centre · #3 droite
-    const byRank = {}
-    players.forEach(p => { byRank[p.rank] = p })
-    const slots = [byRank[2], byRank[1], byRank[3]].filter(Boolean)
+    if(card) card.setAttribute('data-state', 'ok')
 
-    const headBase = 'https://www.districtliferp.fr/api/skin-api/avatars/face'
+    const sorted = [...players].sort((a, b) => a.rank - b.rank)
 
-    const html = '<div class="dl-bc-podium-stage">' + slots.map(p => `
-        <div class="dl-bc-pod-slot pod-rank-${p.rank}">
-            <span class="dl-bc-pod-crown">&#9819;</span>
-            <img class="dl-bc-pod-head"
-                 src="${headBase}/${encodeURIComponent(p.username)}.png"
-                 onerror="this.src='assets/images/SealCircle.png'"
-                 alt="${_escHtml(p.username)}">
+    const html = sorted.map(p => `
+        <div class="dl-bc-pod-row${p.rank === 1 ? ' dl-bc-pod-row-top' : ''}">
+            <b class="dl-bc-pod-rank">${p.rank}</b>
+            <img class="dl-bc-pod-head" data-username="${_escHtml(p.username)}" alt="${_escHtml(p.username)}">
             <span class="dl-bc-pod-name">${_escHtml(p.username)}</span>
-            <span class="dl-bc-pod-vcnt">${p.votes} votes</span>
-            <div class="dl-bc-pod-base">${p.rank}</div>
-        </div>`).join('') + '</div>'
+            <span class="dl-bc-pod-vcnt-inline">${p.votes}</span>
+        </div>`).join('')
 
     wrap.innerHTML = html
+    // Construit en chaîne (synchrone, pour l'affichage immédiat) : les <img> démarrent
+    // sans src, remplies de façon asynchrone juste après via le découpage canvas local.
+    wrap.querySelectorAll('.dl-bc-pod-head').forEach(img => {
+        renderSkinFaceImg(img, img.dataset.username)
+    })
 }
 
 async function initVotePodium() {
+    const card = document.getElementById('dl-bc-podium')
+    if(card) card.setAttribute('data-state', 'loading')
     try {
         const resp = await fetch('https://www.districtliferp.fr/api/api-vote-list/top?limit=3&period=monthly')
         if (!resp.ok) throw new Error('HTTP ' + resp.status)
         const json = await resp.json()
         renderVotePodium(json.data || [])
     } catch (e) {
+        if(card) card.setAttribute('data-state', 'error')
         const wrap = document.getElementById('dl-bc-podium-wrap')
-        if (wrap) wrap.innerHTML = '<span class="dl-bc-podium-empty">Classement indisponible</span>'
+        if (wrap) wrap.innerHTML = `
+            <div class="dl-bc-podium-empty-title">Classement indisponible</div>
+            <span class="dl-bc-cta" id="dl-bc-podium-retry">↻ Réessayer</span>`
+        const retry = document.getElementById('dl-bc-podium-retry')
+        if(retry) retry.onclick = () => initVotePodium()
     }
 }
 

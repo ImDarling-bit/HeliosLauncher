@@ -7,6 +7,17 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700;900&display=swap');
 
+/* html/body n'ont par défaut aucun overflow:hidden. La fenêtre étant de taille fixe et
+   non destinée à défiler, ça ne devrait jamais poser de problème — sauf que pendant la
+   transition de glissement accueil ↔ paramètres (switchViewSlide, uibinder.js), les
+   conteneurs passent temporairement par des positions x négatives ou au-delà de la
+   largeur de la fenêtre, ce qui faisait apparaître une scrollbar horizontale native :
+   elle grignotait ~15px de hauteur (698px → 683px) pendant toute l'animation, visible
+   comme une fine barre en bas de la fenêtre. */
+html, body {
+    overflow: hidden !important;
+}
+
 /* ─────────────────────────────────────────────
    TOKENS
 ───────────────────────────────────────────── */
@@ -126,7 +137,9 @@ body {
     flex-direction: row !important;
     height: 100% !important;
     width: 100% !important;
-    position: relative !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
     overflow: hidden !important;
 }
 /* jQuery cache via display:none — priorité haute pour respecter le fadeOut */
@@ -202,19 +215,17 @@ body {
 }
 
 @keyframes dl-avatar-levitate {
-    0%, 100% {
+    from {
         transform: translateY(0px);
-        filter: drop-shadow(0 4px 3px rgba(0, 0, 0, 0.38));
     }
-    50% {
+    to {
         transform: translateY(-4px);
-        filter: drop-shadow(0 7px 5px rgba(0, 0, 0, 0.18));
     }
 }
 
 #avatarContainer {
-    width: 72px !important;
-    height: 80px !important;
+    width: 82px !important;
+    height: 91px !important;
     border: none !important;
     border-radius: 0 !important;
     box-shadow: none !important;
@@ -226,15 +237,30 @@ body {
     justify-content: center !important;
 }
 
-#avatarImg {
-    width: 72px !important;
-    height: 80px !important;
+#avatarImg,
+#avatarCanvas {
+    width: 82px !important;
+    height: 91px !important;
     object-fit: contain !important;
     display: block !important;
+    filter: drop-shadow(0 5px 4px rgba(0, 0, 0, 0.3)) !important;
+    animation: dl-avatar-levitate 1.8s ease-in-out infinite alternate !important;
+    will-change: transform !important;
+    backface-visibility: hidden !important;
+    transform-style: preserve-3d !important;
+}
+
+#avatarImg {
+    /* Pixel art (crops de skin en 2D) : on garde le rendu "net", non lissé. */
     image-rendering: pixelated !important;
     image-rendering: crisp-edges !important;
-    animation: dl-avatar-levitate 2.8s ease-in-out infinite !important;
-    will-change: transform, filter !important;
+}
+
+#avatarCanvas {
+    /* Scène 3D WebGL déjà anti-aliasée par skinview3d : forcer un rendu "pixelated" ici
+       force un instantané sur la grille de pixels entiers à chaque frame, ce qui rendait
+       le léger déplacement de l'animation de lévitation visiblement saccadé. */
+    image-rendering: auto !important;
 }
 
 #user_badge {
@@ -247,7 +273,7 @@ body {
     font-weight: 700 !important;
     letter-spacing: 0.16em !important;
     text-transform: uppercase !important;
-    color: var(--dl-text-soft) !important;
+    color: #ffffff !important;
     text-shadow: none !important;
     display: block !important;
 }
@@ -327,6 +353,17 @@ body {
 }
 
 .dl-sidebar-btn:hover .dl-sidebar-icon-news .arrowLine {
+    stroke: var(--dl-gold-dark) !important;
+}
+
+/* Icône wiki (contour livre) — stroke pas fill, même principe que l'icône actus */
+.dl-sidebar-icon-wiki {
+    fill: none !important;
+    stroke: var(--dl-text-muted) !important;
+    transition: stroke 0.15s ease !important;
+}
+
+.dl-sidebar-btn:hover .dl-sidebar-icon-wiki {
     stroke: var(--dl-gold-dark) !important;
 }
 
@@ -1190,19 +1227,16 @@ body {
 }
 
 /* ─────────────────────────────────────────────
-   PANNEAU ACTUALITÉS
+   PANNEAU ACTUALITÉS — hérité de l'ancienne UI Helios, remplacé par la carte
+   #dl-bc-news du bento. #newsButton (son seul déclencheur) est display:none dans
+   landing.ejs, donc ce panneau n'est plus jamais ouvert. Il restait positionné juste
+   sous la zone visible (top:100%) et masqué par l'overflow:hidden du parent, mais ce
+   clip devenait peu fiable pendant l'animation de glissement accueil ↔ paramètres
+   (le bord du panneau apparaissait brièvement en bas de la fenêtre) — on le masque
+   donc complètement plutôt que de compter sur le clipping.
 ───────────────────────────────────────────── */
 #newsContainer {
-    position: absolute !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
-    top: 100% !important;
-    z-index: 50 !important;
-    background: var(--dl-surface) !important;
-    border-top: 1px solid var(--dl-border) !important;
-    transition: top 2s ease !important;
-    box-shadow: 0 -4px 24px rgba(0,0,0,0.08) !important;
+    display: none !important;
 }
 
 #newsArticleTitle {
@@ -1609,13 +1643,47 @@ input:checked + .toggleSwitchSlider::before {
     flex-direction: row !important;
     height: 100% !important;
     width: 100% !important;
-    position: relative !important;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
     background-color: var(--dl-bg) !important;
     overflow: hidden !important;
 }
 /* jQuery cache via display:none — priorité haute pour respecter le fadeOut */
 #settingsContainer[style*="display: none"],
 #settingsContainer[style*="display:none"] {
+    display: none !important;
+}
+
+/* Transition Accueil ↔ Paramètres : pilotée entièrement en JS (style.transform /
+   style.transition inline) par switchViewSlide() dans uibinder.js — voir ce fichier.
+   Les deux conteneurs sont en position: absolute (cf. règles de base ci-dessus) pour
+   être empilés exactement au même endroit pendant l'animation. */
+
+/* ─────────────────────────────────────────────
+   PARAMÈTRES — Réglages avancés masqués pour les joueurs
+   On masque en CSS plutôt que de supprimer le HTML/JS : les champs cValue restent
+   fonctionnels (ConfigManager garde leur valeur par défaut), seule leur UI disparaît —
+   zéro risque de casser settings.js (ex. settingsJavaExecDetails/settingsJvmOptsLink
+   sont lus directement par leur id, sans vérification null).
+───────────────────────────────────────────── */
+/* Minecraft : connexion auto + lancement détaché (gardé : résolution, plein écran) */
+.settingsFieldContainer:has(input[cValue="AutoConnect"]),
+.settingsFieldContainer:has(input[cValue="LaunchDetached"]) {
+    display: none !important;
+}
+/* Java : exécutable Java + options JVM (gardé : RAM min/max) */
+.settingsFileSelContainer:has(input[cValue="JavaExecutable"]),
+#settingsJVMOptsContainer {
+    display: none !important;
+}
+/* Launcher : bêtas/prerelease (gardé : dossier de données) */
+.settingsFieldContainer:has(input[cValue="AllowPrerelease"]) {
+    display: none !important;
+}
+/* À propos : lien du dépôt GitHub + console DevTools (gardé : version, support) */
+#settingsAboutSourceButton,
+#settingsAboutDevToolsButton {
     display: none !important;
 }
 
@@ -1873,3 +1941,1012 @@ input:checked + .toggleSwitchSlider::before {
     outline: none !important;
     background: var(--dl-surface) !important;
 }
+
+/*******************************************************************************
+ *                                                                             *
+ * ÉCRAN D'ACCUEIL — Refonte « Pré-vol »  (PROMPT-launcher.md)                *
+ * Fenêtre 1084×726 · titlebar 24px · sidebar sombre 208px · bento 6 colonnes *
+ *                                                                             *
+ ******************************************************************************/
+
+:root {
+    --gold:       var(--dl-gold);
+    --gold-hi:    var(--dl-gold-light);
+    --gold-lo:    var(--dl-gold-dark);
+    --ink:        #f3efe2;
+    --ink-2:      #bdb8a8;
+    --ink-3:      #8d897d;
+    --glass:      rgba(14, 14, 20, .62);
+    --glass-hero: linear-gradient(135deg, rgba(212, 175, 55, .10), rgba(14, 14, 20, .66) 55%);
+    --line:       rgba(255, 255, 255, .07);
+    --line-gold:  rgba(212, 175, 55, .28);
+    --ok:         var(--dl-online);
+    --warn:       #f3a84a;
+    --err:        var(--dl-offline);
+    --r-card:     18px;
+    --r-chip:     14px;
+    --blur:       blur(10px) saturate(1.1); /* perf : réduit vs la maquette (18px), seule la sidebar l'utilise encore */
+    --shadow:     0 8px 28px rgba(0, 0, 0, .35), inset 0 1px 0 rgba(255, 255, 255, .05);
+}
+
+@keyframes dl-pv-pulse { 0%, 100% { opacity: 1; } 50% { opacity: .35; } }
+@keyframes dl-pv-shim  { 0% { background-position: -200px 0; } 100% { background-position: 200px 0; } }
+@keyframes dl-pv-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-4px); } }
+
+@media (prefers-reduced-motion: reduce) {
+    #dl-bc-status-ok .dl-dot-on,
+    .dl-live-dot,
+    .dl-sk,
+    #dl-bc-event-empty-text,
+    .dl-bc,
+    .dl-bc-tile {
+        animation: none !important;
+        transition: opacity .2s ease !important;
+    }
+}
+
+/* ── Zone principale / grille bento 6 colonnes ─ */
+#landingContainer > #upper > #content {
+    overflow: hidden !important;
+    align-items: stretch !important;
+}
+#dl-bento {
+    display: grid !important;
+    grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+    grid-template-rows: 200px 52px minmax(0, 1fr) !important;
+    grid-template-areas: none !important;
+    gap: 12px !important;
+    padding: 14px !important;
+    height: 100% !important;
+    flex: 1 1 0% !important;
+    min-height: 0 !important;
+}
+#dl-bento > * {
+    grid-area: auto !important;
+    min-width: 0;
+    min-height: 0;
+}
+#dl-bento > #dl-bc-status { grid-column: 1 / span 4 !important; grid-row: 1 !important; }
+#dl-bento > #dl-bc-event  { grid-column: 5 / span 2 !important; grid-row: 1 !important; }
+#dl-bento > #dl-bc-actions{ grid-column: 1 / span 6 !important; grid-row: 2 !important; }
+#dl-bento > #dl-bc-news   { grid-column: 1 / span 2 !important; grid-row: 3 !important; }
+#dl-bento > #dl-bc-patch  { grid-column: 3 / span 2 !important; grid-row: 3 !important; }
+#dl-bento > #dl-bc-podium { grid-column: 5 / span 2 !important; grid-row: 3 !important; }
+
+.dl-bc {
+    /* Transparence + flou de la version d'origine */
+    background: rgba(12, 15, 24, 0.72) !important;
+    backdrop-filter: blur(14px) !important;
+    -webkit-backdrop-filter: blur(14px) !important;
+    border: 1px solid var(--line) !important;
+    border-radius: var(--r-card) !important;
+    box-shadow: var(--shadow) !important;
+    padding: 16px 18px !important;
+}
+.dl-bc:hover {
+    transform: translateY(-2px) !important;
+    border-color: rgba(212, 175, 55, .4) !important;
+    box-shadow: 0 14px 36px rgba(0, 0, 0, .5), 0 0 0 1px rgba(212, 175, 55, .15) !important;
+}
+.dl-bc-eyebrow {
+    font: 700 10px var(--font) !important;
+    letter-spacing: .16em !important;
+    color: var(--gold) !important;
+}
+.dl-bc-cta {
+    font: 700 11px var(--font) !important;
+    color: var(--gold) !important;
+}
+
+/* Skeletons génériques */
+.dl-sk {
+    background: linear-gradient(90deg, rgba(255,255,255,.06), rgba(255,255,255,.16), rgba(255,255,255,.06));
+    background-size: 400px 100%;
+    animation: dl-pv-shim 1.2s linear infinite;
+    border-radius: 8px;
+}
+.dl-sk-eyebrow { width: 120px; height: 10px; }
+.dl-sk-big { width: 200px; height: 56px; margin-top: 8px; }
+.dl-bc-status-stats { display: flex; gap: 10px; margin-top: auto; }
+.dl-sk-stat { flex: 1; height: 44px; background: rgba(255,255,255,.07); animation: none; }
+
+/* Carte statut (héros) */
+.dl-bc-hero {
+    grid-column: span 4 !important;
+    background: linear-gradient(135deg, rgba(212, 175, 55, .10), rgba(17, 17, 23, 0) 55%), rgba(12, 15, 24, 0.72) !important;
+    border-color: rgba(212, 175, 55, .28) !important;
+    position: relative;
+    overflow: hidden;
+}
+.dl-bc-state { display: none; flex-direction: column; gap: 12px; height: 100%; }
+#dl-bc-status[data-state="loading"] #dl-bc-status-loading,
+#dl-bc-status[data-state="error"] #dl-bc-status-error,
+#dl-bc-status[data-state="ok"] #dl-bc-status-ok { display: flex; }
+
+.dl-bc-status-badge {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font: 700 10px var(--font);
+    letter-spacing: .16em;
+}
+.dl-bc-status-badge-ok { color: var(--ok); }
+.dl-bc-status-badge-off { color: var(--err); }
+.dl-dot-on, .dl-dot-off {
+    width: 8px; height: 8px; border-radius: 50%;
+}
+.dl-dot-on { background: var(--ok); box-shadow: 0 0 10px var(--ok); animation: dl-pv-pulse 2s infinite; }
+.dl-dot-off { background: var(--err); }
+.dl-bc-status-sub { color: var(--ink-3); margin-left: 6px; letter-spacing: .12em; }
+
+#dl-bc-status-error-title { font: 800 26px var(--font); color: var(--ink); }
+#dl-bc-status-error-desc { font: 500 12px var(--font); color: var(--ink-3); max-width: 420px; line-height: 1.5; }
+.dl-bc-status-error-actions { margin-top: auto; display: flex; gap: 10px; }
+.dl-btn-chip {
+    padding: 9px 16px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, .14);
+    font: 700 11px var(--font);
+    color: var(--ink-2);
+    cursor: pointer;
+}
+.dl-btn-chip:hover { border-color: #fff; }
+.dl-btn-chip-gold {
+    background: rgba(212, 175, 55, .16);
+    border-color: rgba(212, 175, 55, .5);
+    color: var(--gold-hi);
+}
+.dl-btn-chip-gold:hover { background: rgba(212, 175, 55, .28); }
+
+.dl-bc-status-main { display: flex; align-items: flex-end; gap: 22px; }
+.dl-bc-status-count { display: flex; align-items: baseline; gap: 6px; }
+#dl-bc-players { font: 800 58px/1 var(--font); color: var(--ink); letter-spacing: -.02em; }
+.dl-bc-status-max { font: 600 22px var(--font); color: var(--ink-3); }
+.dl-bc-status-count-label { font: 500 11px var(--font); color: var(--ink-3); margin-left: 6px; }
+.dl-bc-status-avatars { display: flex; margin-bottom: 6px; }
+.dl-bc-avatar-head {
+    width: 28px; height: 28px; border-radius: 8px;
+    border: 2px solid #14141a;
+    margin-left: -8px;
+    image-rendering: pixelated;
+    background: #2a2a33;
+}
+.dl-bc-avatar-head:first-child { margin-left: 0; }
+.dl-bc-avatar-more {
+    width: 28px; height: 28px; border-radius: 8px;
+    background: #2a2a33; border: 2px solid #14141a; margin-left: -8px;
+    font: 700 9px/24px var(--font); text-align: center; color: var(--gold);
+}
+.dl-bc-status-fill { height: 6px; border-radius: 3px; background: rgba(255, 255, 255, .08); }
+#dl-bc-status-fill-bar { width: 0%; height: 100%; border-radius: 3px; background: linear-gradient(90deg, var(--gold-lo), var(--gold-hi)); transition: width .4s ease; }
+.dl-bc-status-mini { display: grid; grid-template-columns: auto 1fr; gap: 10px; margin-top: auto; }
+.dl-bc-mini { background: rgba(0, 0, 0, .28); border-radius: 11px; padding: 9px 12px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.dl-bc-mini-label { font: 700 9px var(--font); letter-spacing: .16em; color: var(--ink-3); }
+.dl-bc-mini-val { font: 800 18px var(--font); color: var(--ink); }
+.dl-bc-mini-val small { font-size: 11px; color: var(--ink-3); font-weight: 600; }
+.dl-bc-mini-val.dl-ok { color: var(--ok); }
+/* Message du serveur (MOTD) — texte libre, pas un chiffre : police plus petite, tronqué sur 1 ligne */
+.dl-bc-mini-wide { justify-content: center; }
+.dl-bc-mini-text {
+    font: 600 12px var(--font) !important;
+    color: var(--ink-2) !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Carte événement */
+#dl-bc-event { grid-column: span 2 !important; cursor: pointer; }
+#dl-bc-event .dl-bc-state { display: none; }
+#dl-bc-event[data-state="ok"] #dl-bc-event-ok,
+#dl-bc-event[data-state="empty"] #dl-bc-event-empty { display: flex; }
+#dl-bc-event-title { font: 800 17px/1.2 var(--font); color: var(--ink); }
+#dl-bc-event-meta { font: 500 11px var(--font); color: #ffffff; }
+.dl-bc-event-footer { margin-top: auto; display: flex; align-items: center; justify-content: space-between; }
+.dl-bc-event-countdown { display: flex; gap: 6px; }
+.dl-bc-event-countdown span {
+    background: rgba(0, 0, 0, .35); border-radius: 7px; padding: 5px 8px; font: 800 14px var(--font); color: #ffffff;
+}
+.dl-bc-event-countdown small { font: 600 9px var(--font); color: var(--ink-3); }
+#dl-bc-event-empty { flex: 1; justify-content: center; align-items: center; text-align: center; gap: 6px; }
+#dl-bc-event-empty-text { font: 800 13px var(--font); color: var(--ink); }
+#dl-bc-event-empty-sub { font: 500 10.5px var(--font); color: var(--ink-3); }
+
+/* Bandeau d'actions — sous-grille 4 col */
+#dl-bc-actions {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+    height: 52px;
+}
+#dl-bc-actions > .dl-bc-tile { grid-area: auto !important; height: 52px; }
+.dl-bc-tile {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 10px !important;
+    padding: 0 14px !important;
+    cursor: pointer;
+    border-radius: var(--r-chip) !important;
+}
+.dl-bc-tile:hover { transform: translateY(-2px) !important; box-shadow: none !important; }
+.dl-bc-tile-icon {
+    width: 28px; height: 28px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: transform .2s ease;
+}
+.dl-bc-tile:hover .dl-bc-tile-icon { transform: scale(1.05); }
+.dl-bc-tile-text { flex: 1; min-width: 0; }
+.dl-bc-tile-label { font: 800 11px var(--font); letter-spacing: .12em; color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dl-bc-tile-sub { font: 500 10px var(--font); color: var(--ink-3); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.dl-bc-tile-arrow { color: var(--ink-3); transition: transform .2s ease; flex-shrink: 0; }
+.dl-bc-tile:hover .dl-bc-tile-arrow { transform: translateX(3px); }
+
+.dl-bc-tile-discord { background: linear-gradient(rgba(88, 101, 242, .16), rgba(88, 101, 242, .16)), rgba(12, 15, 24, 0.72) !important; border-color: rgba(88, 101, 242, .35) !important; }
+.dl-bc-tile-discord:hover { background: linear-gradient(rgba(88, 101, 242, .28), rgba(88, 101, 242, .28)), rgba(12, 15, 24, 0.72) !important; }
+.dl-bc-tile-discord .dl-bc-tile-icon { background: rgba(88, 101, 242, .4); color: #fff; }
+
+.dl-bc-tile-vote { background: linear-gradient(rgba(212, 175, 55, .12), rgba(212, 175, 55, .12)), rgba(12, 15, 24, 0.72) !important; border-color: rgba(212, 175, 55, .35) !important; }
+.dl-bc-tile-vote:hover { background: linear-gradient(rgba(212, 175, 55, .24), rgba(212, 175, 55, .24)), rgba(12, 15, 24, 0.72) !important; }
+.dl-bc-tile-vote .dl-bc-tile-icon { background: rgba(212, 175, 55, .3); color: var(--gold-hi); }
+.dl-bc-tile-vote .dl-bc-tile-sub { color: var(--gold-hi); }
+
+.dl-bc-tile-store { background: linear-gradient(rgba(46, 160, 110, .14), rgba(46, 160, 110, .14)), rgba(12, 15, 24, 0.72) !important; border-color: rgba(46, 160, 110, .35) !important; }
+.dl-bc-tile-store:hover { background: linear-gradient(rgba(46, 160, 110, .26), rgba(46, 160, 110, .26)), rgba(12, 15, 24, 0.72) !important; }
+.dl-bc-tile-store .dl-bc-tile-icon { background: rgba(46, 160, 110, .35); color: #fff; }
+
+.dl-bc-tile-reglement { background: rgba(12, 15, 24, 0.72) !important; border-color: rgba(255, 255, 255, .1) !important; }
+.dl-bc-tile-reglement:hover { border-color: rgba(212, 175, 55, .4) !important; }
+.dl-bc-tile-reglement .dl-bc-tile-icon { background: rgba(255, 255, 255, .08); color: var(--ink); }
+
+/* Actus / patch notes / podium — span 2 chacune */
+#dl-bc-news, #dl-bc-patch, #dl-bc-podium {
+    grid-column: span 2 !important;
+}
+#dl-bc-news { cursor: pointer; gap: 10px !important; }
+.dl-bc-news-thumb {
+    width: 100%;
+    flex: 0 0 auto !important;
+    aspect-ratio: 16 / 7;
+    height: auto !important;
+    border-radius: 12px;
+    overflow: hidden;
+    background: repeating-linear-gradient(135deg, rgba(255,255,255,.07) 0 8px, rgba(255,255,255,.02) 8px 16px);
+}
+.dl-bc-news-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+#dl-bc-news-title { font: 800 14px/1.25 var(--font) !important; color: var(--ink) !important; }
+#dl-bc-news-excerpt { font: 500 11px var(--font) !important; color: var(--ink-3) !important; }
+
+#dl-bc-patch-content { gap: 9px !important; }
+.dl-bc-patch-header { align-items: center !important; }
+.dl-bc-patch-version { color: var(--gold-hi) !important; background: rgba(212, 175, 55, .14) !important; }
+.dl-bc-patch-date { color: var(--ink-3) !important; }
+.dl-bc-patch-item { color: rgba(255,255,255,.72) !important; }
+.dl-bc-patch-item:hover { color: var(--ink) !important; }
+
+#dl-bc-podium { padding: 16px 18px !important; }
+.dl-bc-podium-wrap { align-items: stretch !important; flex-direction: column !important; gap: 4px !important; justify-content: flex-start !important; }
+
+.dl-bc-pod-row {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 0 9px;
+    height: 26px;
+}
+.dl-bc-pod-row-top {
+    background: rgba(212, 175, 55, .12);
+    border-radius: 9px;
+    height: 30px;
+}
+.dl-bc-pod-rank { width: 14px; color: #c9c9d0; font-weight: 700; }
+.dl-bc-pod-row-top .dl-bc-pod-rank { color: var(--gold-hi); }
+.dl-bc-pod-row .dl-bc-pod-head { width: 20px; height: 20px; border-radius: 6px; }
+.dl-bc-pod-row .dl-bc-pod-name { flex: 1; font: 600 12px var(--font); color: rgba(255,255,255,.90); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dl-bc-pod-row-top .dl-bc-pod-name { font-weight: 700; color: var(--gold-hi); }
+.dl-bc-pod-vcnt-inline { font: 600 11px var(--font); color: var(--ink-2); }
+
+.dl-bc-podium-empty-title { font: 800 12.5px var(--font); color: var(--ink); text-align: center; margin-top: 8px; }
+.dl-bc-podium-empty-sub { font: 500 10.5px var(--font); color: var(--ink-3); text-align: center; margin-top: 4px; }
+#dl-bc-podium-wrap .dl-btn-chip { align-self: center; margin-top: 10px; }
+.dl-bc-pod-ghost-stage { display: flex; align-items: flex-end; gap: 5px; justify-content: center; margin-top: 10px; }
+.dl-bc-pod-ghost { width: 26px; height: 26px; border-radius: 6px 6px 0 0; border: 1px dashed rgba(255,255,255,.25); display: block; }
+
+/* Actus vide : liseré pointillé or + halo radial, contenu centré */
+#dl-bc-news[data-state="empty"] {
+    position: relative;
+    border: 1px dashed rgba(212, 175, 55, .35) !important;
+    background: radial-gradient(circle at 50% 0%, rgba(212, 175, 55, .14), rgba(17, 17, 23, 0) 70%), rgba(12, 15, 24, 0.72) !important;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+#dl-bc-news[data-state="empty"] .dl-bc-eyebrow { position: absolute; top: 16px; left: 18px; }
+#dl-bc-news[data-state="empty"] .dl-bc-cta { margin-top: 10px !important; padding-top: 0 !important; }
+#dl-bc-news[data-state="empty"] .dl-bc-news-body::before {
+    content: '\2605';
+    display: block;
+    font-size: 22px;
+    color: var(--gold);
+    margin-bottom: 8px;
+}
+.dl-bc-pod-ghost-tall { height: 40px; border-color: var(--gold); background: rgba(212, 175, 55, .1); }
+#dl-bc-podium[data-state] .dl-bc-podium-empty { display: none; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   PARAMÈTRES — Redesign complet en fenêtre modale (pop-up), plus de vue pleine
+   page ni de navigation latérale par onglets : toutes les sections essentielles
+   tiennent sur une seule page défilante, dans une carte centrée sur l'accueil.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+#settingsContainer {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    background: rgba(10, 12, 18, 0.55) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 1000 !important;
+    /* backdrop-filter retiré : coûteux à recalculer en continu (GPU) pendant le
+       scroll/l'animation de la modale, source de saccades. L'assombrissement seul
+       suffit à détacher visuellement la pop-up de l'accueil derrière. */
+    overflow: visible !important;
+}
+/* Ancienne ombre de défilement héritée (launcher.css, #settingsContainer:before) :
+   #settingsContainer occupe désormais tout l'écran en position fixed, donc ce
+   pseudo-élément (sans top/left, centré par le flex ci-dessus) se retrouvait au
+   milieu de la fenêtre au lieu de rester sous l'en-tête. On la désactive : le
+   vrai effet d'ombre au scroll est géré par #settingsModalHeader plus bas.*/
+#settingsContainer::before {
+    content: none !important;
+    display: none !important;
+}
+/* jQuery cache via display:none — priorité haute pour respecter le fadeOut */
+#settingsContainer[style*="display: none"],
+#settingsContainer[style*="display:none"] {
+    display: none !important;
+}
+
+@keyframes dl-settings-pop {
+    from { opacity: 0; transform: scale(.96) translateY(6px); }
+    to   { opacity: 1; transform: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+    #settingsModalPanel { animation: none !important; }
+}
+
+#settingsModalPanel {
+    width: 560px !important;
+    max-width: 92% !important;
+    max-height: 84% !important;
+    background: var(--dl-surface) !important;
+    color: var(--dl-text) !important;
+    border-radius: 16px !important;
+    box-shadow: 0 30px 80px rgba(10, 12, 18, .45), 0 4px 14px rgba(10, 12, 18, .18) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    animation: dl-settings-pop .2s ease-out !important;
+}
+
+#settingsModalHeader {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding: 20px 24px 18px 28px !important;
+    border-bottom: none !important;
+    flex-shrink: 0 !important;
+    position: relative !important;
+    z-index: 2 !important;
+    transition: box-shadow .2s !important;
+}
+#settingsContainer[scrolled] #settingsModalHeader {
+    box-shadow: 0 6px 16px rgba(10, 12, 18, .10) !important;
+}
+#settingsModalTitle {
+    font: 700 22px var(--font) !important;
+    letter-spacing: -.2px !important;
+    color: var(--dl-text) !important;
+}
+#settingsNavDone {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 100px !important;
+    border: none !important;
+    background: var(--dl-surface-2) !important;
+    color: var(--dl-text-soft) !important;
+    font-size: 20px !important;
+    line-height: 1 !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 0 !important;
+    transition: all .15s !important;
+}
+#settingsNavDone:hover {
+    background: var(--dl-gold) !important;
+    color: var(--dl-text) !important;
+    transform: rotate(90deg) !important;
+}
+
+#settingsModalBody {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    padding: 8px 28px 32px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 30px !important;
+    background: var(--dl-surface) !important;
+}
+
+.settingsSection {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+}
+.settingsSectionHeader {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+}
+.settingsSectionIcon {
+    width: 36px !important;
+    height: 36px !important;
+    flex: none !important;
+    border-radius: 12px !important;
+    background: var(--dl-gold-dim) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+.settingsSectionTitle {
+    font: 700 17px var(--font) !important;
+    letter-spacing: normal !important;
+    text-transform: none !important;
+    color: var(--dl-text) !important;
+}
+.settingsSectionTitleGrow {
+    flex: 1 !important;
+}
+.settingsSectionDesc {
+    font-size: 12px !important;
+    color: var(--dl-text-muted) !important;
+}
+
+/* ── Compte : bouton "Ajouter un compte" + cartes de compte ───────────── */
+.settingsAddAuthAccount {
+    /* Multi-comptes retiré : un seul compte Azuriom par launcher. */
+    display: none !important;
+    align-items: center !important;
+    gap: 6px !important;
+    height: 34px !important;
+    padding: 0 14px !important;
+    border-radius: 100px !important;
+    border: 1px solid var(--dl-border-gold) !important;
+    background: var(--dl-gold-subtle) !important;
+    color: var(--dl-gold-dark) !important;
+    font: 700 13px var(--font) !important;
+    cursor: pointer !important;
+    transition: all .15s !important;
+}
+.settingsAddAuthAccount:hover {
+    background: var(--dl-gold) !important;
+    color: var(--dl-text) !important;
+    box-shadow: 0 0 0 4px var(--dl-gold-glow) !important;
+}
+.settingsCurrentAccounts {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+}
+.settingsAuthAccount {
+    display: flex !important;
+    align-items: center !important;
+    gap: 14px !important;
+    padding: 14px !important;
+    border-radius: 20px !important;
+    background: var(--dl-surface) !important;
+    border: 1px solid var(--dl-border) !important;
+    transition: all .2s !important;
+}
+.settingsAuthAccount:has(.settingsAuthAccountSelect[selected]) {
+    background: var(--dl-gold-subtle) !important;
+    border-color: var(--dl-border-gold) !important;
+}
+.settingsAuthAccountAvatar {
+    width: 52px !important;
+    height: 52px !important;
+    flex: none !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    background: var(--dl-surface-2) !important;
+}
+.settingsAuthAccountImage {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: cover !important;
+    image-rendering: pixelated !important;
+    display: block !important;
+}
+.settingsAuthAccountInfo {
+    flex: 1 !important;
+    min-width: 0 !important;
+}
+.settingsAuthAccountName {
+    font: 700 16px var(--font) !important;
+    color: var(--dl-text) !important;
+}
+.settingsAuthAccountUuid {
+    font-size: 12px !important;
+    color: var(--dl-text-muted) !important;
+    margin-top: 3px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+}
+.settingsAuthAccountSelect {
+    height: 34px !important;
+    padding: 0 14px !important;
+    border-radius: 100px !important;
+    border: none !important;
+    background: var(--dl-surface-2) !important;
+    color: var(--dl-text-soft) !important;
+    font: 700 13px var(--font) !important;
+    cursor: pointer !important;
+    white-space: nowrap !important;
+    transition: all .15s !important;
+    flex: none !important;
+}
+.settingsAuthAccountSelect[selected] {
+    background: var(--dl-gold) !important;
+    color: var(--dl-text) !important;
+}
+.settingsAuthAccountLogOut {
+    /* launcher.css (ancien design) cache ce bouton par défaut (opacity:0) et ne le
+       révèle qu'au survol de toute la carte — on le veut visible en permanence. */
+    opacity: 1 !important;
+    width: 34px !important;
+    height: 34px !important;
+    flex: none !important;
+    border-radius: 100px !important;
+    border: none !important;
+    background: var(--dl-surface-2) !important;
+    color: var(--dl-text-muted) !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all .15s !important;
+}
+.settingsAuthAccountLogOut:hover {
+    background: var(--dl-offline) !important;
+    color: #FFFFFF !important;
+}
+
+/* ── Carte générique (Minecraft / RAM) ─────────────────────────────────── */
+.settingsCard {
+    padding: 18px !important;
+    border-radius: 20px !important;
+    background: var(--dl-bg) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 18px !important;
+}
+.settingsCardRow {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 16px !important;
+}
+.settingsToggleRow {
+    cursor: pointer !important;
+}
+.settingsCardDivider {
+    height: 1px !important;
+    background: var(--dl-border) !important;
+    flex: none !important;
+}
+.settingsCardDividerVertical {
+    width: 1px !important;
+    height: auto !important;
+    align-self: stretch !important;
+}
+.settingsFieldTitle {
+    font: 700 14px var(--font) !important;
+    color: var(--dl-text) !important;
+}
+.settingsFieldDesc {
+    font-size: 12px !important;
+    color: var(--dl-text-muted) !important;
+    margin-top: 3px !important;
+}
+
+/* ── Résolution du jeu ──────────────────────────────────────────────────── */
+#settingsGameResolutionContent {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    flex: none !important;
+}
+#settingsGameWidth,
+#settingsGameHeight {
+    width: 76px !important;
+    height: 40px !important;
+    box-sizing: border-box !important;
+    border-radius: 12px !important;
+    border: 1px solid var(--dl-border) !important;
+    background: var(--dl-surface) !important;
+    text-align: center !important;
+    font: 500 15px var(--font) !important;
+    color: var(--dl-text) !important;
+    outline: none !important;
+    transition: all .15s !important;
+}
+#settingsGameWidth:focus,
+#settingsGameHeight:focus {
+    border-color: var(--dl-border-gold) !important;
+    box-shadow: 0 0 0 4px var(--dl-gold-glow) !important;
+}
+#settingsGameResolutionCross {
+    color: var(--dl-text-muted) !important;
+    font-size: 16px !important;
+}
+
+/* ── Toggle switch ──────────────────────────────────────────────────────── */
+.toggleSwitch {
+    display: inline-block !important;
+    width: 50px !important;
+    height: 30px !important;
+    position: relative !important;
+    flex: none !important;
+    margin: 0 !important;
+}
+.toggleSwitch input {
+    opacity: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    position: absolute !important;
+    cursor: pointer !important;
+    z-index: 1 !important;
+}
+.toggleSwitchSlider {
+    position: absolute !important;
+    inset: 0 !important;
+    border-radius: 100px !important;
+    background: var(--dl-surface-2) !important;
+    box-shadow: inset 0 0 0 1px var(--dl-border) !important;
+    transition: all .25s !important;
+    pointer-events: none !important;
+}
+.toggleSwitchSlider::before {
+    content: '' !important;
+    position: absolute !important;
+    top: 3px !important;
+    left: 3px !important;
+    width: 24px !important;
+    height: 24px !important;
+    box-sizing: border-box !important;
+    border-radius: 100px !important;
+    background: var(--dl-surface) !important;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, .25) !important;
+    transition: left .25s cubic-bezier(.3, 1.4, .5, 1) !important;
+    /* launcher.css (l'ancien design) applique encore un translateX(15px) sur ce même
+       pseudo-élément à l'état checked — sans ce reset, il s'additionne à notre `left`
+       et fait déborder le rond hors du cadre du bouton. */
+    transform: none !important;
+}
+input:checked + .toggleSwitchSlider {
+    background: var(--dl-gold) !important;
+    box-shadow: 0 0 0 4px var(--dl-gold-glow) !important;
+}
+input:checked + .toggleSwitchSlider::before {
+    left: 23px !important;
+    transform: none !important;
+}
+.toggleSwitch input:focus-visible + .toggleSwitchSlider {
+    box-shadow: 0 0 0 4px var(--dl-gold-glow) !important;
+}
+
+/* ── Mémoire (RAM) ──────────────────────────────────────────────────────── */
+.settingsMemoryCard {
+    /* Classe autonome (ne dépend plus de .settingsCard/.settingsCardRow) : le mélange
+       des deux donnait flex-direction:column (hérité de .settingsCard, jamais annulé
+       par .settingsCardRow) au lieu d'une vraie rangée gauche/droite, ce qui empilait
+       tout verticalement et laissait un grand vide à droite des sliders. */
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: stretch !important;
+    gap: 20px !important;
+    padding: 18px !important;
+    border-radius: 20px !important;
+    background: var(--dl-bg) !important;
+}
+#settingsMemoryContentLeft {
+    flex: 1 !important;
+    min-width: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 14px !important;
+    justify-content: center !important;
+}
+.settingsMemorySliderHead {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    margin-bottom: 6px !important;
+}
+.settingsMemoryHeader {
+    font: 700 14px var(--font) !important;
+    color: var(--dl-text) !important;
+}
+.settingsMemoryLabel {
+    font: 700 12px var(--font) !important;
+    background: var(--dl-gold-dim) !important;
+    color: var(--dl-gold-dark) !important;
+    padding: 3px 10px !important;
+    border-radius: 100px !important;
+}
+.rangeSlider {
+    position: relative !important;
+    height: 8px !important;
+    border-radius: 100px !important;
+    background: var(--dl-surface-2) !important;
+    margin: 11px 0 !important;
+    cursor: pointer !important;
+    outline: none !important;
+}
+.rangeSlider:focus-visible {
+    box-shadow: 0 0 0 3px var(--dl-gold-glow) !important;
+}
+#settingsNavDone:focus-visible,
+.settingsAddAuthAccount:focus-visible,
+.settingsAuthAccountSelect:focus-visible,
+.settingsAuthAccountLogOut:focus-visible,
+.settingsFileSelButton:focus-visible,
+#settingsUpdateActionButton:focus-visible,
+.settingsAboutButton:focus-visible {
+    outline: none !important;
+    box-shadow: 0 0 0 3px var(--dl-gold-glow) !important;
+}
+.rangeSliderBar {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    border-radius: 100px !important;
+    background: linear-gradient(90deg, var(--dl-gold-light), var(--dl-gold)) !important;
+    pointer-events: none !important;
+}
+.rangeSliderTrack {
+    position: absolute !important;
+    top: 50% !important;
+    width: 22px !important;
+    height: 22px !important;
+    margin: -11px 0 0 -11px !important;
+    border-radius: 100px !important;
+    background: var(--dl-surface) !important;
+    border: 3px solid var(--dl-gold) !important;
+    box-sizing: border-box !important;
+    box-shadow: 0 0 0 5px var(--dl-gold-glow), 0 2px 6px rgba(0, 0, 0, .15) !important;
+    cursor: pointer !important;
+}
+#settingsMemoryContentRight {
+    width: 120px !important;
+    flex: none !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    gap: 16px !important;
+}
+.settingsMemoryStatusContainer { }
+.settingsMemoryStatusTitle {
+    font-size: 12px !important;
+    color: var(--dl-text-muted) !important;
+    display: block !important;
+}
+.settingsMemoryStatusValue {
+    font: 900 22px var(--font) !important;
+    color: var(--dl-text) !important;
+    margin-top: 2px !important;
+    display: block !important;
+}
+#settingsMemoryAvail {
+    color: var(--dl-online) !important;
+}
+#settingsMemoryDesc {
+    font-size: 12.5px !important;
+    line-height: 1.5 !important;
+    color: var(--dl-text-muted) !important;
+    padding: 0 4px !important;
+}
+
+/* ── Paramètres du launcher ─────────────────────────────────────────────── */
+.settingsFileSelContainer {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+}
+.settingsFileSelActions {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    align-items: center !important;
+    gap: 8px !important;
+    width: 100% !important;
+}
+.settingsFileSelVal {
+    flex: 1 1 0% !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    height: 42px !important;
+    box-sizing: border-box !important;
+    padding: 0 12px !important;
+    border-radius: 12px !important;
+    border: 1px solid transparent !important;
+    background: var(--dl-surface-2) !important;
+    font-size: 12.5px !important;
+    color: var(--dl-text-soft) !important;
+    overflow: hidden !important;
+    white-space: nowrap !important;
+    text-overflow: ellipsis !important;
+    cursor: text !important;
+    transition: all .15s !important;
+}
+.settingsFileSelVal:focus {
+    outline: none !important;
+    border-color: var(--dl-border-gold) !important;
+    box-shadow: 0 0 0 4px var(--dl-gold-glow) !important;
+    background: var(--dl-surface) !important;
+}
+.settingsFileSelButton {
+    height: 42px !important;
+    padding: 0 14px !important;
+    border-radius: 100px !important;
+    border: 1px solid var(--dl-border) !important;
+    background: var(--dl-surface) !important;
+    color: var(--dl-text) !important;
+    font: 700 13px var(--font) !important;
+    cursor: pointer !important;
+    white-space: nowrap !important;
+    transition: all .15s !important;
+    flex: none !important;
+}
+.settingsFileSelButton:hover {
+    border-color: var(--dl-border-gold) !important;
+    background: var(--dl-gold-subtle) !important;
+    box-shadow: 0 0 0 4px var(--dl-gold-dim) !important;
+}
+.settingsFileSelDesc {
+    font-size: 12px !important;
+    color: var(--dl-text-muted) !important;
+}
+
+/* ── Carte statut de mise à jour ────────────────────────────────────────── */
+#settingsUpdateStatusContainer {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 14px !important;
+    padding: 16px 18px !important;
+    border-radius: 20px !important;
+    background: var(--dl-gold-subtle) !important;
+    border: 1px solid var(--dl-border-gold) !important;
+    width: auto !important;
+    margin-bottom: 0 !important;
+}
+#settingsUpdateStatusContent {
+    flex: 1 !important;
+    min-width: 0 !important;
+    display: block !important;
+    flex-direction: column !important;
+    padding: 0 !important;
+}
+#settingsUpdateStatusHeadline {
+    display: block !important;
+    padding-bottom: 0 !important;
+    border-bottom: none !important;
+}
+#settingsUpdateVersion {
+    display: block !important;
+    padding: 0 !important;
+    border-bottom: none !important;
+}
+#settingsUpdateVersionDetails {
+    display: block !important;
+    margin-left: 0 !important;
+}
+#settingsUpdateVersionCheck {
+    width: 40px !important;
+    height: 40px !important;
+    flex: none !important;
+    border-radius: 100px !important;
+    background: var(--dl-online) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+#settingsUpdateTitle {
+    font: 700 15px var(--font) !important;
+    color: var(--dl-text) !important;
+    display: block !important;
+    padding-left: 0 !important;
+}
+#settingsUpdateVersionTitle {
+    font-family: var(--font) !important;
+    color: var(--dl-text-soft) !important;
+    font-weight: 700 !important;
+}
+#settingsUpdateVersionLine {
+    font-size: 12.5px !important;
+    color: var(--dl-text-soft) !important;
+    margin-top: 3px !important;
+}
+#settingsUpdateActionContainer {
+    padding-top: 0 !important;
+}
+#settingsUpdateActionButton {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 36px !important;
+    padding: 0 16px !important;
+    border-radius: 100px !important;
+    border: none !important;
+    background: var(--dl-gold) !important;
+    color: var(--dl-text) !important;
+    font: 700 13px var(--font) !important;
+    text-align: center !important;
+    cursor: pointer !important;
+    white-space: nowrap !important;
+    transition: all .15s !important;
+    flex: none !important;
+}
+#settingsUpdateActionButton:hover,
+#settingsUpdateActionButton:focus {
+    text-shadow: none !important;
+}
+#settingsUpdateActionButton:hover {
+    background: var(--dl-gold-light) !important;
+    box-shadow: 0 0 0 4px var(--dl-gold-glow) !important;
+}
+#settingsUpdateActionButton:active {
+    transform: scale(.96) !important;
+}
+.settingsChangelogContainer {
+    margin-top: 14px !important;
+    padding: 16px 18px !important;
+    border-radius: 20px !important;
+    background: var(--dl-bg) !important;
+}
+
+/* ── Lien Support ───────────────────────────────────────────────────────── */
+#settingsAboutButtons {
+    display: flex !important;
+    justify-content: center !important;
+    padding-top: 4px !important;
+}
+.settingsAboutButton {
+    font: 500 13px var(--font) !important;
+    color: var(--dl-gold-dark) !important;
+    text-decoration: none !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    transition: color .15s !important;
+}
+.settingsAboutButton:hover {
+    color: var(--dl-text) !important;
+}
+.settingsAboutButtonArrow {
+    font-size: 14px !important;
+}
+

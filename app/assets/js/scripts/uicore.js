@@ -37,6 +37,13 @@ webFrame.setVisualZoomLevelLimits(1, 1)
 
 // Initialize auto updates in production environments.
 let updateCheckListener
+// GUIDE — Mise à jour auto au démarrage : seule la TOUTE PREMIÈRE vérification (celle
+// lancée au lancement du launcher, cas 'ready' ci-dessous) installe automatiquement une
+// mise à jour trouvée, sans action du joueur — avant qu'il n'ait commencé à jouer/cliquer.
+// Les vérifications suivantes (toutes les 30 min en tâche de fond, ou via le bouton
+// "Vérifier les mises à jour") redeviennent manuelles : on ne force jamais la fermeture
+// du launcher pendant qu'il est utilisé activement.
+let isInitialUpdateCheck = true
 if(!isDev){
     ipcRenderer.on('autoUpdateNotification', (event, arg, info) => {
         switch(arg){
@@ -46,34 +53,43 @@ if(!isDev){
                 break
             case 'update-available':
                 loggerAutoUpdater.info('New update available', info.version)
-                
+
                 if(process.platform === 'darwin'){
-                    info.darwindownload = `https://github.com/dscalzi/HeliosLauncher/releases/download/v${info.version}/Helios-Launcher-setup-${info.version}${process.arch === 'arm64' ? '-arm64' : '-x64'}.dmg`
+                    info.darwindownload = `https://github.com/ImDarling-bit/HeliosLauncher/releases/download/v${info.version}/DistrictLife-Launcher-setup-${info.version}-${process.arch === 'arm64' ? 'arm64' : 'x64'}.dmg`
                     showUpdateUI(info)
                 }
-                
+
                 populateSettingsUpdateInformation(info)
                 break
             case 'update-downloaded':
                 loggerAutoUpdater.info('Update ' + info.version + ' ready to be installed.')
-                settingsUpdateButtonStatus(Lang.queryJS('uicore.autoUpdate.installNowButton'), false, () => {
-                    if(!isDev){
+                if(isInitialUpdateCheck){
+                    // Démarrage : on installe immédiatement, en silence, avant d'afficher
+                    // quoi que ce soit au joueur. Le launcher redémarre seul une fois à jour.
+                    loggerAutoUpdater.info('Installation automatique de la mise à jour au démarrage.')
+                    isInitialUpdateCheck = false
+                    ipcRenderer.send('autoUpdateAction', 'installUpdateNow')
+                } else {
+                    settingsUpdateButtonStatus(Lang.queryJS('uicore.autoUpdate.installNowButton'), false, () => {
                         ipcRenderer.send('autoUpdateAction', 'installUpdateNow')
-                    }
-                })
-                showUpdateUI(info)
+                    })
+                    showUpdateUI(info)
+                }
                 break
             case 'update-not-available':
                 loggerAutoUpdater.info('No new update found.')
                 settingsUpdateButtonStatus(Lang.queryJS('uicore.autoUpdate.checkForUpdatesButton'))
+                isInitialUpdateCheck = false
                 break
             case 'ready':
                 updateCheckListener = setInterval(() => {
+                    isInitialUpdateCheck = false
                     ipcRenderer.send('autoUpdateAction', 'checkForUpdate')
                 }, 1800000)
                 ipcRenderer.send('autoUpdateAction', 'checkForUpdate')
                 break
             case 'realerror':
+                isInitialUpdateCheck = false
                 if(info != null && info.code != null){
                     if(info.code === 'ERR_UPDATER_INVALID_RELEASE_FEED'){
                         loggerAutoUpdater.info('No suitable releases found.')
@@ -121,9 +137,7 @@ function showUpdateUI(info){
             toggleOverlay(false)
         })
         toggleOverlay(true, true)*/
-        switchView(getCurrentView(), VIEWS.settings, 500, 500, () => {
-            settingsNavItemListener(document.getElementById('settingsNavUpdate'), false)
-        })
+        prepareSettings().then(() => openSettingsModal())
     }
 }
 

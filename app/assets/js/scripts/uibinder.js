@@ -62,6 +62,7 @@ function switchView(current, next, currentFadeTime = 500, nextFadeTime = 500, on
     })
 }
 
+
 /**
  * Get the currently shown view container.
  * 
@@ -147,6 +148,8 @@ async function showMainUI(data){
     })
     initVotePodium()
     initPatchNotes()
+    initNextEvent()
+    initLinks()
 }
 
 function showFatalStartupError(){
@@ -178,6 +181,8 @@ function onDistroRefresh(data){
     initNews()
     initVotePodium()
     initPatchNotes()
+    initNextEvent()
+    initLinks()
     syncModConfigurations(data)
     ensureJavaSettings(data)
 }

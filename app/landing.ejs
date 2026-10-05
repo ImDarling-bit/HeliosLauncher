@@ -11,7 +11,7 @@
         <div id="left">
             <div id="user_content">
                 <div id="avatarContainer">
-                    <img id="avatarImg" src="" alt="" draggable="false">
+                    <canvas id="avatarCanvas" width="64" height="64"></canvas>
                 </div>
                 <div id="user_badge">
                     <span id="user_text"><%- lang('landing.usernamePlaceholder') %></span>
@@ -31,6 +31,11 @@
                     <div id="settingsTooltip" style="display: none;"><%- lang('landing.settingsTooltip') %></div>
                 </button>
 
+                <button class="dl-sidebar-btn" id="wikiButton">
+                    <svg class="dl-sidebar-icon dl-sidebar-icon-wiki" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                    <span class="dl-sidebar-label">WIKI</span>
+                </button>
+
             </div>
         </div>
 
@@ -46,18 +51,125 @@
 
     <!-- ═══════════════════════════════════════════════════════════════
          ZONE PRINCIPALE  ·  mappée sur #upper
-         Fond clair, branding en filigrane
+         Grille bento 6 colonnes — variante « Pré-vol »
          ═══════════════════════════════════════════════════════════════ -->
     <div id="upper">
         <div id="left"></div>
         <div id="content">
             <div id="dl-bento">
 
-                <!-- ── Actualité principale (2 cols · row 1) ──────── -->
-                <div class="dl-bc" id="dl-bc-news">
+                <!-- ── L1 · Statut serveur (héros, span 4) ───────── -->
+                <div class="dl-bc dl-bc-hero" id="dl-bc-status" data-state="loading">
+                    <div id="dl-bc-status-loading" class="dl-bc-state">
+                        <div class="dl-sk dl-sk-eyebrow"></div>
+                        <div class="dl-sk dl-sk-big"></div>
+                        <div class="dl-bc-status-stats">
+                            <div class="dl-sk dl-sk-stat"></div>
+                            <div class="dl-sk dl-sk-stat"></div>
+                            <div class="dl-sk dl-sk-stat"></div>
+                        </div>
+                    </div>
+                    <div id="dl-bc-status-error" class="dl-bc-state">
+                        <div class="dl-bc-status-badge dl-bc-status-badge-off">
+                            <span class="dl-dot-off"></span>HORS LIGNE
+                        </div>
+                        <div id="dl-bc-status-error-title">Impossible de joindre le serveur</div>
+                        <div id="dl-bc-status-error-desc">Maintenance en cours ou connexion interrompue. Ton installation reste prête — tu pourras jouer dès le retour du serveur.</div>
+                        <div class="dl-bc-status-error-actions">
+                            <span class="dl-btn-chip dl-btn-chip-gold" id="dl-bc-status-retry">↻ Réessayer</span>
+                            <span class="dl-btn-chip" id="dl-bc-status-discord-link">Statut sur Discord</span>
+                        </div>
+                    </div>
+                    <div id="dl-bc-status-ok" class="dl-bc-state">
+                        <div class="dl-bc-status-badge dl-bc-status-badge-ok">
+                            <span class="dl-dot-on"></span>EN LIGNE<span class="dl-bc-status-sub">DISTRICTLIFE · FORGE 1.16.5</span>
+                        </div>
+                        <div class="dl-bc-status-main">
+                            <div class="dl-bc-status-count">
+                                <span id="dl-bc-players">–</span><span class="dl-bc-status-max">/ <span id="dl-bc-players-max">20</span></span>
+                                <span class="dl-bc-status-count-label">joueurs en ligne</span>
+                            </div>
+                            <div id="dl-bc-status-avatars" class="dl-bc-status-avatars"></div>
+                        </div>
+                        <div class="dl-bc-status-fill"><div id="dl-bc-status-fill-bar"></div></div>
+                        <div class="dl-bc-status-mini">
+                            <div class="dl-bc-mini"><span class="dl-bc-mini-label">PING</span><span id="dl-bc-status-ping" class="dl-bc-mini-val dl-ok">– <small>ms</small></span></div>
+                            <div class="dl-bc-mini dl-bc-mini-wide"><span class="dl-bc-mini-label">MESSAGE DU SERVEUR</span><span id="dl-bc-status-motd" class="dl-bc-mini-val dl-bc-mini-text">—</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── L1 · Prochain événement (span 2) ──────────── -->
+                <div class="dl-bc" id="dl-bc-event" data-state="empty">
+                    <div class="dl-bc-eyebrow">◷ PROCHAIN ÉVÉNEMENT</div>
+                    <div id="dl-bc-event-ok" class="dl-bc-state">
+                        <div id="dl-bc-event-title"></div>
+                        <div id="dl-bc-event-meta"></div>
+                        <div class="dl-bc-event-footer">
+                            <div id="dl-bc-event-countdown" class="dl-bc-event-countdown"></div>
+                            <span class="dl-bc-cta" id="dl-bc-event-cta">S'inscrire &#8594;</span>
+                        </div>
+                    </div>
+                    <div id="dl-bc-event-empty" class="dl-bc-state">
+                        <div id="dl-bc-event-empty-text">Aucun événement prévu pour le moment.</div>
+                        <div id="dl-bc-event-empty-sub">Les annonces d'événements tombent sur Discord.</div>
+                    </div>
+                </div>
+
+                <!-- ── L2 · Bandeau d'actions (span 6, sous-grille 4 col) ── -->
+                <div id="dl-bc-actions">
+
+                    <div class="dl-bc dl-bc-tile dl-bc-tile-discord" id="dl-bc-discord">
+                        <span class="dl-bc-tile-icon">
+                            <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.032.054a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
+                        </span>
+                        <div class="dl-bc-tile-text">
+                            <div class="dl-bc-tile-label">DISCORD</div>
+                            <div class="dl-bc-tile-sub">Rejoins la communauté</div>
+                        </div>
+                        <span class="dl-bc-tile-arrow">&#8594;</span>
+                    </div>
+
+                    <div class="dl-bc dl-bc-tile dl-bc-tile-vote" id="dl-bc-vote">
+                        <span class="dl-bc-tile-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg>
+                        </span>
+                        <div class="dl-bc-tile-text">
+                            <div class="dl-bc-tile-label">VOTER</div>
+                            <div class="dl-bc-tile-sub" id="dl-bc-vote-sub">Vote &amp; gagne des récompenses</div>
+                        </div>
+                        <span class="dl-bc-tile-arrow">&#8594;</span>
+                    </div>
+
+                    <div class="dl-bc dl-bc-tile dl-bc-tile-store" id="dl-bc-store">
+                        <span class="dl-bc-tile-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+                        </span>
+                        <div class="dl-bc-tile-text">
+                            <div class="dl-bc-tile-label">BOUTIQUE</div>
+                            <div class="dl-bc-tile-sub">Grades &amp; cosmétiques</div>
+                        </div>
+                        <span class="dl-bc-tile-arrow">&#8594;</span>
+                    </div>
+
+                    <div class="dl-bc dl-bc-tile dl-bc-tile-reglement" id="dl-bc-reglement">
+                        <span class="dl-bc-tile-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                        </span>
+                        <div class="dl-bc-tile-text">
+                            <div class="dl-bc-tile-label">RÈGLEMENT</div>
+                            <div class="dl-bc-tile-sub">Consulter les règles</div>
+                        </div>
+                        <span class="dl-bc-tile-arrow">&#8594;</span>
+                    </div>
+
+                </div>
+
+                <!-- ── L3 · Dernière actu (span 2) ───────────────── -->
+                <div class="dl-bc" id="dl-bc-news" data-state="loading">
                     <div class="dl-bc-eyebrow">
                         <span class="dl-live-dot"></span>
-                        ACTUALITÉS
+                        DERNIÈRE ACTU
                     </div>
                     <div class="dl-bc-news-thumb" id="dl-bc-news-thumb">
                         <img id="dl-bc-news-img" src="" alt="">
@@ -69,50 +181,10 @@
                     <span class="dl-bc-cta">LIRE LA SUITE &#8594;</span>
                 </div>
 
-                <!-- ── Infos serveur (1 col · row 1) ─────────────── -->
-                <div class="dl-bc" id="dl-bc-server">
-                    <div class="dl-bc-eyebrow">INFOS SERVEUR</div>
-                    <div class="dl-bc-server-count" id="dl-bc-players">–</div>
-                    <div class="dl-bc-server-label">joueurs en ligne</div>
-                    <div class="dl-bc-server-spacer"></div>
-                    <div class="dl-bc-server-name">DistrictLife</div>
-                    <div class="dl-bc-server-version">Forge 1.16.5</div>
-                </div>
-
-                <!-- ── Discord (col 1 · row 2) ───────────────────── -->
-                <div class="dl-bc dl-bc-link" id="dl-bc-discord">
-                    <div class="dl-bc-link-icon dl-bc-icon-discord">
-                        <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057c.002.022.015.043.032.054a19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>
-                    </div>
-                    <div class="dl-bc-link-label">DISCORD</div>
-                    <div class="dl-bc-link-desc">Rejoins la communauté</div>
-                    <span class="dl-bc-cta">REJOINDRE &#8594;</span>
-                </div>
-
-                <!-- ── Vote (col 2 · row 2) ─────────────────────── -->
-                <div class="dl-bc dl-bc-link" id="dl-bc-vote">
-                    <div class="dl-bc-link-icon dl-bc-icon-vote">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2z"/></svg>
-                    </div>
-                    <div class="dl-bc-link-label">VOTER</div>
-                    <div class="dl-bc-link-desc">Vote &amp; gagne des récompenses</div>
-                    <span class="dl-bc-cta">VOTER &#8594;</span>
-                </div>
-
-                <!-- ── Boutique (col 3 · row 2) ───────────────────── -->
-                <div class="dl-bc dl-bc-link" id="dl-bc-store">
-                    <div class="dl-bc-link-icon dl-bc-icon-store">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
-                    </div>
-                    <div class="dl-bc-link-label">BOUTIQUE</div>
-                    <div class="dl-bc-link-desc">Grades &amp; cosmétiques</div>
-                    <span class="dl-bc-cta">ACCÉDER &#8594;</span>
-                </div>
-
-                <!-- ── Patch notes (col 1 · row 4) ───────────────── -->
+                <!-- ── L3 · Patch notes (span 2) ─────────────────── -->
                 <div class="dl-bc" id="dl-bc-patch">
                     <div class="dl-bc-eyebrow">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="9" height="9" style="color:var(--dl-gold)"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="9" height="9" style="color:var(--gold)"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
                         PATCH NOTES
                     </div>
                     <div id="dl-bc-patch-content">
@@ -120,11 +192,11 @@
                     </div>
                 </div>
 
-                <!-- ── Podium votes (col 2-3 · row 3) ────────────── -->
-                <div class="dl-bc" id="dl-bc-podium">
+                <!-- ── L3 · Top voteurs du mois (span 2) ─────────── -->
+                <div class="dl-bc" id="dl-bc-podium" data-state="loading">
                     <div class="dl-bc-eyebrow">
-                        <svg viewBox="0 0 24 24" fill="currentColor" width="9" height="9" style="margin-right:4px;vertical-align:middle;color:var(--dl-gold)"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                        CLASSEMENT VOTES
+                        <svg viewBox="0 0 24 24" fill="currentColor" width="9" height="9" style="margin-right:4px;vertical-align:middle;color:var(--gold)"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+                        TOP VOTEURS DU MOIS
                     </div>
                     <div id="dl-bc-podium-wrap" class="dl-bc-podium-wrap">
                         <span class="dl-bc-podium-empty">Chargement&hellip;</span>
@@ -242,5 +314,8 @@
         </div>
     </div>
 
+    <!-- skinview3d (Three.js/WebGL, 100% local) : rendu 3D du skin dans la sidebar.
+         Chargé avant landing.js, qui s'appuie sur le global window.skinview3d. -->
+    <script src="./assets/js/libs/skinview3d.bundle.js"></script>
     <script src="./assets/js/scripts/landing.js"></script>
 </div>

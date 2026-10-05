@@ -72,14 +72,14 @@
                     }
                 },
                 {
-                    "id": "districtlife:districtclothing:1.2.0",
+                    "id": "districtlife:districtclothing:1.4.1",
                     "name": "DistrictClothing",
                     "type": "File",
                     "artifact": {
-                        "size": 78985,
-                        "MD5": "cbd4a8e3e0e715dd3926b862e78c6a1a",
-                        "url": "https://distribution.districtliferp.fr/mods/districtlife_clothing-1.2.0.jar",
-                        "path": "mods/districtlife_clothing-1.2.0.jar"
+                        "size": 5243224,
+                        "MD5": "e27f2cfbe4dc5b250a78cbc98bec0fc7",
+                        "url": "https://distribution.districtliferp.fr/mods/districtlife_clothing-1.4.1.jar",
+                        "path": "mods/districtlife_clothing-1.4.1.jar"
                     },
                     "required": {
                         "value": true
@@ -170,28 +170,42 @@
                     }
                 },
                 {
-                    "id": "districtlife:districteconomy:1.3.2",
+                    "id": "districtlife:districteconomy:1.4.1",
                     "name": "DistrictEconomy",
                     "type": "File",
                     "artifact": {
-                        "size": 294128,
-                        "MD5": "43b72b5281926534dd4423516564019f",
-                        "url": "https://distribution.districtliferp.fr/mods/districtlife_economy-1.3.2.jar",
-                        "path": "mods/districtlife_economy-1.3.2.jar"
+                        "size": 18102911,
+                        "MD5": "6abea7b9afe256552022eed89cfd648a",
+                        "url": "https://distribution.districtliferp.fr/mods/districtlife_economy-1.4.1.jar",
+                        "path": "mods/districtlife_economy-1.4.1.jar"
                     },
                     "required": {
                         "value": true
                     }
                 },
                 {
-                    "id": "districtlife:districtphone:1.17.0",
+                    "id": "districtlife:districtphone:1.21.0",
                     "name": "DistrictPhone",
                     "type": "File",
                     "artifact": {
-                        "size": 2194213,
-                        "MD5": "d2a54209542f4ec603022d1ea274a0b5",
-                        "url": "https://distribution.districtliferp.fr/mods/districtlife_phone-1.17.0.jar",
-                        "path": "mods/districtlife_phone-1.17.0.jar"
+                        "size": 2367987,
+                        "MD5": "5620b5a6dbc9576ecd01286acac73bde",
+                        "url": "https://distribution.districtliferp.fr/mods/districtlife_phone-1.21.0.jar",
+                        "path": "mods/districtlife_phone-1.21.0.jar"
+                    },
+                    "required": {
+                        "value": true
+                    }
+                },
+                {
+                    "id": "districtlife:districtjob:1.2.18",
+                    "name": "DistrictJob",
+                    "type": "File",
+                    "artifact": {
+                        "size": 571544,
+                        "MD5": "a80195637c3b42f3f34f1dff41328ca4",
+                        "url": "https://distribution.districtliferp.fr/mods/districtlife_job-1.2.18.jar",
+                        "path": "mods/districtlife_job-1.2.18.jar"
                     },
                     "required": {
                         "value": true
@@ -212,14 +226,14 @@
                     }
                 },
                 {
-                    "id": "districtlife:dlclient:1.50.0",
+                    "id": "districtlife:dlclient:1.78.0",
                     "name": "DLClient",
                     "type": "File",
                     "artifact": {
-                        "size": 27405771,
-                        "MD5": "8047d99cd131357fc91069b6a82bf913",
-                        "url": "https://distribution.districtliferp.fr/mods/dlclient-1.50.0.jar",
-                        "path": "mods/dlclient-1.50.0.jar"
+                        "size": 34911204,
+                        "MD5": "5121dec597935f92739f1ab511089497",
+                        "url": "https://distribution.districtliferp.fr/mods/dlclient-1.78.0.jar",
+                        "path": "mods/dlclient-1.78.0.jar"
                     },
                     "required": {
                         "value": true
@@ -262,6 +276,34 @@
                         "MD5": "6a96a36de00e5d8e9bf2e87634d13125",
                         "url": "https://distribution.districtliferp.fr/mods/ferritecore-2.1.1-forge.jar",
                         "path": "mods/ferritecore-2.1.1-forge.jar"
+                    },
+                    "required": {
+                        "value": true
+                    }
+                },
+                {
+                    "id": "curse:rubidium:0.2.13",
+                    "name": "Rubidium",
+                    "type": "File",
+                    "artifact": {
+                        "size": 625052,
+                        "MD5": "908bbd1fd7b988bc61d685344e6de496",
+                        "url": "https://distribution.districtliferp.fr/mods/rubidium-mc1.16.5-0.2.13.jar",
+                        "path": "mods/rubidium-mc1.16.5-0.2.13.jar"
+                    },
+                    "required": {
+                        "value": true
+                    }
+                },
+                {
+                    "id": "curse:oculus:1.4.8",
+                    "name": "Oculus",
+                    "type": "File",
+                    "artifact": {
+                        "size": 3133901,
+                        "MD5": "568661a2dd12b461674c7f3a80837804",
+                        "url": "https://distribution.districtliferp.fr/mods/oculus-mc1.16.5-1.4.8.jar",
+                        "path": "mods/oculus-mc1.16.5-1.4.8.jar"
                     },
                     "required": {
                         "value": true

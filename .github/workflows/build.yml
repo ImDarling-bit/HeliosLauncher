@@ -13,11 +13,20 @@ jobs:
       matrix:
         include:
           - os: windows-latest
-            artifact: dist/*.exe
+            # latest.yml est indispensable à electron-updater pour détecter les mises
+            # à jour (Windows) — sans lui dans la Release, checkForUpdates() ne trouve
+            # jamais rien.
+            artifact: |
+              dist/*.exe
+              dist/latest.yml
           - os: ubuntu-latest
-            artifact: dist/*.AppImage
+            artifact: |
+              dist/*.AppImage
+              dist/latest-linux.yml
           - os: macos-latest
-            artifact: dist/*.dmg
+            artifact: |
+              dist/*.dmg
+              dist/latest-mac.yml
       fail-fast: false
 
     steps:

@@ -44,7 +44,6 @@ function bindFileSelectors(){
     for(let ele of document.getElementsByClassName('settingsFileSelButton')){
         
         ele.onclick = async e => {
-            const isJavaExecSel = ele.id === 'settingsJavaExecSel'
             const directoryDialog = ele.hasAttribute('dialogDirectory') && ele.getAttribute('dialogDirectory') == 'true'
             const properties = directoryDialog ? ['openDirectory', 'createDirectory'] : ['openFile']
 
@@ -56,25 +55,22 @@ function bindFileSelectors(){
                 options.title = ele.getAttribute('dialogTitle')
             }
 
-            if(isJavaExecSel && process.platform === 'win32') {
-                options.filters = [
-                    { name: Lang.queryJS('settings.fileSelectors.executables'), extensions: ['exe'] },
-                    { name: Lang.queryJS('settings.fileSelectors.allFiles'), extensions: ['*'] }
-                ]
-            }
-
             const res = await remote.dialog.showOpenDialog(remote.getCurrentWindow(), options)
             if(!res.canceled) {
                 ele.previousElementSibling.value = res.filePaths[0]
-                if(isJavaExecSel) {
-                    await populateJavaExecDetails(ele.previousElementSibling.value)
-                }
+                ele.previousElementSibling.title = res.filePaths[0]
             }
         }
     }
 }
 
 bindFileSelectors()
+
+// Dossier de données : champ désormais éditable à la main (plus de "disabled"), on
+// garde l'infobulle à jour pour pouvoir relire le chemin complet au survol.
+document.getElementById('settingsDataDirVal').addEventListener('input', (e) => {
+    e.target.title = e.target.value
+})
 
 
 /**
@@ -136,15 +132,15 @@ async function initSettingsValues(){
             if(v.tagName === 'INPUT'){
                 if(v.type === 'number' || v.type === 'text'){
                     // Special Conditions
-                    if(cVal === 'JavaExecutable'){
-                        v.value = gFn.apply(null, gFnOpts)
-                        await populateJavaExecDetails(v.value)
-                    } else if (cVal === 'DataDirectory'){
-                        v.value = gFn.apply(null, gFnOpts)
-                    } else if(cVal === 'JVMOptions'){
+                    if(cVal === 'JVMOptions'){
                         v.value = gFn.apply(null, gFnOpts).join(' ')
                     } else {
                         v.value = gFn.apply(null, gFnOpts)
+                    }
+                    // Chemin potentiellement plus long que ce qui est visible dans le
+                    // champ : l'infobulle native permet de le relire en entier au survol.
+                    if(cVal === 'DataDirectory'){
+                        v.title = v.value
                     }
                 } else if(v.type === 'checkbox'){
                     v.checked = gFn.apply(null, gFnOpts)
@@ -231,16 +227,10 @@ function saveSettingsValues(){
     })
 }
 
-let selectedSettingsTab = 'settingsTabAccount'
-
-/**
- * Modify the settings container UI when the scroll threshold reaches
- * a certain poin.
- * 
- * @param {UIEvent} e The scroll event.
- */
-function settingsTabScrollListener(e){
-    if(e.target.scrollTop > Number.parseFloat(getComputedStyle(e.target.firstElementChild).marginTop)){
+// Ombre en haut du panneau quand le contenu défile (toutes les sections sont sur une
+// seule page désormais, plus d'onglets à faire défiler individuellement).
+document.getElementById('settingsModalBody').onscroll = (e) => {
+    if(e.target.scrollTop > 0){
         document.getElementById('settingsContainer').setAttribute('scrolled', '')
     } else {
         document.getElementById('settingsContainer').removeAttribute('scrolled')
@@ -248,65 +238,25 @@ function settingsTabScrollListener(e){
 }
 
 /**
- * Bind functionality for the settings navigation items.
+ * Ouvre la fenêtre modale des paramètres (remplace l'ancienne navigation en vue pleine
+ * page + animation de glissement).
  */
-function setupSettingsTabs(){
-    Array.from(document.getElementsByClassName('settingsNavItem')).map((val) => {
-        if(val.hasAttribute('rSc')){
-            val.onclick = () => {
-                settingsNavItemListener(val)
-            }
-        }
-    })
+function openSettingsModal(){
+    $('#settingsContainer').fadeIn(180)
 }
 
 /**
- * Settings nav item onclick lisener. Function is exposed so that
- * other UI elements can quickly toggle to a certain tab from other views.
- * 
- * @param {Element} ele The nav item which has been clicked.
- * @param {boolean} fade Optional. True to fade transition.
+ * Ferme la fenêtre modale des paramètres.
  */
-function settingsNavItemListener(ele, fade = true){
-    if(ele.hasAttribute('selected')){
-        return
-    }
-    const navItems = document.getElementsByClassName('settingsNavItem')
-    for(let i=0; i<navItems.length; i++){
-        if(navItems[i].hasAttribute('selected')){
-            navItems[i].removeAttribute('selected')
-        }
-    }
-    ele.setAttribute('selected', '')
-    let prevTab = selectedSettingsTab
-    selectedSettingsTab = ele.getAttribute('rSc')
+function closeSettingsModal(){
+    $('#settingsContainer').fadeOut(180)
+}
 
-    document.getElementById(prevTab).onscroll = null
-    document.getElementById(selectedSettingsTab).onscroll = settingsTabScrollListener
-
-    if(fade){
-        $(`#${prevTab}`).fadeOut(250, () => {
-            $(`#${selectedSettingsTab}`).fadeIn({
-                duration: 250,
-                start: () => {
-                    settingsTabScrollListener({
-                        target: document.getElementById(selectedSettingsTab)
-                    })
-                }
-            })
-        })
-    } else {
-        $(`#${prevTab}`).hide(0, () => {
-            $(`#${selectedSettingsTab}`).show({
-                duration: 0,
-                start: () => {
-                    settingsTabScrollListener({
-                        target: document.getElementById(selectedSettingsTab)
-                    })
-                }
-            })
-        })
-    }
+/**
+ * @returns {boolean} True si la modale des paramètres est actuellement affichée.
+ */
+function isSettingsModalOpen(){
+    return getComputedStyle(document.getElementById('settingsContainer')).display !== 'none'
 }
 
 const settingsNavDone = document.getElementById('settingsNavDone')
@@ -325,21 +275,25 @@ function fullSettingsSave() {
     ConfigManager.save()
 }
 
-/* Closes the settings view and saves all data. */
+/* Closes the settings modal and saves all data. */
 settingsNavDone.onclick = () => {
     fullSettingsSave()
-    switchView(getCurrentView(), VIEWS.landing)
+    closeSettingsModal()
 }
 
 /**
  * Account Management Tab
  */
 
-// Bind the add Azuriom account button.
+// Bind the add Azuriom account button. La modale se ferme d'abord : on quitte
+// temporairement l'accueil pour le formulaire de connexion (vue pleine page), puis on
+// revient à l'accueil (pas de ré-ouverture automatique de la modale — l'utilisateur la
+// rouvre lui-même si besoin, plus simple et plus robuste que de la rebrancher).
 document.getElementById('settingsAddAzuriomAccount').onclick = (e) => {
+    closeSettingsModal()
     switchView(getCurrentView(), VIEWS.loginOptions, 500, 500, () => {
-        loginOptionsViewOnCancel = VIEWS.settings
-        loginOptionsViewOnLoginSuccess = VIEWS.settings
+        loginOptionsViewOnCancel = VIEWS.landing
+        loginOptionsViewOnLoginSuccess = VIEWS.landing
         loginOptionsCancelEnabled(true)
     })
 }
@@ -419,8 +373,9 @@ function processLogOut(val, isLastAccount){
             validateSelectedAccount()
         }
         if(isLastAccount) {
+            closeSettingsModal()
             loginOptionsCancelEnabled(false)
-            loginOptionsViewOnLoginSuccess = VIEWS.settings
+            loginOptionsViewOnLoginSuccess = VIEWS.landing
             loginOptionsViewOnLoginCancel = VIEWS.loginOptions
             switchView(getCurrentView(), VIEWS.loginOptions)
         }
@@ -469,28 +424,19 @@ function populateAuthAccounts(){
     authKeys.forEach((val) => {
         const acc = authAccounts[val]
 
+        const logoutLabel = Lang.queryJS('settings.authAccountPopulate.logout')
         const accHtml = `<div class="settingsAuthAccount" uuid="${acc.uuid}">
-            <div class="settingsAuthAccountLeft">
+            <div class="settingsAuthAccountAvatar">
                 <img class="settingsAuthAccountImage" alt="${acc.displayName}" src="https://www.districtliferp.fr/api/skin-api/avatars/combo/${acc.displayName}.png">
             </div>
-            <div class="settingsAuthAccountRight">
-                <div class="settingsAuthAccountDetails">
-                    <div class="settingsAuthAccountDetailPane">
-                        <div class="settingsAuthAccountDetailTitle">${Lang.queryJS('settings.authAccountPopulate.username')}</div>
-                        <div class="settingsAuthAccountDetailValue">${acc.displayName}</div>
-                    </div>
-                    <div class="settingsAuthAccountDetailPane">
-                        <div class="settingsAuthAccountDetailTitle">${Lang.queryJS('settings.authAccountPopulate.uuid')}</div>
-                        <div class="settingsAuthAccountDetailValue">${acc.uuid}</div>
-                    </div>
-                </div>
-                <div class="settingsAuthAccountActions">
-                    <button class="settingsAuthAccountSelect" ${selectedUUID === acc.uuid ? 'selected>' + Lang.queryJS('settings.authAccountPopulate.selectedAccount') : '>' + Lang.queryJS('settings.authAccountPopulate.selectAccount')}</button>
-                    <div class="settingsAuthAccountWrapper">
-                        <button class="settingsAuthAccountLogOut">${Lang.queryJS('settings.authAccountPopulate.logout')}</button>
-                    </div>
-                </div>
+            <div class="settingsAuthAccountInfo">
+                <div class="settingsAuthAccountName">${acc.displayName}</div>
+                <div class="settingsAuthAccountUuid">${acc.uuid}</div>
             </div>
+            <button class="settingsAuthAccountSelect" ${selectedUUID === acc.uuid ? 'selected>' + Lang.queryJS('settings.authAccountPopulate.selectedAccount') : '>' + Lang.queryJS('settings.authAccountPopulate.selectAccount')}</button>
+            <button class="settingsAuthAccountLogOut" aria-label="${logoutLabel}" title="${logoutLabel}">
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"></path></svg>
+            </button>
         </div>`
 
         azuriomAuthAccountStr += accHtml
@@ -528,14 +474,11 @@ document.getElementById('settingsGameHeight').addEventListener('keydown', (e) =>
 })
 
 /**
- * Function to refresh the current tab whenever the selected
- * server is changed.
+ * Refresh the settings values whenever the selected server is changed
+ * (RAM bounds, etc. are server-dependent).
  */
-function animateSettingsTabRefresh(){
-    $(`#${selectedSettingsTab}`).fadeOut(500, async () => {
-        await prepareSettings()
-        $(`#${selectedSettingsTab}`).fadeIn(500)
-    })
+async function refreshSettingsValues(){
+    await prepareSettings()
 }
 
 /**
@@ -549,9 +492,6 @@ const settingsMaxRAMLabel     = document.getElementById('settingsMaxRAMLabel')
 const settingsMinRAMLabel     = document.getElementById('settingsMinRAMLabel')
 const settingsMemoryTotal     = document.getElementById('settingsMemoryTotal')
 const settingsMemoryAvail     = document.getElementById('settingsMemoryAvail')
-const settingsJavaExecDetails = document.getElementById('settingsJavaExecDetails')
-const settingsJavaReqDesc     = document.getElementById('settingsJavaReqDesc')
-const settingsJvmOptsLink     = document.getElementById('settingsJvmOptsLink')
 
 // Bind on change event for min memory container.
 settingsMinRAMRange.onchange = (e) => {
@@ -679,7 +619,26 @@ function bindRangeSlider(){
                 }
             }
         }
-    }) 
+
+        // Accessibilité clavier : flèches = ±1 pas, Origine/Fin = min/max.
+        v.onkeydown = (e) => {
+            const current = Number(v.getAttribute('value'))
+            let next = null
+            if(e.key === 'ArrowRight' || e.key === 'ArrowUp'){
+                next = Math.min(sliderMeta.max, current + sliderMeta.step)
+            } else if(e.key === 'ArrowLeft' || e.key === 'ArrowDown'){
+                next = Math.max(sliderMeta.min, current - sliderMeta.step)
+            } else if(e.key === 'Home'){
+                next = sliderMeta.min
+            } else if(e.key === 'End'){
+                next = sliderMeta.max
+            }
+            if(next !== null){
+                e.preventDefault()
+                updateRangedSlider(v, next, ((next-sliderMeta.min)/sliderMeta.step)*sliderMeta.inc)
+            }
+        }
+    })
 }
 
 /**
@@ -695,6 +654,7 @@ function updateRangedSlider(element, value, notch){
     const track = element.getElementsByClassName('rangeSliderTrack')[0]
     
     element.setAttribute('value', value)
+    element.setAttribute('aria-valuenow', value)
 
     if(notch < 0){
         notch = 0
@@ -727,45 +687,6 @@ function populateMemoryStatus(){
     settingsMemoryAvail.innerHTML = Number(os.freemem()/1073741824).toFixed(1) + 'G'
 }
 
-/**
- * Validate the provided executable path and display the data on
- * the UI.
- * 
- * @param {string} execPath The executable path to populate against.
- */
-async function populateJavaExecDetails(execPath){
-    const server = (await DistroAPI.getDistribution()).getServerById(ConfigManager.getSelectedServer())
-
-    const details = await validateSelectedJvm(ensureJavaDirIsRoot(execPath), server.effectiveJavaOptions.supported)
-
-    if(details != null) {
-        settingsJavaExecDetails.innerHTML = Lang.queryJS('settings.java.selectedJava', { version: details.semverStr, vendor: details.vendor })
-    } else {
-        settingsJavaExecDetails.innerHTML = Lang.queryJS('settings.java.invalidSelection')
-    }
-}
-
-function populateJavaReqDesc(server) {
-    settingsJavaReqDesc.innerHTML = Lang.queryJS('settings.java.requiresJava', { major: server.effectiveJavaOptions.suggestedMajor })
-}
-
-function populateJvmOptsLink(server) {
-    const major = server.effectiveJavaOptions.suggestedMajor
-    settingsJvmOptsLink.innerHTML = Lang.queryJS('settings.java.availableOptions', { major: major })
-    if(major >= 12) {
-        settingsJvmOptsLink.href = `https://docs.oracle.com/en/java/javase/${major}/docs/specs/man/java.html#extra-options-for-java`
-    }
-    else if(major >= 11) {
-        settingsJvmOptsLink.href = 'https://docs.oracle.com/en/java/javase/11/tools/java.html#GUID-3B1CE181-CD30-4178-9602-230B800D4FAE'
-    }
-    else if(major >= 9) {
-        settingsJvmOptsLink.href = `https://docs.oracle.com/javase/${major}/tools/java.htm`
-    }
-    else {
-        settingsJvmOptsLink.href = `https://docs.oracle.com/javase/${major}/docs/technotes/tools/${process.platform === 'win32' ? 'windows' : 'unix'}/java.html`
-    }
-}
-
 function bindMinMaxRam(server) {
     // Store maximum memory values.
     const SETTINGS_MAX_MEMORY = ConfigManager.getAbsoluteMaxRAM(server.rawServer.javaOptions?.ram)
@@ -786,24 +707,8 @@ async function prepareJavaTab(){
     bindMinMaxRam(server)
     bindRangeSlider(server)
     populateMemoryStatus()
-    populateJavaReqDesc(server)
-    populateJvmOptsLink(server)
 }
 
-/**
- * About Tab
- */
-
-const settingsTabAbout             = document.getElementById('settingsTabAbout')
-const settingsAboutChangelogTitle  = settingsTabAbout.getElementsByClassName('settingsChangelogTitle')[0]
-const settingsAboutChangelogText   = settingsTabAbout.getElementsByClassName('settingsChangelogText')[0]
-const settingsAboutChangelogButton = settingsTabAbout.getElementsByClassName('settingsChangelogButton')[0]
-
-// Bind the devtools toggle button.
-document.getElementById('settingsAboutDevToolsButton').onclick = (e) => {
-    let window = remote.getCurrentWindow()
-    window.toggleDevTools()
-}
 
 /**
  * Return whether or not the provided version is a prerelease.
@@ -836,51 +741,6 @@ function populateVersionInformation(version, valueElement, titleElement, checkEl
         titleElement.style.color = null
         checkElement.style.background = null
     }
-}
-
-/**
- * Retrieve the version information and display it on the UI.
- */
-function populateAboutVersionInformation(){
-    populateVersionInformation(remote.app.getVersion(), document.getElementById('settingsAboutCurrentVersionValue'), document.getElementById('settingsAboutCurrentVersionTitle'), document.getElementById('settingsAboutCurrentVersionCheck'))
-}
-
-/**
- * Fetches the GitHub atom release feed and parses it for the release notes
- * of the current version. This value is displayed on the UI.
- */
-function populateReleaseNotes(){
-    $.ajax({
-        url: 'https://github.com/dscalzi/HeliosLauncher/releases.atom',
-        success: (data) => {
-            const version = 'v' + remote.app.getVersion()
-            const entries = $(data).find('entry')
-            
-            for(let i=0; i<entries.length; i++){
-                const entry = $(entries[i])
-                let id = entry.find('id').text()
-                id = id.substring(id.lastIndexOf('/')+1)
-
-                if(id === version){
-                    settingsAboutChangelogTitle.innerHTML = entry.find('title').text()
-                    settingsAboutChangelogText.innerHTML = entry.find('content').text()
-                    settingsAboutChangelogButton.href = entry.find('link').attr('href')
-                }
-            }
-
-        },
-        timeout: 2500
-    }).catch(err => {
-        settingsAboutChangelogText.innerHTML = Lang.queryJS('settings.about.releaseNotesFailed')
-    })
-}
-
-/**
- * Prepare account tab for display.
- */
-function prepareAboutTab(){
-    populateAboutVersionInformation()
-    populateReleaseNotes()
 }
 
 /**
@@ -965,14 +825,12 @@ function prepareUpdateTab(data = null){
   */
 async function prepareSettings(first = false) {
     if(first){
-        setupSettingsTabs()
         initSettingsValidators()
         prepareUpdateTab()
     }
     await initSettingsValues()
     prepareAccountsTab()
     await prepareJavaTab()
-    prepareAboutTab()
 }
 
 // Prepare the settings UI on startup.
