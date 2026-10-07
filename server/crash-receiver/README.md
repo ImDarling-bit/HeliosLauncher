@@ -22,16 +22,31 @@ Avec Plesk, c'est en général `/var/www/vhosts/districtliferp.fr/crash-reports/
 du dossier public : personne ne peut les télécharger depuis Internet. Tu y accèdes par le
 Gestionnaire de fichiers de Plesk (racine de l'abonnement) ou en SFTP.
 
+Les rapports sont rangés **par code d'erreur, puis par pseudo** :
+
 ```
 crash-reports/
-  2026-10-07/
-    204109_Roket_e50e6c6e/
-      meta.json          ← pseudo, version du launcher, code de sortie, OS, RAM, options Java
-      crash-report.txt   ← le crash-report Minecraft (s'il y en a un)
-      hs_err.log         ← crash natif de la JVM (rare)
-      latest.log         ← fin de logs/latest.log
-      debug.log          ← fin de logs/debug.log
+  OutOfMemoryError/
+    Roket/
+      2026-10-07_224236_d39ad515/
+        meta.json          ← pseudo, version du launcher, code de sortie, OS, RAM, options Java
+        crash-report.txt   ← le crash-report Minecraft (s'il y en a un)
+        hs_err.log         ← crash natif de la JVM (rare)
+        latest.log         ← fin de logs/latest.log
+        debug.log          ← fin de logs/debug.log
+  NoClassDefFoundError/
+    Alex_42/
+      …
+  JVM_crash_natif/
+  exit_-1/
 ```
+
+Le **code d'erreur** est déterminé ainsi :
+1. l'exception Java du crash-report, juste après `Description:` (ex. `java.lang.OutOfMemoryError: …` → `OutOfMemoryError`) ;
+2. sinon `JVM_crash_natif` si Java lui-même a planté (`hs_err_pid*.log`) ;
+3. sinon le code de sortie du jeu (`exit_-1`, `exit_1`…), quand le jeu s'est fermé anormalement sans crash-report.
+
+Il est aussi enregistré dans `meta.json` (`"errorCode"`).
 
 Si le dossier ne peut pas être créé (droits), mets un autre chemin dans `config.php`
 (`storage_dir`), de préférence en dehors de `httpdocs`.

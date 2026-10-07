@@ -10,9 +10,12 @@
  *   - debug-log     : logs/debug.log (fin du fichier), gzip (facultatif)
  * avec l'en-tête X-DL-Crash-Key.
  *
- * Chaque rapport est décompressé et rangé dans :
- *   <STORAGE_DIR>/<AAAA-MM-JJ>/<HHMMSS>_<pseudo>_<id>/
+ * Chaque rapport est décompressé et rangé par code d'erreur, puis par pseudo :
+ *   <STORAGE_DIR>/<code d'erreur>/<pseudo>/<AAAA-MM-JJ_HHMMSS>_<id>/
  *       meta.json, crash-report.txt, hs_err.log, latest.log, debug.log
+ * Le code d'erreur est l'exception Java du crash-report (ex. NoClassDefFoundError,
+ * OutOfMemoryError), « JVM_crash_natif » pour un crash de la JVM, sinon le code de
+ * sortie du jeu (ex. exit_-1) — voir errorCode() plus bas.
  *
  * Installation et configuration : voir README.md à côté de ce fichier.
  */
@@ -106,9 +109,32 @@ if (!$decoded) {
     reply(400, ['ok' => false, 'error' => 'aucun fichier']);
 }
 
+// --- Code d'erreur (premier niveau de dossier) ---------------------------------
+/**
+ * Exception Java qui a fait planter le jeu, lue dans le crash-report :
+ * « java.lang.NoClassDefFoundError: com/x/Y » donne « NoClassDefFoundError ».
+ * À défaut : « JVM_crash_natif » (hs_err_pid*.log), puis le code de sortie.
+ */
+function errorCode(array $decoded, array $meta): string
+{
+    $report = $decoded['crash-report.txt'] ?? '';
+    // Après « Description: », la première ligne du type pkg.NomException / pkg.NomError.
+    $afterDescription = preg_split('/^Description:.*$/m', $report, 2)[1] ?? $report;
+    if (preg_match('/^\s*(?:[a-z_$][\w$]*\.)+([A-Z][\w$]*(?:Exception|Error|Throwable))\b/m', $afterDescription, $m)) {
+        return $m[1];
+    }
+    if (isset($decoded['hs_err.log'])) {
+        return 'JVM_crash_natif';
+    }
+    $exit = $meta['exitCode'] ?? null;
+    return is_int($exit) ? 'exit_' . $exit : 'inconnu';
+}
+$code = preg_replace('/[^A-Za-z0-9_.-]/', '_', errorCode($decoded, $meta));
+$meta['errorCode'] = $code;
+
 // --- Enregistrement -----------------------------------------------------------
 $id = bin2hex(random_bytes(4));
-$dir = sprintf('%s/%s/%s_%s_%s', $storage, date('Y-m-d'), date('His'), $username, $id);
+$dir = sprintf('%s/%s/%s/%s_%s', $storage, $code, $username, date('Y-m-d_His'), $id);
 if (!mkdir($dir, 0750, true)) {
     reply(500, ['ok' => false, 'error' => 'écriture impossible']);
 }
@@ -121,20 +147,36 @@ foreach ($decoded as $name => $content) {
 }
 
 // --- Nettoyage des vieux rapports (une fois sur 50 environ) ----------------------
+// Chaque rapport est daté par le nom de son dossier (AAAA-MM-JJ_HHMMSS_id) ; les
+// dossiers pseudo / code d'erreur devenus vides sont supprimés aussi.
+function removeTree(string $path): void
+{
+    $it = new RecursiveIteratorIterator(
+        new RecursiveDirectoryIterator($path, FilesystemIterator::SKIP_DOTS),
+        RecursiveIteratorIterator::CHILD_FIRST
+    );
+    foreach ($it as $f) {
+        $f->isDir() ? rmdir($f->getPathname()) : unlink($f->getPathname());
+    }
+    rmdir($path);
+}
 if (random_int(1, 50) === 1) {
     $limit = date('Y-m-d', $now - $config['retention_days'] * 86400);
-    foreach (glob($storage . '/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]', GLOB_ONLYDIR) ?: [] as $day) {
-        if (basename($day) < $limit) {
-            $it = new RecursiveIteratorIterator(
-                new RecursiveDirectoryIterator($day, FilesystemIterator::SKIP_DOTS),
-                RecursiveIteratorIterator::CHILD_FIRST
-            );
-            foreach ($it as $f) {
-                $f->isDir() ? rmdir($f->getPathname()) : unlink($f->getPathname());
-            }
-            rmdir($day);
+    foreach (glob($storage . '/*/*/[0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]_*', GLOB_ONLYDIR) ?: [] as $report) {
+        if (substr(basename($report), 0, 10) < $limit) {
+            removeTree($report);
+        }
+    }
+    foreach (glob($storage . '/*/*', GLOB_ONLYDIR) ?: [] as $player) {
+        if (!(new FilesystemIterator($player))->valid()) {
+            rmdir($player);
+        }
+    }
+    foreach (glob($storage . '/*', GLOB_ONLYDIR) ?: [] as $codeDir) {
+        if (basename($codeDir) !== '_ratelimit' && !(new FilesystemIterator($codeDir))->valid()) {
+            rmdir($codeDir);
         }
     }
 }
 
-reply(200, ['ok' => true, 'id' => basename($dir)]);
+reply(200, ['ok' => true, 'id' => "$code/$username/" . basename($dir)]);
