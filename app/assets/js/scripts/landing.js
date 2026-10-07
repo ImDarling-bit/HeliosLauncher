@@ -1439,7 +1439,9 @@ async function initPatchNotes() {
 //  PROCHAIN ÉVÉNEMENT — fichier JSON dédié, même principe que
 //  patch.json (voir initPatchNotes ci-dessus). Schéma attendu :
 //  [{ "title": "...", "date": "2026-10-15T20:30:00", "location": "...",
-//     "description": "...", "signupUrl": "https://..." }, ...]
+//     "description": "...", "url": "https://...", "linkLabel": "Voir sur Discord" }, ...]
+//  url et linkLabel sont facultatifs : sans url, aucun lien n'est affiché ; sans
+//  linkLabel, le lien s'intitule « En savoir plus ». (signupUrl reste accepté.)
 //  (un tableau, pas un objet seul — permet d'en préparer plusieurs à
 //  l'avance ; le launcher prend automatiquement le plus proche dans le futur)
 // ─────────────────────────────────────────────────────────
@@ -1515,14 +1517,17 @@ function renderNextEvent(evt){
     const dateStr = dateObj.toLocaleString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })
     if(meta) meta.textContent = [dateStr, evt.location].filter(Boolean).join(' · ')
 
+    const url = evt.url || evt.signupUrl
     if(cta){
-        cta.textContent = evt.signupUrl ? "S'inscrire →" : 'Détails →'
+        cta.style.display = url ? '' : 'none'
+        cta.textContent = `${evt.linkLabel || 'En savoir plus'} →`
         cta.onclick = (e) => {
             e.stopPropagation()
-            if(evt.signupUrl) shell.openExternal(evt.signupUrl)
+            if(url) shell.openExternal(url)
         }
     }
-    card.onclick = () => { if(evt.signupUrl) shell.openExternal(evt.signupUrl) }
+    card.style.cursor = url ? 'pointer' : 'default'
+    card.onclick = () => { if(url) shell.openExternal(url) }
 
     renderEventCountdown()
     nextEventTimer = setInterval(renderEventCountdown, 1000)

@@ -43,14 +43,47 @@ const configPath = path.join(exports.getLauncherDirectory(), 'config.json')
 const configPathLEGACY = path.join(dataPath, 'config.json')
 const firstLaunch = !fs.existsSync(configPath) && !fs.existsSync(configPathLEGACY)
 
+// Mémoire de la JVM (DistrictLife) :
+// - -Xmx : 4 Go par défaut, jamais moins de 3 Go (beaucoup de packs de véhicules MTS) ;
+// - -Xms : la moitié de -Xmx (au moins 1 Go) au lieu de la même valeur, pour que Java
+//   puisse rendre la mémoire inutilisée au système.
+// Aucune option -XX:MaxDirectMemorySize : sans elle, la limite de mémoire directe vaut
+// -Xmx (elle était fixée à 2 Go et provoquait des « OutOfMemoryError: Direct buffer
+// memory » dans le rendu d'Immersive Vehicles).
+const GiB = 1073741824
+const MIN_MAX_RAM_MB = 3072
+const DEFAULT_MAX_RAM_MB = 4096
+const MIN_XMS_MB = 1024
+
+function ramToMB(ram) {
+    const val = Number.parseFloat(ram)
+    return String(ram).trim().toUpperCase().endsWith('G') ? val*1024 : val
+}
+
+function mbToRam(mb) {
+    return mb % 1024 === 0 ? `${mb/1024}G` : `${mb}M`
+}
+
+// -Xms par défaut : la moitié de -Xmx, arrondie à 512 Mo, au moins 1 Go.
+function resolveXms(maxRAM) {
+    return mbToRam(Math.max(MIN_XMS_MB, Math.floor(ramToMB(maxRAM)/2/512)*512))
+}
+
 exports.getAbsoluteMinRAM = function(ram){
+    let min
     if(ram?.minimum != null) {
-        return ram.minimum/1024
+        min = ram.minimum/1024
     } else {
         // Legacy behavior
         const mem = os.totalmem()
-        return mem >= (6*1073741824) ? 3 : 2
+        min = mem >= (6*GiB) ? 3 : 2
     }
+    return Math.max(min, MIN_MAX_RAM_MB/1024)
+}
+
+// Borne basse du curseur « RAM minimale » (-Xms), indépendante de celle de -Xmx.
+exports.getAbsoluteMinXmsRAM = function(){
+    return MIN_XMS_MB/1024
 }
 
 exports.getAbsoluteMaxRAM = function(_ram){
@@ -61,11 +94,18 @@ exports.getAbsoluteMaxRAM = function(_ram){
 
 function resolveSelectedRAM(ram) {
     if(ram?.recommended != null) {
-        return `${ram.recommended}M`
+        // Réglage fourni par la distribution : 4 Go au moins, sans dépasser le maximum
+        // proposé par le curseur des paramètres (ni descendre sous 3 Go).
+        const sliderMaxMB = exports.getAbsoluteMaxRAM(ram)*1024
+        const mb = Math.max(MIN_MAX_RAM_MB, Math.min(Math.max(ram.recommended, DEFAULT_MAX_RAM_MB), sliderMaxMB))
+        return mbToRam(mb)
     } else {
-        // Legacy behavior
+        // Pas de réglage : d'après la RAM totale du PC (6 Go dès 16 Go, 4 Go dès 8 Go),
+        // jamais plus de la moitié de la RAM totale.
         const mem = os.totalmem()
-        return mem >= (8*1073741824) ? '4G' : (mem >= (6*1073741824) ? '3G' : '2G')
+        const wantedMB = mem >= (16*GiB) ? 6144 : (mem >= (8*GiB) ? DEFAULT_MAX_RAM_MB : MIN_MAX_RAM_MB)
+        const halfMB = Math.floor(mem/2/1048576/512)*512
+        return mbToRam(Math.min(wantedMB, halfMB))
     }
 }
 
@@ -537,9 +577,11 @@ function defaultJavaConfig(effectiveJavaOptions, ram) {
 }
 
 function defaultJavaConfig8(ram) {
+    const maxRAM = resolveSelectedRAM(ram)
     return {
-        minRAM: resolveSelectedRAM(ram),
-        maxRAM: resolveSelectedRAM(ram),
+        minRAM: resolveXms(maxRAM),
+        maxRAM,
+        migrationVersion: JAVA_CONFIG_MIGRATION_VERSION,
         executable: null,
         jvmOptions: [
             '-XX:+UseConcMarkSweepGC',
@@ -551,9 +593,11 @@ function defaultJavaConfig8(ram) {
 }
 
 function defaultJavaConfig17(ram) {
+    const maxRAM = resolveSelectedRAM(ram)
     return {
-        minRAM: resolveSelectedRAM(ram),
-        maxRAM: resolveSelectedRAM(ram),
+        minRAM: resolveXms(maxRAM),
+        maxRAM,
+        migrationVersion: JAVA_CONFIG_MIGRATION_VERSION,
         executable: null,
         jvmOptions: [
             '-XX:+UnlockExperimentalVMOptions',
@@ -561,8 +605,7 @@ function defaultJavaConfig17(ram) {
             '-XX:G1NewSizePercent=20',
             '-XX:G1ReservePercent=20',
             '-XX:MaxGCPauseMillis=50',
-            '-XX:G1HeapRegionSize=32M',
-            '-XX:MaxDirectMemorySize=2G'
+            '-XX:G1HeapRegionSize=32M'
         ],
     }
 }
@@ -576,7 +619,28 @@ function defaultJavaConfig17(ram) {
 exports.ensureJavaConfig = function(serverid, effectiveJavaOptions, ram) {
     if(!Object.prototype.hasOwnProperty.call(config.javaConfig, serverid)) {
         config.javaConfig[serverid] = defaultJavaConfig(effectiveJavaOptions, ram)
+    } else {
+        migrateJavaConfig(config.javaConfig[serverid])
     }
+}
+
+// Migration des configs Java déjà enregistrées chez les joueurs (appliquée une seule
+// fois, au premier démarrage du launcher mis à jour) :
+// v1 — retire -XX:MaxDirectMemorySize, remonte -Xmx à 3 Go s'il est en dessous, et
+//      passe -Xms à la moitié de -Xmx s'il lui était égal (ou supérieur).
+const JAVA_CONFIG_MIGRATION_VERSION = 1
+function migrateJavaConfig(javaConfig) {
+    if((javaConfig.migrationVersion || 0) >= JAVA_CONFIG_MIGRATION_VERSION) return
+
+    javaConfig.jvmOptions = (javaConfig.jvmOptions || [])
+        .filter(opt => !/^-XX:MaxDirectMemorySize=/i.test(opt.trim()))
+    if(ramToMB(javaConfig.maxRAM) < MIN_MAX_RAM_MB) {
+        javaConfig.maxRAM = mbToRam(MIN_MAX_RAM_MB)
+    }
+    if(ramToMB(javaConfig.minRAM) >= ramToMB(javaConfig.maxRAM)) {
+        javaConfig.minRAM = resolveXms(javaConfig.maxRAM)
+    }
+    javaConfig.migrationVersion = JAVA_CONFIG_MIGRATION_VERSION
 }
 
 /**
