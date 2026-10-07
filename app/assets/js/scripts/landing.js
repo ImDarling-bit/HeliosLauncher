@@ -32,6 +32,7 @@ const {
 // Internal Requirements
 const DiscordWrapper          = require('./assets/js/discordwrapper')
 const ProcessBuilder          = require('./assets/js/processbuilder')
+const GameLock                = require('./assets/js/gamelock')
 
 // Launch Elements
 const launch_content          = document.getElementById('launch_content')
@@ -743,6 +744,58 @@ function showLaunchFailure(title, desc){
     toggleLaunchArea(false)
 }
 
+/**
+ * Vérifie qu'aucun jeu lancé par le launcher ne tourne encore pour ce serveur. Si un
+ * jeu tourne, rien ne doit être vérifié ni écrit dans le dossier mods (le jeu garde
+ * ses .jar ouverts) : on affiche un message qui propose de fermer le jeu, puis de
+ * relancer la mise à jour.
+ *
+ * @param {string} serverId Le serveur à lancer.
+ * @param {Function} retry Relance la procédure une fois le jeu fermé.
+ * @returns {Promise<boolean>} true si on peut continuer.
+ */
+async function ensureGameNotRunning(serverId, retry){
+    const running = await GameLock.getRunningGame(serverId)
+    if(running == null) return true
+
+    LoggerUtil.getLogger('LaunchSuite').warn(`Le jeu tourne encore (PID ${running.pid}), mise à jour des mods bloquée.`)
+    setOverlayContent(
+        'Le jeu est déjà lancé',
+        'Ferme le jeu pour installer la mise à jour.<br><br>DistrictLife est encore ouvert : le launcher ne peut ni vérifier ni mettre à jour les mods tant qu\'il tourne, et une seule partie peut être lancée à la fois.',
+        'Fermer le jeu',
+        'Annuler'
+    )
+    setOverlayHandler(async () => {
+        toggleOverlay(false)
+        setLaunchDetails('Fermeture du jeu…')
+        toggleLaunchArea(true)
+        if(await GameLock.closeGame(running.pid)){
+            retry()
+        } else {
+            showLaunchFailure('Impossible de fermer le jeu', 'Ferme DistrictLife manuellement, puis clique de nouveau sur JOUER.')
+        }
+    })
+    setDismissHandler(() => {
+        toggleOverlay(false)
+    })
+    toggleOverlay(true, true)
+    toggleLaunchArea(false)
+    return false
+}
+
+/**
+ * Dernière vérification juste avant d'écrire dans le dossier mods (téléchargement,
+ * suppression des mods obsolètes) : si un jeu a été lancé entre-temps, on abandonne.
+ *
+ * @param {string} serverId Le serveur.
+ * @returns {Promise<boolean>} true si on peut écrire.
+ */
+async function canWriteMods(serverId){
+    if(await GameLock.getRunningGame(serverId) == null) return true
+    showLaunchFailure('Le jeu est déjà lancé', 'Ferme le jeu pour installer la mise à jour, puis clique de nouveau sur JOUER.')
+    return false
+}
+
 /* System (Java) Scan */
 
 /**
@@ -1081,6 +1134,12 @@ async function dlAsync(login = true) {
         }
     }
 
+    // Jamais de vérification ni de mise à jour des mods pendant qu'une partie tourne,
+    // et jamais deux parties en même temps.
+    if(!await ensureGameNotRunning(serv.rawServer.id, () => dlAsync(login))) {
+        return
+    }
+
     setLaunchDetails(Lang.queryJS('landing.dlAsync.pleaseWait'))
     toggleLaunchArea(true)
     setLaunchPercentage(0, 100)
@@ -1122,6 +1181,10 @@ async function dlAsync(login = true) {
     
 
     if(invalidFileCount > 0) {
+        if(!await canWriteMods(serv.rawServer.id)) {
+            fullRepairModule.destroyReceiver()
+            return
+        }
         loggerLaunchSuite.info('Downloading files.')
         setLaunchDetails(Lang.queryJS('landing.dlAsync.downloadingFiles'))
         setLaunchPercentage(0)
@@ -1145,7 +1208,11 @@ async function dlAsync(login = true) {
     fullRepairModule.destroyReceiver()
 
     // Supprime les mods présents sur le disque qui ne sont plus dans le distribution.json
+    // (et les téléchargements interrompus *.dlpart, voir patches/helios-core*.patch).
     const modsDir = path.join(ConfigManager.getInstanceDirectory(), ConfigManager.getSelectedServer(), 'mods')
+    if(!await canWriteMods(serv.rawServer.id)) {
+        return
+    }
     if(await fsExtra.pathExists(modsDir)) {
         const expectedMods = new Set(
             serv.modules
@@ -1154,7 +1221,9 @@ async function dlAsync(login = true) {
         )
         const presentFiles = await fsExtra.readdir(modsDir)
         for(const file of presentFiles) {
-            if(file.endsWith('.jar') && !expectedMods.has(file)) {
+            if(file.endsWith('.dlpart')) {
+                await fsExtra.remove(path.join(modsDir, file))
+            } else if(file.endsWith('.jar') && !expectedMods.has(file)) {
                 loggerLaunchSuite.info(`Suppression mod obsolète : ${file}`)
                 await fsExtra.remove(path.join(modsDir, file))
             }
@@ -1241,6 +1310,7 @@ async function dlAsync(login = true) {
         try {
             // Build Minecraft process.
             proc = pb.build()
+            GameLock.recordLaunch(serv.rawServer.id, proc)
 
             // Bind listeners to stdout.
             proc.stdout.on('data', tempListener)

@@ -337,8 +337,23 @@ function getPlatformIcon(filename){
     return path.join(__dirname, 'app', 'assets', 'images', `${filename}.png`)
 }
 
-app.on('ready', createWindow)
-app.on('ready', createMenu)
+// Une seule instance du launcher : pendant une partie, la fenêtre est seulement
+// masquée. Sans ce verrou, relancer le launcher (raccourci, menu Démarrer) ouvrait une
+// deuxième copie qui revérifiait et réécrivait le dossier mods pendant que le jeu
+// tournait. Une deuxième ouverture réaffiche simplement la fenêtre existante.
+if(!app.requestSingleInstanceLock()){
+    app.quit()
+} else {
+    app.on('second-instance', () => {
+        if(win){
+            if(win.isMinimized()) win.restore()
+            win.show()
+            win.focus()
+        }
+    })
+    app.on('ready', createWindow)
+    app.on('ready', createMenu)
+}
 
 app.on('window-all-closed', () => {
     // On macOS it is common for applications and their menu bar
