@@ -126,7 +126,9 @@ const DEFAULT_CONFIG = {
         },
         launcher: {
             allowPrerelease: false,
-            dataDirectory: dataPath
+            dataDirectory: dataPath,
+            sendCrashReports: true,
+            crashReportNoticeShown: false
         }
     },
     newsCache: {
@@ -876,4 +878,32 @@ exports.getAllowPrerelease = function(def = false){
  */
 exports.setAllowPrerelease = function(allowPrerelease){
     config.settings.launcher.allowPrerelease = allowPrerelease
+}
+
+/**
+ * Envoi automatique des rapports de crash au serveur DistrictLife (voir crashreporter.js).
+ *
+ * @param {boolean} def Optional. If true, the default value will be returned.
+ * @returns {boolean}
+ */
+exports.getSendCrashReports = function(def = false){
+    return !def ? config.settings.launcher.sendCrashReports : DEFAULT_CONFIG.settings.launcher.sendCrashReports
+}
+
+/**
+ * @param {boolean} sendCrashReports Envoyer les rapports de crash.
+ */
+exports.setSendCrashReports = function(sendCrashReports){
+    config.settings.launcher.sendCrashReports = sendCrashReports
+}
+
+/**
+ * @returns {boolean} Le joueur a déjà vu le message d'information sur les rapports de crash.
+ */
+exports.getCrashReportNoticeShown = function(){
+    return config.settings.launcher.crashReportNoticeShown
+}
+
+exports.setCrashReportNoticeShown = function(shown){
+    config.settings.launcher.crashReportNoticeShown = shown
 }

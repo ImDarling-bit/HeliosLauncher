@@ -21,6 +21,9 @@ const logger = LoggerUtil.getLogger('GameLock')
 
 const LOCK_FILE = '.dl-game.lock'
 
+// PID des jeux fermés par le bouton « Fermer le jeu » : ce n'est pas un crash.
+const closedByLauncher = new Set()
+
 function lockPath(serverId){
     return path.join(ConfigManager.getInstanceDirectory(), serverId, LOCK_FILE)
 }
@@ -92,12 +95,21 @@ exports.getRunningGame = async function(serverId){
 }
 
 /**
+ * @param {number} pid Le PID d'un jeu.
+ * @returns {boolean} true si ce jeu a été fermé volontairement par le launcher.
+ */
+exports.wasClosedByLauncher = function(pid){
+    return closedByLauncher.has(pid)
+}
+
+/**
  * Ferme le jeu et attend qu'il soit réellement arrêté (max ~15 s).
  *
  * @param {number} pid Le PID du jeu.
  * @returns {Promise<boolean>} true si le jeu est fermé.
  */
 exports.closeGame = async function(pid){
+    closedByLauncher.add(pid)
     try {
         process.kill(pid)
     } catch(err) {

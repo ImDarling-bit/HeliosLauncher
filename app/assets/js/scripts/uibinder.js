@@ -150,6 +150,8 @@ async function showMainUI(data){
     initPatchNotes()
     initNextEvent()
     initLinks()
+    // Rapports de crash restés en attente (envoi précédent impossible).
+    CrashReporter.flushQueue()
 }
 
 function showFatalStartupError(){

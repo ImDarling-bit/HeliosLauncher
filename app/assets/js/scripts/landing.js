@@ -33,6 +33,7 @@ const {
 const DiscordWrapper          = require('./assets/js/discordwrapper')
 const ProcessBuilder          = require('./assets/js/processbuilder')
 const GameLock                = require('./assets/js/gamelock')
+const CrashReporter           = require('./assets/js/crashreporter')
 
 // Launch Elements
 const launch_content          = document.getElementById('launch_content')
@@ -796,6 +797,34 @@ async function canWriteMods(serverId){
     return false
 }
 
+/**
+ * Au tout premier lancement, informe le joueur que les rapports de crash sont envoyés
+ * au staff (RGPD) et lui permet de refuser. Ne bloque plus ensuite.
+ *
+ * @returns {Promise<void>} Résolu quand le joueur a fait son choix.
+ */
+function showCrashReportNotice(){
+    if(ConfigManager.getCrashReportNoticeShown()) return Promise.resolve()
+    return new Promise(resolve => {
+        const done = (send) => {
+            ConfigManager.setSendCrashReports(send)
+            ConfigManager.setCrashReportNoticeShown(true)
+            ConfigManager.save()
+            toggleOverlay(false)
+            resolve()
+        }
+        setOverlayContent(
+            'Rapports de crash',
+            'Si le jeu plante, le launcher envoie automatiquement au staff DistrictLife le rapport de crash et les logs du jeu (pseudo, configuration du PC et de Java, liste des erreurs) pour corriger les problèmes plus vite. Les mots de passe et jetons de connexion ne sont jamais envoyés.<br><br>Tu peux changer ce choix à tout moment dans Paramètres → Launcher.',
+            'D\'accord',
+            'Ne pas envoyer'
+        )
+        setOverlayHandler(() => done(true))
+        setDismissHandler(() => done(false))
+        toggleOverlay(true, true)
+    })
+}
+
 /* System (Java) Scan */
 
 /**
@@ -1134,6 +1163,8 @@ async function dlAsync(login = true) {
         }
     }
 
+    await showCrashReportNotice()
+
     // Jamais de vérification ni de mise à jour des mods pendant qu'une partie tourne,
     // et jamais deux parties en même temps.
     if(!await ensureGameNotRunning(serv.rawServer.id, () => dlAsync(login))) {
@@ -1311,6 +1342,20 @@ async function dlAsync(login = true) {
             // Build Minecraft process.
             proc = pb.build()
             GameLock.recordLaunch(serv.rawServer.id, proc)
+            const gameStartedAt = Date.now()
+            const gamePid = proc.pid
+            proc.on('close', (code, signal) => {
+                CrashReporter.handleGameExit({
+                    serverId: serv.rawServer.id,
+                    gameDir: path.join(ConfigManager.getInstanceDirectory(), serv.rawServer.id),
+                    startedAt: gameStartedAt,
+                    exitCode: code,
+                    signal,
+                    closedByLauncher: GameLock.wasClosedByLauncher(gamePid),
+                    account: authUser,
+                    launcherVersion: remote.app.getVersion()
+                })
+            })
 
             // Bind listeners to stdout.
             proc.stdout.on('data', tempListener)

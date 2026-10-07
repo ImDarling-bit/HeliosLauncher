@@ -49,6 +49,8 @@ accountSelectConfirm = "Select"
 accountSelectCancel = "Cancel"
 
 [ejs.settings]
+sendCrashReportsTitle = "Send crash reports"
+sendCrashReportsDesc = "If the game crashes, the crash report and game logs are sent to the DistrictLife staff to help fix the issue. Login tokens are never sent."
 navHeaderText = "Settings"
 navAccount = "Account"
 navMinecraft = "Minecraft"

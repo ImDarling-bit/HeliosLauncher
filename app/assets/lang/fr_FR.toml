@@ -57,6 +57,8 @@ accountSelectConfirm = "Sélectionner"
 accountSelectCancel = "Annuler"
 
 [ejs.settings]
+sendCrashReportsTitle = "Envoyer les rapports de crash"
+sendCrashReportsDesc = "Si le jeu plante, le crash-report et les logs du jeu sont envoyés au staff DistrictLife pour l'aider à corriger le problème. Les jetons de connexion ne sont jamais envoyés."
 navHeaderText = "Paramètres"
 navAccount = "Compte"
 navMinecraft = "Minecraft"
