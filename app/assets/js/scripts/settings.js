@@ -696,7 +696,7 @@ function bindMinMaxRam(server) {
     settingsMaxRAMRange.setAttribute('max', SETTINGS_MAX_MEMORY)
     settingsMaxRAMRange.setAttribute('min', SETTINGS_MIN_MEMORY)
     settingsMinRAMRange.setAttribute('max', SETTINGS_MAX_MEMORY)
-    settingsMinRAMRange.setAttribute('min', SETTINGS_MIN_MEMORY)
+    settingsMinRAMRange.setAttribute('min', ConfigManager.getAbsoluteMinXmsRAM())
 }
 
 /**
