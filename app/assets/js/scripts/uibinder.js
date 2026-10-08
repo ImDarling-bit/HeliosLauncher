@@ -9,6 +9,11 @@ const { Type }      = require('helios-distribution-types')
 const AuthManager   = require('./assets/js/authmanager')
 const ConfigManager = require('./assets/js/configmanager')
 const { DistroAPI } = require('./assets/js/distromanager')
+const Backgrounds   = require('./assets/js/backgrounds')
+
+// Fond d'écran tiré au hasard dans distribution.districtliferp.fr/photo/index.json
+// (voir backgrounds.js). Lancé dès le démarrage pour être prêt avec l'interface.
+Backgrounds.applyRandomBackground()
 
 let rscShouldLoad = false
 let fatalStartupError = false
@@ -77,9 +82,8 @@ function getCurrentView(){
  * Appelé par l'événement IPC 'distributionIndexDone' depuis preloader.js.
  *
  * GUIDE UI/UX — Points de personnalisation dans cette fonction :
- *   1. Fond d'écran  : modifier la ligne document.body.style.backgroundImage
- *      → Pour désactiver les fonds rotatifs, commenter cette ligne et définir
- *        background dans dl-theme.css sur body.
+ *   1. Fond d'écran  : chargé depuis le serveur (photo/index.json), voir
+ *      assets/js/backgrounds.js — plus dans cette fonction.
  *   2. Couleur frameBar : modifier 'rgba(0, 0, 0, 0.5)' (barre de titre en jeu)
  *   3. Vue initiale : la logique if/else choisit entre welcome / landing / loginOptions
  *      selon l'état d'authentification — ne pas supprimer cette logique.
@@ -102,9 +106,6 @@ async function showMainUI(data){
         // UI — couleur de la barre de titre une fois la page principale visible.
         // Pour dl-theme.css : surcharger #frameBar { background-color: ... !important }
         document.getElementById('frameBar').style.backgroundColor = 'rgba(0, 0, 0, 0.5)'
-        // UI — injection du fond d'écran rotatif (bkid généré dans index.js).
-        // Pour désactiver : commenter cette ligne et définir background dans dl-theme.css
-        document.body.style.backgroundImage = `url('assets/images/backgrounds/${document.body.getAttribute('bkid')}.jpg')`
         $('#main').show()
 
         const isLoggedIn = Object.keys(ConfigManager.getAuthAccounts()).length > 0

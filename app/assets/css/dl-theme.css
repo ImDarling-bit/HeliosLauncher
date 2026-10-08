@@ -65,7 +65,9 @@ html, body {
 }
 
 body {
-    background-color: var(--dl-bg) !important;
+    /* Visible tant que le fond d'écran (chargé depuis le serveur, voir backgrounds.js)
+       n'est pas arrivé, ou hors ligne sans fond en cache : sombre, comme les cartes. */
+    background-color: var(--dl-navy) !important;
     background-size: cover !important;
     background-position: center !important;
     color: var(--dl-text) !important;
