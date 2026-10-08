@@ -825,6 +825,63 @@ function showCrashReportNotice(){
     })
 }
 
+/**
+ * Espace disque nécessaire pour les fichiers du serveur qui manquent (ou ont changé),
+ * comparé à l'espace libre du disque qui contient le dossier des données. Si ça ne
+ * passe pas, affiche un message clair au lieu de laisser le téléchargement planter en
+ * plein milieu avec ENOSPC.
+ *
+ * Seuls les modules de la distribution sont comptés (mods, Forge, configs…) ; une marge
+ * couvre les fichiers Minecraft (assets, librairies) et Java.
+ *
+ * @param {Object} serv Le serveur (distribution helios-core).
+ * @returns {Promise<boolean>} true si l'espace est suffisant (ou impossible à mesurer).
+ */
+const DISK_MARGIN_BYTES = 500 * 1024 * 1024
+async function ensureDiskSpace(serv){
+    const logger = LoggerUtil.getLogger('LaunchSuite')
+    try {
+        let needed = 0
+        const visit = async (mdl) => {
+            const size = mdl.rawModule.artifact?.size
+            if(size > 0){
+                const stat = await fsExtra.stat(mdl.getPath()).catch(() => null)
+                if(stat == null || stat.size !== size) needed += size
+            }
+            for(const sub of mdl.subModules) await visit(sub)
+        }
+        for(const mdl of serv.modules) await visit(mdl)
+        if(needed === 0) return true
+        needed += DISK_MARGIN_BYTES
+
+        // statfs a besoin d'un dossier existant : on remonte jusqu'au premier qui existe.
+        let dir = ConfigManager.getDataDirectory()
+        while(!await fsExtra.pathExists(dir) && path.dirname(dir) !== dir) dir = path.dirname(dir)
+        const { bavail, bsize } = await fsExtra.promises.statfs(dir)
+        const free = bavail * bsize
+        logger.info(`Espace disque : ${(needed / 1073741824).toFixed(2)} Go nécessaires, ${(free / 1073741824).toFixed(2)} Go libres (${dir}).`)
+        if(free >= needed) return true
+
+        showDiskFullFailure(needed, free, dir)
+        return false
+    } catch(err) {
+        logger.warn('Impossible de vérifier l\'espace disque, on continue.', err)
+        return true
+    }
+}
+
+function showDiskFullFailure(needed, free, dir){
+    const go = (bytes) => (bytes / 1073741824).toFixed(1).replace('.', ',')
+    const drive = process.platform === 'win32' ? path.parse(dir).root.replace(/\\$/, '') : dir
+    const detail = needed != null
+        ? `Il faut environ <b>${go(needed)} Go</b> libres pour installer les fichiers du jeu, et il ne reste que <b>${go(free)} Go</b> sur ${drive}.`
+        : `Le disque ${drive} est plein : le téléchargement des fichiers du jeu n'a pas pu se terminer.`
+    showLaunchFailure(
+        'Espace disque insuffisant',
+        `${detail}<br><br>Libère de la place (corbeille, téléchargements, « Nettoyage de disque » de Windows) ou choisis un autre dossier dans Paramètres → Launcher → Dossier des données, puis clique de nouveau sur JOUER. Les fichiers déjà téléchargés sont conservés.`
+    )
+}
+
 /* System (Java) Scan */
 
 /**
@@ -891,10 +948,8 @@ async function asyncSystemScan(effectiveJavaOptions, launchAfter = true){
         ConfigManager.setJavaExecutable(ConfigManager.getSelectedServer(), javaExec)
         ConfigManager.save()
 
-        // We need to make sure that the updated value is on the settings UI.
-        // Just incase the settings UI is already open.
-        settingsJavaExecVal.value = javaExec
-        await populateJavaExecDetails(settingsJavaExecVal.value)
+        // (L'ancienne page Java des Paramètres, qui affichait ce chemin, n'existe plus :
+        // la mettre à jour ici faisait échouer le premier lancement avec une ReferenceError.)
 
         // TODO Callback hell, refactor
         // TODO Move this out, separate concerns.
@@ -1212,7 +1267,7 @@ async function dlAsync(login = true) {
     
 
     if(invalidFileCount > 0) {
-        if(!await canWriteMods(serv.rawServer.id)) {
+        if(!await canWriteMods(serv.rawServer.id) || !await ensureDiskSpace(serv)) {
             fullRepairModule.destroyReceiver()
             return
         }
@@ -1226,7 +1281,11 @@ async function dlAsync(login = true) {
             setDownloadPercentage(100)
         } catch(err) {
             loggerLaunchSuite.error('Error during file download.')
-            showLaunchFailure(Lang.queryJS('landing.dlAsync.errorDuringFileDownloadTitle'), err.displayable || Lang.queryJS('landing.dlAsync.seeConsoleForDetails'))
+            if(/ENOSPC|no space left/i.test(`${err?.message ?? ''} ${err?.displayable ?? ''} ${err}`)) {
+                showDiskFullFailure(null, null, ConfigManager.getDataDirectory())
+            } else {
+                showLaunchFailure(Lang.queryJS('landing.dlAsync.errorDuringFileDownloadTitle'), err.displayable || Lang.queryJS('landing.dlAsync.seeConsoleForDetails'))
+            }
             return
         }
     } else {

@@ -285,10 +285,17 @@ document.addEventListener('readystatechange', function () {
         //const targetWidth2 = document.getElementById("server_selection").getBoundingClientRect().width
         //const targetWidth3 = document.getElementById("launch_button").getBoundingClientRect().width
 
-        document.getElementById('launch_details').style.maxWidth = 266.01
-        document.getElementById('launch_progress').style.width = 170.8
-        document.getElementById('launch_details_right').style.maxWidth = 170.8
-        document.getElementById('launch_progress_label').style.width = 53.21
+        // Certains de ces éléments n'existent plus dans le nouveau design (ex.
+        // launch_details_right) : sans ce test, l'erreur interrompait la fin de
+        // l'initialisation.
+        const setStyle = (id, prop, value) => {
+            const el = document.getElementById(id)
+            if(el) el.style[prop] = value
+        }
+        setStyle('launch_details', 'maxWidth', 266.01)
+        setStyle('launch_progress', 'width', 170.8)
+        setStyle('launch_details_right', 'maxWidth', 170.8)
+        setStyle('launch_progress_label', 'width', 53.21)
         
     }
 
