@@ -37,8 +37,13 @@ const FILES = [
     { key: 'crash-report', maxBytes: 2 * 1024 * 1024 },
     { key: 'hs-err',       maxBytes: 2 * 1024 * 1024 },
     { key: 'latest-log',   maxBytes: 4 * 1024 * 1024 },
-    { key: 'debug-log',    maxBytes: 3 * 1024 * 1024 }
+    { key: 'debug-log',    maxBytes: 3 * 1024 * 1024 },
+    { key: 'launcher-log', maxBytes: 2 * 1024 * 1024 }
 ]
+
+// Une même erreur du launcher n'est envoyée qu'une fois toutes les 10 minutes.
+const LAUNCHER_ERROR_COOLDOWN_MS = 10 * 60 * 1000
+const recentLauncherErrors = new Map()
 
 function queueDir(){
     return path.join(ConfigManager.getLauncherDirectory(), 'crash-queue')
@@ -216,4 +221,78 @@ exports.flushQueue = async function(){
     }
 }
 
+/**
+ * Code court d'une erreur du launcher, utilisé pour ranger le rapport côté serveur
+ * (dossier Launcher_<code>) : le code système (ENOENT, ENOSPC, EPERM…), sinon celui
+ * trouvé dans les dernières lignes de log, sinon le type d'erreur.
+ */
+function launcherErrorCode(error, logText){
+    if(error?.code && /^[A-Z][A-Z0-9_]{2,}$/.test(error.code)) return error.code
+    const lastErrors = logText.split('\n').slice(-200).reverse()
+    for(const line of lastErrors){
+        const m = line.match(/\b(E[A-Z]{2,}[A-Z0-9_]*):/)
+        if(m) return m[1]
+    }
+    if(error?.name && error.name !== 'Error') return error.name
+    return 'Erreur'
+}
+
+/**
+ * Envoie au serveur une erreur du launcher (échec du lancement, du téléchargement, de
+ * la vérification des fichiers…) avec les derniers logs du launcher.
+ *
+ * @param {Object} report
+ * @param {string} report.title Le titre affiché au joueur.
+ * @param {string} report.description Le message affiché au joueur.
+ * @param {*} report.error L'erreur d'origine (facultatif).
+ * @param {string} report.launcherVersion La version du launcher.
+ */
+exports.reportLauncherError = async function(report){
+    try {
+        if(!ConfigManager.getSendCrashReports()) return
+        const error = report.error instanceof Error ? report.error : (report.error != null ? new Error(String(report.error?.message ?? report.error)) : null)
+        if(report.error?.code && error && !error.code) error.code = report.error.code
+
+        const key = `${report.title}|${error?.message ?? report.description}`
+        const last = recentLauncherErrors.get(key)
+        if(last && Date.now() - last < LAUNCHER_ERROR_COOLDOWN_MS) return
+        recentLauncherErrors.set(key, Date.now())
+
+        const logText = require('./logbuffer').getText()
+        const serverId = ConfigManager.getSelectedServer()
+        const account = ConfigManager.getSelectedAccount()
+        const meta = {
+            type: 'launcher',
+            launcherVersion: report.launcherVersion,
+            serverId,
+            username: account?.displayName ?? null,
+            uuid: account?.uuid ?? null,
+            launcherErrorCode: launcherErrorCode(error, logText),
+            errorTitle: redact(String(report.title ?? '')),
+            errorDescription: redact(String(report.description ?? '').replace(/<[^>]+>/g, ' ')),
+            errorMessage: error ? redact(String(error.message)) : null,
+            errorStack: error?.stack ? redact(String(error.stack)) : null,
+            occurredAt: new Date().toISOString(),
+            os: `${os.platform()} ${os.release()} (${os.arch()})`,
+            totalMemoryGB: Math.round(os.totalmem() / 1073741824),
+            freeMemoryGB: Math.round(os.freemem() / 1073741824),
+            dataDirectory: redact(ConfigManager.getDataDirectory()),
+            javaMaxRAM: serverId ? ConfigManager.getMaxRAM(serverId) : null
+        }
+        const maxBytes = FILES.find(f => f.key === 'launcher-log').maxBytes
+        const files = { 'launcher-log': zlib.gzipSync(Buffer.from(redact(logText.slice(-maxBytes)), 'utf8')) }
+
+        try {
+            const res = await upload(meta, files)
+            logger.info('Erreur du launcher envoyée au serveur.', res?.id ?? '')
+        } catch(err) {
+            logger.warn('Envoi de l\'erreur du launcher impossible, elle sera renvoyée au prochain démarrage.', err.message)
+            await enqueue(`${Date.now()}-${process.pid}-launcher`, meta, files)
+        }
+    } catch(err) {
+        logger.error('Erreur pendant la préparation du rapport d\'erreur du launcher.', err)
+    }
+}
+
 exports._redact = redact
+exports._launcherErrorCode = launcherErrorCode

@@ -48,6 +48,19 @@ Le **code d'erreur** est déterminé ainsi :
 
 Il est aussi enregistré dans `meta.json` (`"errorCode"`).
 
+### Erreurs du launcher
+
+Quand le **launcher** lui-même échoue (vérification ou téléchargement des fichiers,
+chargement de la distribution, lancement du jeu…), il envoie aussi un rapport, rangé dans
+`Launcher_<code>/<pseudo>/…` (ex. `Launcher_ENOENT`, `Launcher_ENOSPC`, `Launcher_Erreur`) :
+
+- `meta.json` : `"type": "launcher"`, titre et message affichés au joueur, message et pile de
+  l'erreur, code (`launcherErrorCode`), OS, RAM, dossier des données ;
+- `launcher.log` : les ~3000 dernières lignes de log du launcher (jetons masqués).
+
+Les situations normales (jeu déjà lancé, disque plein, compte non connecté…) ne sont pas
+envoyées, et une même erreur n'est envoyée qu'une fois toutes les 10 minutes.
+
 Si le dossier ne peut pas être créé (droits), mets un autre chemin dans `config.php`
 (`storage_dir`), de préférence en dehors de `httpdocs`.
 
