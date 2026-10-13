@@ -1,3 +1,6 @@
+// Tampon des derniers logs, joint aux rapports d'erreur du launcher (crashreporter.js).
+require('./logbuffer').install()
+
 const {ipcRenderer}  = require('electron')
 const fs             = require('fs-extra')
 const os             = require('os')

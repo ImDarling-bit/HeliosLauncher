@@ -8,6 +8,7 @@
  *   - hs-err        : crash natif de la JVM, gzip (facultatif)
  *   - latest-log    : logs/latest.log (fin du fichier), gzip (facultatif)
  *   - debug-log     : logs/debug.log (fin du fichier), gzip (facultatif)
+ *   - launcher-log  : derniers logs du launcher, gzip (rapports "type": "launcher")
  * avec l'en-tête X-DL-Crash-Key.
  *
  * Chaque rapport est décompressé et rangé par code d'erreur, puis par pseudo :
@@ -79,6 +80,7 @@ $allowed = [
     'hs-err'       => 'hs_err.log',
     'latest-log'   => 'latest.log',
     'debug-log'    => 'debug.log',
+    'launcher-log' => 'launcher.log',   // erreurs du launcher (type "launcher")
 ];
 $maxBytes = $config['max_file_mb'] * 1024 * 1024;
 $decoded = [];
@@ -117,6 +119,12 @@ if (!$decoded) {
  */
 function errorCode(array $decoded, array $meta): string
 {
+    // Erreur du launcher lui-même (échec de téléchargement, de lancement…) :
+    // Launcher_<code système ou type d'erreur>, ex. Launcher_ENOENT.
+    if (($meta['type'] ?? '') === 'launcher') {
+        $code = preg_replace('/[^A-Za-z0-9_]/', '', (string) ($meta['launcherErrorCode'] ?? ''));
+        return 'Launcher_' . ($code !== '' ? substr($code, 0, 40) : 'Erreur');
+    }
     $report = $decoded['crash-report.txt'] ?? '';
     // Après « Description: », la première ligne du type pkg.NomException / pkg.NomError.
     $afterDescription = preg_split('/^Description:.*$/m', $report, 2)[1] ?? $report;
