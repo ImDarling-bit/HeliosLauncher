@@ -1,16 +1,17 @@
 diff --git a/node_modules/helios-core/dist/dl/DownloadEngine.js b/node_modules/helios-core/dist/dl/DownloadEngine.js
-index 922cd1a..f94cd8b 100644
+index 922cd1a..0548097 100644
 --- a/node_modules/helios-core/dist/dl/DownloadEngine.js
 +++ b/node_modules/helios-core/dist/dl/DownloadEngine.js
-@@ -44,6 +44,7 @@ const fs_extra_1 = require("fs-extra");
+@@ -44,6 +44,8 @@ const fs_extra_1 = require("fs-extra");
  const path_1 = require("path");
  const LoggerUtil_1 = require("../util/LoggerUtil");
  const NodeUtil_1 = require("../util/NodeUtil");
 +const FileUtils_1 = require("../common/util/FileUtils");
++const crypto_1 = require("crypto");
  const log = LoggerUtil_1.LoggerUtil.getLogger('DownloadEngine');
  function getExpectedDownloadSize(assets) {
      return assets.map(({ size }) => size).reduce((acc, v) => acc + v, 0);
-@@ -58,14 +59,19 @@ async function downloadQueue(assets, onProgress) {
+@@ -58,14 +60,22 @@ async function downloadQueue(assets, onProgress) {
              onProgress(received);
          };
      };
@@ -22,17 +23,20 @@ index 922cd1a..f94cd8b 100644
      return receivedTotals;
  }
 -async function downloadFile(url, path, onProgress) {
-+// DistrictLife : le fichier est écrit sous un nom temporaire (<fichier>.dlpart), son
-+// hash est vérifié, puis il remplace l'ancien par un simple renommage. Le fichier
-+// final n'est ainsi jamais à moitié écrit, même si le téléchargement est interrompu.
++// DistrictLife : le fichier est écrit sous un nom temporaire unique
++// (<fichier>.<aléatoire>.dlpart), son hash est vérifié, puis il remplace l'ancien par un
++// renommage atomique. Le fichier final n'est ainsi jamais à moitié écrit, même si le
++// téléchargement est interrompu. Le nom temporaire est unique car plusieurs entrées
++// peuvent pointer vers le même fichier et être téléchargées en parallèle (assets
++// Minecraft au contenu identique, librairies listées deux fois).
 +async function downloadFile(url, path, onProgress, asset) {
      await (0, fs_extra_1.ensureDir)((0, path_1.dirname)(path));
 +    const finalPath = path;
-+    path = `${finalPath}.dlpart`;
++    path = `${finalPath}.${(0, crypto_1.randomBytes)(4).toString('hex')}.dlpart`;
      const MAX_RETRIES = 10;
      let fileWriterStream = null; // The write stream.
      let retryCount = 0; // The number of retries attempted.
-@@ -116,8 +122,14 @@ async function downloadFile(url, path, onProgress) {
+@@ -116,8 +126,37 @@ async function downloadFile(url, path, onProgress) {
          else {
              log.error(`Unknown or unretryable exception thrown during request to ${url}. Rethrowing exception.`);
          }
@@ -43,7 +47,30 @@ index 922cd1a..f94cd8b 100644
 +        await (0, fs_extra_1.remove)(path).catch(() => { });
 +        throw new Error(`Le fichier téléchargé ${url} est corrompu (hash ${asset.algo} différent de celui attendu).`);
 +    }
-+    await (0, fs_extra_1.move)(path, finalPath, { overwrite: true });
++    await replaceFile(path, finalPath, asset);
++}
++// fs.rename remplace la destination d'un coup (y compris sous Windows). Sous Windows, il
++// peut échouer brièvement (EPERM/EBUSY) si un antivirus lit le fichier : on réessaie.
++async function replaceFile(tmpPath, finalPath, asset) {
++    for (let attempt = 0;; attempt++) {
++        try {
++            await (0, fs_extra_1.rename)(tmpPath, finalPath);
++            return;
++        }
++        catch (err) {
++            // Un téléchargement parallèle du même fichier a déjà mis en place un fichier valide.
++            if (asset?.hash != null && await (0, FileUtils_1.validateLocalFile)(finalPath, asset.algo, asset.hash)) {
++                await (0, fs_extra_1.remove)(tmpPath).catch(() => { });
++                return;
++            }
++            if (attempt < 5 && ['EPERM', 'EBUSY', 'EACCES'].includes(err.code)) {
++                await (0, NodeUtil_1.sleep)(200 * (attempt + 1));
++                continue;
++            }
++            await (0, fs_extra_1.remove)(tmpPath).catch(() => { });
++            throw err;
++        }
++    }
  }
  function retryableError(error) {
      if (error instanceof got_1.RequestError) {
