@@ -15,6 +15,39 @@ const LangLoader                        = require('./app/assets/js/langloader')
 // Setup Lang
 LangLoader.setupLanguage()
 
+// Outils de developpement : autorises uniquement quand le launcher tourne en mode
+// non package (npm start / electron .). On s'appuie sur app.isPackaged plutot que sur
+// isDev, car isDev peut etre force par la variable d'environnement ELECTRON_IS_DEV,
+// que n'importe quel joueur peut definir sur le build distribue.
+const DEV_TOOLS_ENABLED = !app.isPackaged
+
+/**
+ * Securite supplementaire quand les DevTools sont desactives : bloque les raccourcis
+ * clavier qui les ouvrent et referme immediatement toute fenetre DevTools ouverte.
+ * Applique a TOUS les webContents (fenetre principale, fenetres de connexion
+ * Microsoft, et tout webContents cree plus tard) via 'web-contents-created'.
+ */
+function blockDevTools(contents) {
+    contents.on('before-input-event', (event, input) => {
+        if(input.type !== 'keyDown') return
+        const key = (input.key || '').toLowerCase()
+        const ctrlShift = input.control && input.shift && ['i', 'j', 'c'].includes(key)
+        const macCmdAlt = input.meta && input.alt && ['i', 'j', 'c'].includes(key)
+        if(key === 'f12' || ctrlShift || macCmdAlt){
+            event.preventDefault()
+        }
+    })
+    contents.on('devtools-opened', () => {
+        contents.closeDevTools()
+    })
+}
+
+if(!DEV_TOOLS_ENABLED){
+    app.on('web-contents-created', (_, contents) => {
+        blockDevTools(contents)
+    })
+}
+
 // Setup auto updater.
 function initAutoUpdater(event, data) {
 
@@ -135,7 +168,10 @@ ipcMain.on(MSFT_OPCODE.OPEN_LOGIN, (ipcEvent, ...arguments_) => {
         width: 520,
         height: 600,
         frame: true,
-        icon: getPlatformIcon('district_life_icon_v1_4092x4092')
+        icon: getPlatformIcon('district_life_icon_v1_4092x4092'),
+        webPreferences: {
+            devTools: DEV_TOOLS_ENABLED
+        }
     })
 
     msftAuthWindow.on('closed', () => {
@@ -186,7 +222,10 @@ ipcMain.on(MSFT_OPCODE.OPEN_LOGOUT, (ipcEvent, uuid, isLastAccount) => {
         width: 520,
         height: 600,
         frame: true,
-        icon: getPlatformIcon('district_life_icon_v1_4092x4092')
+        icon: getPlatformIcon('district_life_icon_v1_4092x4092'),
+        webPreferences: {
+            devTools: DEV_TOOLS_ENABLED
+        }
     })
 
     msftLogoutWindow.on('closed', () => {
@@ -243,7 +282,8 @@ function createWindow() {
         webPreferences: {
             preload: path.join(__dirname, 'app', 'assets', 'js', 'preloader.js'),
             nodeIntegration: true,
-            contextIsolation: false
+            contextIsolation: false,
+            devTools: DEV_TOOLS_ENABLED
         },
         backgroundColor: '#00000000'
     })

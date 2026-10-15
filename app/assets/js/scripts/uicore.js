@@ -313,8 +313,11 @@ $(document).on('click', 'a[href^="http"]', function(event) {
  * Opens DevTools window if you hold (ctrl + shift + i).
  * This will crash the program if you are using multiple
  * DevTools, for example the chrome debugger in VS Code. 
+ * Uniquement hors build package : dans le launcher distribue les DevTools sont
+ * desactives (webPreferences.devTools = false, voir index.js).
  */
 document.addEventListener('keydown', function (e) {
+    if(remote.app.isPackaged) return
     if((e.key === 'I' || e.key === 'i') && e.ctrlKey && e.shiftKey){
         let window = remote.getCurrentWindow()
         window.toggleDevTools()
