@@ -269,8 +269,9 @@ let win
 function createWindow() {
 
     win = new BrowserWindow({
-        width: 1080,
-        height: 720,
+        // 1080×720 de contenu + 10 px de marge par côté pour l'ombre portée (--win-gap, dl-theme.css)
+        width: 1100,
+        height: 740,
         icon: getPlatformIcon('district_life_icon_v1_4092x4092'),
         frame: false,
         // Fenêtre transparente : les coins arrondis sont dessinés en CSS (voir

@@ -1917,9 +1917,12 @@ function renderPatchNotes(data) {
         <ul class="dl-bc-patch-list">${items || '<li class="dl-bc-patch-item" style="justify-content:center;color:rgba(255,255,255,0.3)">—</li>'}</ul>`
 }
 
+// Relue toutes les 5 min : une note publiée depuis District Center apparaît sans relancer.
+let patchNotesTimer = null
 async function initPatchNotes() {
+    if(!patchNotesTimer) patchNotesTimer = setInterval(initPatchNotes, 5 * 60 * 1000)
     try {
-        const resp = await fetch('https://distribution.districtliferp.fr/patch.json')
+        const resp = await fetch('https://distribution.districtliferp.fr/patch.json?t=' + Date.now(), { cache: 'no-store' })
         if (!resp.ok) throw new Error('HTTP ' + resp.status)
         renderPatchNotes(await resp.json())
     } catch (e) {
@@ -2070,7 +2073,7 @@ async function initNextEvent(){
 // ─────────────────────────────────────────────────────────
 async function initLinks(){
     try {
-        const resp = await fetch('https://distribution.districtliferp.fr/link.json')
+        const resp = await fetch('https://distribution.districtliferp.fr/link.json?t=' + Date.now(), { cache: 'no-store' })
         if(!resp.ok) throw new Error('HTTP ' + resp.status)
         const links = await resp.json()
 
@@ -2464,7 +2467,7 @@ function renderVotePodium(players) {
     const sorted = [...players].sort((a, b) => a.rank - b.rank)
 
     const html = sorted.map(p => `
-        <div class="dl-bc-pod-row${p.rank === 1 ? ' dl-bc-pod-row-top' : ''}">
+        <div class="dl-bc-pod-row${p.rank <= 3 ? ' dl-bc-pod-row-top dl-bc-pod-row-' + p.rank : ''}">
             <b class="dl-bc-pod-rank">${p.rank}</b>
             <img class="dl-bc-pod-head" data-username="${_escHtml(p.username)}" alt="${_escHtml(p.username)}">
             <span class="dl-bc-pod-name">${_escHtml(p.username)}</span>
@@ -2483,7 +2486,7 @@ async function initVotePodium() {
     const card = document.getElementById('dl-bc-podium')
     if(card) card.setAttribute('data-state', 'loading')
     try {
-        const resp = await fetch('https://www.districtliferp.fr/api/api-vote-list/top?limit=3&period=monthly')
+        const resp = await fetch('https://www.districtliferp.fr/api/api-vote-list/top?limit=10&period=monthly')
         if (!resp.ok) throw new Error('HTTP ' + resp.status)
         const json = await resp.json()
         renderVotePodium(json.data || [])
