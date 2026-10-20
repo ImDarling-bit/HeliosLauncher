@@ -3123,6 +3123,9 @@ body {
        laisser la place à l'ombre portée : sur un fond d'écran clair, le bord reste visible. */
     margin: var(--win-gap) !important;
     height: calc(100% - 2 * var(--win-gap)) !important;
+    /* Les conteneurs en position absolue (#main, overlay…) se calent sur le body et non
+       sur la fenêtre entière, sinon ils débordent de la marge de l'ombre. */
+    position: relative !important;
     clip-path: inset(0 round var(--r-sm)) !important;
 }
 :root { --win-gap: 10px; }
