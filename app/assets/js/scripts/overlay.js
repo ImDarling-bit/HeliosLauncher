@@ -169,6 +169,75 @@ function setDismissHandler(handler){
     }
 }
 
+/* Fenêtre d'information DistrictLife (#dlNoticeContent) */
+
+/**
+ * Affiche une fenêtre au style du bento (badge, titre, texte, code facultatif et
+ * boutons). Entrée déclenche le bouton principal, Échap le bouton marqué `escape`.
+ *
+ * @param {Object} opts
+ * @param {'err'|'gold'} opts.tone Couleur du badge (rouge ou or).
+ * @param {string} opts.badge Texte du badge (FERMÉ, CRASH, CHARGEMENT…).
+ * @param {string} opts.title Titre.
+ * @param {string} opts.desc Texte (HTML autorisé, contenu fourni par le launcher).
+ * @param {string} [opts.code] Code à afficher dans l'encadré (numéro de rapport).
+ * @param {Array<{label: string, primary?: boolean, escape?: boolean, keepOpen?: boolean, onClick?: function}>} opts.actions
+ */
+function showDlNotice(opts){
+    document.getElementById('dlNoticeCard').setAttribute('data-tone', opts.tone || 'err')
+    document.getElementById('dlNoticeBadge').textContent = opts.badge || ''
+    document.getElementById('dlNoticeTitle').textContent = opts.title || ''
+    document.getElementById('dlNoticeDesc').innerHTML = opts.desc || ''
+    setDlNoticeCode(opts.code)
+    const actions = document.getElementById('dlNoticeActions')
+    actions.innerHTML = ''
+    const list = opts.actions && opts.actions.length ? opts.actions : [{ label: 'OK', primary: true }]
+    let hasEscape = false
+    list.forEach((action, i) => {
+        const btn = document.createElement('button')
+        btn.type = 'button'
+        btn.className = 'dl-notice-btn' + (action.primary ? ' dl-notice-btn-gold' : '')
+        if(action.primary || (i === 0 && !list.some(a => a.primary))) btn.classList.add('overlayKeybindEnter')
+        if(action.escape){
+            btn.classList.add('overlayKeybindEsc')
+            hasEscape = true
+        }
+        btn.textContent = action.label
+        btn.onclick = () => {
+            const run = () => { if(typeof action.onClick === 'function') action.onClick() }
+            if(action.keepOpen){
+                run()
+            } else {
+                toggleOverlay(false, 'dlNoticeContent')
+                // Après le fondu de fermeture (250 ms) : une autre fenêtre ouverte par
+                // l'action (ex. erreur de lancement) ne doit pas être masquée par la
+                // fin de ce fondu.
+                setTimeout(run, 300)
+            }
+        }
+        actions.appendChild(btn)
+    })
+    toggleOverlay(true, hasEscape, 'dlNoticeContent')
+}
+
+/**
+ * Met à jour (ou masque) le code affiché dans la fenêtre d'information.
+ *
+ * @param {string|null} code
+ */
+function setDlNoticeCode(code){
+    const el = document.getElementById('dlNoticeCode')
+    el.textContent = code || ''
+    el.style.display = code ? '' : 'none'
+}
+
+/**
+ * @returns {boolean} true si la fenêtre d'information est actuellement affichée.
+ */
+function isDlNoticeVisible(){
+    return isOverlayVisible() && overlayHandlerContent === 'dlNoticeContent'
+}
+
 /* Server Select View */
 
 document.getElementById('serverSelectConfirm').addEventListener('click', async () => {

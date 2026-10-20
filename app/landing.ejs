@@ -80,6 +80,22 @@
                             <span class="dl-btn-chip" id="dl-bc-status-discord-link">Statut sur Discord</span>
                         </div>
                     </div>
+                    <!-- Serveur fermé au public (hors des horaires d'ouverture, heure de Paris) :
+                         compte à rebours et frise de la journée (renderClosedState, landing.js). -->
+                    <div id="dl-bc-status-closed" class="dl-bc-state">
+                        <div class="dl-bc-status-badge dl-bc-status-badge-off">
+                            <span class="dl-dot-off dl-dot-closed"></span>FERMÉ<span class="dl-bc-status-sub" id="dl-bc-closed-sub">DISTRICTLIFE · FORGE 1.16.5</span>
+                        </div>
+                        <div class="dl-bc-closed-cd">
+                            <b id="dl-bc-closed-countdown">–</b><span id="dl-bc-closed-when">avant l'ouverture</span>
+                        </div>
+                        <div class="dl-bc-closed-sched">
+                            <div class="dl-bc-closed-tl" id="dl-bc-closed-tl"><em id="dl-bc-closed-now"></em></div>
+                            <div class="dl-bc-closed-lb">
+                                <span>00 h</span><span id="dl-bc-closed-now-label">Maintenant</span><span id="dl-bc-closed-range">19 h – minuit</span>
+                            </div>
+                        </div>
+                    </div>
                     <div id="dl-bc-status-ok" class="dl-bc-state">
                         <div class="dl-bc-status-badge dl-bc-status-badge-ok">
                             <span class="dl-dot-on"></span>EN LIGNE<span class="dl-bc-status-sub">DISTRICTLIFE · FORGE 1.16.5</span>

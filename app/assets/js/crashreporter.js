@@ -6,6 +6,8 @@
  * - Uniquement en cas de crash : code de sortie ≠ 0, nouveau fichier dans
  *   crash-reports/, ou crash natif de la JVM (hs_err_pid*.log). Une fermeture normale
  *   n'envoie rien, une fermeture par le bouton « Fermer le jeu » non plus.
+ * - Chaque rapport porte un numéro court (DL-XXXX-XXXX) affiché au joueur dans la
+ *   fenêtre « Le jeu s'est fermé », à donner au support.
  * - Le joueur est informé au premier lancement et peut désactiver l'envoi dans les
  *   Paramètres (ConfigManager.getSendCrashReports).
  * - Les données sensibles sont masquées avant l'envoi (jetons de session, nom du
@@ -15,6 +17,7 @@
  *
  * Le receveur côté serveur est dans server/crash-receiver/ (PHP).
  */
+const crypto = require('crypto')
 const fs   = require('fs-extra')
 const os   = require('os')
 const path = require('path')
@@ -44,6 +47,28 @@ const FILES = [
 // Une même erreur du launcher n'est envoyée qu'une fois toutes les 10 minutes.
 const LAUNCHER_ERROR_COOLDOWN_MS = 10 * 60 * 1000
 const recentLauncherErrors = new Map()
+
+// Numéro de rapport court à donner au support : DL-XXXX-XXXX (sans 0/O ni 1/I).
+const REPORT_ID_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+function generateReportId(){
+    const bytes = crypto.randomBytes(8)
+    let out = ''
+    for(let i = 0; i < 8; i++){
+        out += REPORT_ID_ALPHABET[bytes[i] % REPORT_ID_ALPHABET.length]
+        if(i === 3) out += '-'
+    }
+    return `DL-${out}`
+}
+
+// Appelle un callback du launcher sans laisser une erreur d'affichage casser l'envoi.
+function notify(cb, value){
+    if(typeof cb !== 'function') return
+    try {
+        cb(value)
+    } catch(err) {
+        logger.warn('Erreur dans le callback du rapport de crash.', err)
+    }
+}
 
 function queueDir(){
     return path.join(ConfigManager.getLauncherDirectory(), 'crash-queue')
@@ -136,10 +161,13 @@ async function enqueue(id, meta, files){
  * @param {boolean} session.closedByLauncher Le jeu a été fermé par le launcher.
  * @param {Object} session.account Le compte (displayName, uuid).
  * @param {string} session.launcherVersion La version du launcher.
+ * @param {function} [session.onCrash] Appelé dès qu'un crash est détecté (même si
+ *     l'envoi est désactivé) avec { reportId, reportsEnabled }.
+ * @param {function} [session.onReportId] Appelé si le serveur renvoie un numéro de
+ *     rapport différent de celui généré par le launcher.
  */
 exports.handleGameExit = async function(session){
     try {
-        if(!ConfigManager.getSendCrashReports()) return
         if(session.closedByLauncher) return
 
         const crashReports = await filesSince(path.join(session.gameDir, 'crash-reports'), session.startedAt, n => n.endsWith('.txt'))
@@ -147,7 +175,14 @@ exports.handleGameExit = async function(session){
         const abnormalExit = session.exitCode != null && session.exitCode !== 0
         if(!abnormalExit && crashReports.length === 0 && hsErrs.length === 0) return
 
-        logger.info(`Crash détecté (code ${session.exitCode}, ${crashReports.length} crash-report, ${hsErrs.length} hs_err), préparation du rapport.`)
+        // Numéro court affiché au joueur et inclus dans le rapport (le receveur l'utilise
+        // comme identifiant du dossier, voir server/crash-receiver/upload.php).
+        const reportsEnabled = ConfigManager.getSendCrashReports()
+        const reportId = reportsEnabled ? generateReportId() : null
+        notify(session.onCrash, { reportId, reportsEnabled, exitCode: session.exitCode })
+        if(!reportsEnabled) return
+
+        logger.info(`Crash détecté (code ${session.exitCode}, ${crashReports.length} crash-report, ${hsErrs.length} hs_err), préparation du rapport ${reportId}.`)
 
         const sources = {
             'crash-report': crashReports[0],
@@ -164,6 +199,7 @@ exports.handleGameExit = async function(session){
         }
 
         const meta = {
+            reportId,
             launcherVersion: session.launcherVersion,
             serverId: session.serverId,
             username: session.account?.displayName ?? null,
@@ -182,7 +218,11 @@ exports.handleGameExit = async function(session){
 
         try {
             const res = await upload(meta, files)
-            logger.info('Rapport de crash envoyé.', res?.id ?? '')
+            logger.info('Rapport de crash envoyé.', reportId, res?.id ?? '')
+            // Numéro renvoyé par le receveur (normalement identique au nôtre).
+            if(typeof res?.reportId === 'string' && res.reportId && res.reportId !== reportId){
+                notify(session.onReportId, res.reportId)
+            }
         } catch(err) {
             logger.warn('Envoi du rapport de crash impossible, il sera renvoyé au prochain démarrage.', err.message)
             await enqueue(`${Date.now()}-${process.pid}`, meta, files)
@@ -295,4 +335,5 @@ exports.reportLauncherError = async function(report){
 }
 
 exports._redact = redact
+exports._generateReportId = generateReportId
 exports._launcherErrorCode = launcherErrorCode

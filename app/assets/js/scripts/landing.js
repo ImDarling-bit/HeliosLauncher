@@ -46,6 +46,18 @@ const user_text               = document.getElementById('user_text')
 
 const loggerLanding = LoggerUtil.getLogger('Landing')
 
+// Horaires d'ouverture du serveur au public (heure de Paris). En dehors, le serveur est
+// en whitelist (staff uniquement) : la carte statut passe à l'état FERMÉ et JOUER
+// prévient le joueur. Un serveur de la distribution peut les remplacer avec un champ
+// facultatif "openingHours": { "open": "19:00", "close": "00:00", "timeZone": "Europe/Paris" }.
+const SERVER_OPEN_TIME  = '19:00'
+const SERVER_CLOSE_TIME = '00:00'   // minuit
+const SERVER_TIME_ZONE  = 'Europe/Paris'
+
+// Chargement du jeu sans aucune sortie dans les logs pendant ce délai (avant
+// « MinecraftForge … Initialized ») : fenêtre « Le chargement semble bloqué ».
+const LOAD_STALL_MS = 3 * 60 * 1000
+
 /* =============================================================================
    GUIDE UI/UX — Barre de progression du lancement (landing.ejs #lower #right)
    =============================================================================
@@ -141,6 +153,20 @@ function setLaunchEnabled(val){
 // =============================================================================
 // Bind launch button
 document.getElementById('launch_button').addEventListener('click', async e => {
+    // Serveur fermé au public : on prévient. Le launcher ne peut pas savoir si le joueur
+    // est dans la whitelist du serveur (staff) : on ne bloque donc pas, le bouton
+    // « Lancer quand même » lance le jeu normalement.
+    if(openingStateReady && isServerClosedNow()){
+        showServerClosedNotice()
+        return
+    }
+    await launchGame()
+})
+
+/**
+ * Lance le jeu (vérification de Java, des fichiers, puis démarrage du processus).
+ */
+async function launchGame(){
     loggerLanding.info('Launching game..')
     try {
         const server = (await DistroAPI.getDistribution()).getServerById(ConfigManager.getSelectedServer())
@@ -166,7 +192,48 @@ document.getElementById('launch_button').addEventListener('click', async e => {
         loggerLanding.error('Unhandled error in during launch process.', err)
         showLaunchFailure(Lang.queryJS('landing.launch.failureTitle'), Lang.queryJS('landing.launch.failureText'), err)
     }
-})
+}
+
+/**
+ * Fenêtre « Le serveur est fermé » (clic sur JOUER hors des horaires d'ouverture).
+ */
+function showServerClosedNotice(){
+    const hours = currentOpeningHours
+    const until = minutesUntilOpening(hours)
+    showDlNotice({
+        tone: 'err',
+        badge: 'FERMÉ',
+        title: `Le serveur est fermé · ouvert de ${formatOpeningHour(hours.open)} à ${formatOpeningHour(hours.close)}`,
+        desc: `Montello ouvre tous les soirs de <b>${formatOpeningHour(hours.open)} à ${formatOpeningHour(hours.close)}</b> (heure de Paris). `
+            + `Ouverture dans <b>${formatCountdown(until)}</b>.<br><br>`
+            + 'En dehors de ces horaires, seuls les membres du staff peuvent se connecter. Si tu en fais partie, tu peux lancer le jeu quand même.',
+        actions: [
+            { label: 'OK', primary: true, escape: true },
+            { label: 'Lancer quand même', onClick: () => launchGame() }
+        ]
+    })
+}
+
+/**
+ * Ouvre le dossier des logs du jeu (<instance>/<serveur>/logs), en le créant s'il
+ * n'existe pas encore (jeu jamais lancé). Utilisé par les réglages (section Aide) et
+ * par les fenêtres de crash et de chargement bloqué.
+ *
+ * @param {string} [serverId] Le serveur ; par défaut le serveur sélectionné.
+ */
+async function openGameLogsFolder(serverId){
+    try {
+        const id = serverId || ConfigManager.getSelectedServer()
+        const dir = id
+            ? path.join(ConfigManager.getInstanceDirectory(), id, 'logs')
+            : ConfigManager.getInstanceDirectory()
+        await fsExtra.ensureDir(dir)
+        const err = await shell.openPath(dir)
+        if(err) loggerLanding.warn(`Impossible d'ouvrir le dossier des logs (${dir}) : ${err}`)
+    } catch(err) {
+        loggerLanding.warn('Impossible d\'ouvrir le dossier des logs.', err)
+    }
+}
 
 // GUIDE UI/UX — Bouton Settings (icône ⚙️ dans landing.ejs #internalMedia)
 // Sélecteur CSS : #settingsMediaButton, #settingsSVG
@@ -647,6 +714,141 @@ function withTimeout(promise, ms){
     ])
 }
 
+// ─── Horaires d'ouverture : état FERMÉ de la carte statut ────────────────────
+// Calculé uniquement avec l'horloge (heure de Paris), indépendamment du ping : hors des
+// horaires, la carte affiche FERMÉ, un compte à rebours et la frise de la journée. Elle
+// repasse seule à EN LIGNE à l'ouverture (vérification toutes les 5 s).
+
+let currentOpeningHours = resolveOpeningHours(null)
+// Faux tant que le premier statut n'a pas été chargé (distribution pas encore lue).
+let openingStateReady = false
+
+function parseHourMinutes(value){
+    const m = /^(\d{1,2}):(\d{2})$/.exec(String(value ?? '').trim())
+    if(!m) return null
+    const h = parseInt(m[1], 10), min = parseInt(m[2], 10)
+    if(h > 24 || min > 59) return null
+    return (h * 60 + min) % 1440
+}
+
+function isValidTimeZone(tz){
+    try {
+        new Intl.DateTimeFormat('fr-FR', { timeZone: tz })
+        return true
+    } catch(_err) {
+        return false
+    }
+}
+
+/**
+ * Horaires d'ouverture d'un serveur : champ "openingHours" de la distribution s'il
+ * existe et est valide, sinon les constantes en haut du fichier.
+ *
+ * @returns {{open: number, close: number, timeZone: string}} Minutes depuis minuit.
+ */
+function resolveOpeningHours(serv){
+    const raw = serv?.rawServer?.openingHours
+    const src = raw != null && typeof raw === 'object' ? raw : {}
+    const open = parseHourMinutes(src.open) ?? parseHourMinutes(SERVER_OPEN_TIME)
+    const close = parseHourMinutes(src.close) ?? parseHourMinutes(SERVER_CLOSE_TIME)
+    const timeZone = typeof src.timeZone === 'string' && isValidTimeZone(src.timeZone) ? src.timeZone : SERVER_TIME_ZONE
+    return { open, close, timeZone }
+}
+
+// Heure actuelle dans le fuseau du serveur, en minutes depuis minuit (avec les secondes).
+function minutesNowIn(timeZone){
+    const parts = new Intl.DateTimeFormat('fr-FR', {
+        timeZone, hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23'
+    }).formatToParts(new Date())
+    const get = type => parseInt(parts.find(p => p.type === type)?.value ?? '0', 10)
+    return (get('hour') % 24) * 60 + get('minute') + get('second') / 60
+}
+
+function isWithinOpeningHours(min, hours){
+    if(hours.open === hours.close) return true
+    return hours.open < hours.close
+        ? (min >= hours.open && min < hours.close)
+        : (min >= hours.open || min < hours.close)
+}
+
+function isServerClosedNow(){
+    return !isWithinOpeningHours(minutesNowIn(currentOpeningHours.timeZone), currentOpeningHours)
+}
+
+function minutesUntilOpening(hours){
+    return (hours.open - minutesNowIn(hours.timeZone) + 1440) % 1440
+}
+
+// 1140 → « 19 h », 1170 → « 19 h 30 », 0 → « minuit ».
+function formatOpeningHour(min){
+    min = Math.round(min) % 1440
+    if(min === 0) return 'minuit'
+    const h = Math.floor(min / 60), m = min % 60
+    return m ? `${h} h ${String(m).padStart(2, '0')}` : `${h} h`
+}
+
+// 134 → « 2 h 14 », 9 → « 9 min ».
+function formatCountdown(mins){
+    const total = Math.max(1, Math.ceil(mins))
+    const h = Math.floor(total / 60), m = total % 60
+    return h ? `${h} h ${String(m).padStart(2, '0')}` : `${m} min`
+}
+
+/**
+ * Remplit l'état FERMÉ de la carte statut : compte à rebours, frise de la journée
+ * (plage d'ouverture en or, repère « maintenant »).
+ */
+function renderClosedState(serv){
+    const hours = currentOpeningHours
+    const now = minutesNowIn(hours.timeZone)
+    const until = (hours.open - now + 1440) % 1440
+
+    document.getElementById('dl-bc-closed-countdown').textContent = formatCountdown(until)
+    const day = hours.open > now ? (hours.open >= 17 * 60 ? 'ce soir' : 'aujourd\'hui') : 'demain'
+    document.getElementById('dl-bc-closed-when').textContent = `avant l'ouverture · ${day} à ${formatOpeningHour(hours.open)}`
+
+    if(serv){
+        document.getElementById('dl-bc-closed-sub').textContent = `${serv.rawServer.name} · Forge ${serv.rawServer.minecraftVersion}`.toUpperCase()
+    }
+
+    // Frise : une ou deux plages (si l'ouverture passe minuit, ex. 19 h – 2 h).
+    const tl = document.getElementById('dl-bc-closed-tl')
+    tl.querySelectorAll('i').forEach(el => el.remove())
+    const close = hours.close === 0 ? 1440 : hours.close
+    const ranges = hours.open < close ? [[hours.open, close]] : [[0, hours.close], [hours.open, 1440]]
+    for(const [from, to] of ranges){
+        if(to <= from) continue
+        const seg = document.createElement('i')
+        seg.style.left = (from / 1440 * 100) + '%'
+        seg.style.width = ((to - from) / 1440 * 100) + '%'
+        tl.appendChild(seg)
+    }
+    document.getElementById('dl-bc-closed-now').style.left = (now / 1440 * 100) + '%'
+    const nh = Math.floor(now / 60), nm = Math.floor(now % 60)
+    document.getElementById('dl-bc-closed-now-label').textContent = `Maintenant ${nh} h ${String(nm).padStart(2, '0')}`
+    document.getElementById('dl-bc-closed-range').textContent = `${formatOpeningHour(hours.open)} – ${formatOpeningHour(hours.close)}`
+}
+
+// Bascule automatique FERMÉ ↔ EN LIGNE selon l'heure.
+setInterval(() => {
+    if(!openingStateReady) return
+    const card = document.getElementById('dl-bc-status')
+    if(!card) return
+    const closed = isServerClosedNow()
+    const state = card.getAttribute('data-state')
+    if(closed){
+        if(state !== 'closed'){
+            refreshServerStatus(false)
+        } else {
+            renderClosedState(null)
+        }
+    } else if(state === 'closed'){
+        // Ouverture : squelettes le temps du premier ping, puis EN LIGNE.
+        card.setAttribute('data-state', 'loading')
+        refreshServerStatus(false)
+    }
+}, 5000)
+
 const refreshServerStatus = async (fade = false) => {
     loggerLanding.info('Refreshing Server Status')
     const serv = (await DistroAPI.getDistribution()).getServerById(ConfigManager.getSelectedServer())
@@ -665,35 +867,49 @@ const refreshServerStatus = async (fade = false) => {
         clearTimeout(serverStatusRetryTimer)
         serverStatusRetryTimer = null
     }
+    // Horaires d'ouverture : hors des horaires, état FERMÉ sans ping.
+    currentOpeningHours = resolveOpeningHours(serv)
+    openingStateReady = true
+    const closedNow = isServerClosedNow()
+
     // Premier chargement (ou réessai manuel depuis l'état erreur) : squelettes
-    if(statusCard && statusCard.getAttribute('data-state') !== 'ok') statusCard.setAttribute('data-state', 'loading')
+    const prevState = statusCard ? statusCard.getAttribute('data-state') : null
+    if(statusCard && !closedNow && prevState !== 'ok' && prevState !== 'closed') statusCard.setAttribute('data-state', 'loading')
 
-    try {
-
-        const pingStart = Date.now()
-        const servStat = await withTimeout(getServerStatus(47, serv.hostname, serv.port), SERVER_STATUS_TIMEOUT_MS)
-        const pingMs = Date.now() - pingStart
-        pLabel = Lang.queryJS('landing.serverStatus.players')
-        pVal = servStat.players.online + '/' + servStat.players.max
-
+    if(closedNow){
+        pVal = 'Fermé'
         if(statusCard){
-            statusCard.setAttribute('data-state', 'ok')
-            const sub = document.querySelector('#dl-bc-status-ok .dl-bc-status-sub')
-            if(sub) sub.textContent = `${serv.rawServer.name} · Forge ${serv.rawServer.minecraftVersion}`.toUpperCase()
-            renderStatusPlayers(servStat)
-            recordLatencySample(pingMs)
+            statusCard.setAttribute('data-state', 'closed')
+            renderClosedState(serv)
         }
+    } else {
+        try {
 
-    } catch (err) {
-        loggerLanding.warn(`Unable to refresh server status (${serv.hostname}:${serv.port}), assuming offline.`)
-        loggerLanding.debug(err)
-        recordLatencySample(null)
-        if(statusCard){
-            statusCard.setAttribute('data-state', 'error')
-            const desc = document.getElementById('dl-bc-status-error-desc')
-            if(desc) desc.textContent = `${serv.hostname}:${serv.port} ne répond pas (maintenance ou connexion interrompue). Nouvel essai automatique toutes les 10 s — ton installation reste prête.`
+            const pingStart = Date.now()
+            const servStat = await withTimeout(getServerStatus(47, serv.hostname, serv.port), SERVER_STATUS_TIMEOUT_MS)
+            const pingMs = Date.now() - pingStart
+            pLabel = Lang.queryJS('landing.serverStatus.players')
+            pVal = servStat.players.online + '/' + servStat.players.max
+
+            if(statusCard){
+                statusCard.setAttribute('data-state', 'ok')
+                const sub = document.querySelector('#dl-bc-status-ok .dl-bc-status-sub')
+                if(sub) sub.textContent = `${serv.rawServer.name} · Forge ${serv.rawServer.minecraftVersion}`.toUpperCase()
+                renderStatusPlayers(servStat)
+                recordLatencySample(pingMs)
+            }
+
+        } catch (err) {
+            loggerLanding.warn(`Unable to refresh server status (${serv.hostname}:${serv.port}), assuming offline.`)
+            loggerLanding.debug(err)
+            recordLatencySample(null)
+            if(statusCard){
+                statusCard.setAttribute('data-state', 'error')
+                const desc = document.getElementById('dl-bc-status-error-desc')
+                if(desc) desc.textContent = `${serv.hostname}:${serv.port} ne répond pas (maintenance ou connexion interrompue). Nouvel essai automatique toutes les 10 s — ton installation reste prête.`
+            }
+            serverStatusRetryTimer = setTimeout(() => refreshServerStatus(false), SERVER_STATUS_RETRY_MS)
         }
-        serverStatusRetryTimer = setTimeout(() => refreshServerStatus(false), SERVER_STATUS_RETRY_MS)
     }
     const updateBentoPlayers = () => {
         const el = document.getElementById('dl-bc-players')
@@ -1034,6 +1250,87 @@ async function downloadJava(effectiveJavaOptions, launchAfter = true) {
 
 }
 
+// ─── Fenêtres après le lancement : chargement bloqué, crash ──────────────────
+
+/**
+ * Surveille la sortie du jeu jusqu'à « MinecraftForge … Initialized » : si plus rien
+ * n'arrive pendant LOAD_STALL_MS, propose d'attendre, d'ouvrir les logs ou d'annuler
+ * (le processus est alors tué, sans rapport de crash).
+ *
+ * @param {number} pid Le PID du jeu.
+ * @param {string} serverId Le serveur lancé (dossier des logs).
+ * @returns {{touch: function, stop: function}}
+ */
+function createLoadStallWatchdog(pid, serverId){
+    let lastActivity = Date.now()
+    let stopped = false
+    let shown = false
+    const timer = setInterval(() => {
+        if(stopped || shown || Date.now() - lastActivity < LOAD_STALL_MS) return
+        if(isOverlayVisible()) return  // une autre fenêtre est ouverte : on réessaiera
+        shown = true
+        loggerLanding.warn(`Aucune sortie du jeu depuis ${Math.round((Date.now() - lastActivity) / 1000)} s : chargement peut-être bloqué.`)
+        const rearm = () => { shown = false; lastActivity = Date.now() }
+        showDlNotice({
+            tone: 'gold',
+            badge: 'CHARGEMENT',
+            title: 'Le chargement semble bloqué',
+            desc: 'Aucune progression depuis 3 minutes. Tu peux attendre encore, ou ouvrir les logs pour les envoyer au support.',
+            actions: [
+                { label: 'Attendre', primary: true, escape: true, onClick: rearm },
+                { label: 'Ouvrir les logs', keepOpen: true, onClick: () => openGameLogsFolder(serverId) },
+                { label: 'Annuler', onClick: async () => {
+                    loggerLanding.info('Chargement annulé par le joueur, fermeture du jeu.')
+                    stop()
+                    await GameLock.closeGame(pid)
+                    toggleLaunchArea(false)
+                } }
+            ]
+        })
+    }, 5000)
+    function stop(){
+        if(stopped) return
+        stopped = true
+        clearInterval(timer)
+        if(shown && isDlNoticeVisible()) toggleOverlay(false, 'dlNoticeContent')
+    }
+    return {
+        touch: () => { lastActivity = Date.now() },
+        stop
+    }
+}
+
+/**
+ * Fenêtre « Le jeu s'est fermé » après un crash.
+ *
+ * @param {{reportId: string|null, reportsEnabled: boolean}} info
+ * @param {string} serverId Le serveur lancé.
+ */
+function showGameCrashNotice(info, serverId){
+    const desc = info.reportsEnabled
+        ? 'Un rapport a été envoyé automatiquement au staff. Si tu ouvres un ticket, donne ce numéro :'
+        : 'L\'envoi automatique des rapports de crash est désactivé (Réglages → Launcher). Ouvre les logs pour les transmettre au support.'
+    showDlNotice({
+        tone: 'err',
+        badge: 'CRASH',
+        title: 'Le jeu s\'est fermé',
+        desc,
+        code: info.reportId,
+        actions: [
+            { label: '↻ Relancer', primary: true, onClick: () => document.getElementById('launch_button').click() },
+            { label: 'Ouvrir les logs', keepOpen: true, onClick: () => openGameLogsFolder(serverId) },
+            { label: 'Fermer', escape: true }
+        ]
+    })
+}
+
+// Le serveur a renvoyé un autre numéro que celui généré par le launcher.
+function updateGameCrashNoticeCode(reportId){
+    if(reportId && isDlNoticeVisible() && document.getElementById('dlNoticeCode').textContent){
+        setDlNoticeCode(reportId)
+    }
+}
+
 // Keep reference to Minecraft Process
 let proc
 // Is DiscordRPC enabled
@@ -1360,7 +1657,11 @@ async function dlAsync(login = true) {
         // const SERVER_JOINED_REGEX = /\[.+\]: \[CHAT\] [a-zA-Z0-9_]{1,16} joined the game/
         const SERVER_JOINED_REGEX = new RegExp(`\\[.+\\]: \\[CHAT\\] ${authUser.displayName} joined the game`)
 
+        // Surveillance du chargement (fenêtre « Le chargement semble bloqué »).
+        let loadWatchdog = null
+
         const onLoadComplete = () => {
+            if(loadWatchdog) loadWatchdog.stop()
             toggleLaunchArea(false)
             if(proc == null) return
             if(hasRPC){
@@ -1413,16 +1714,24 @@ async function dlAsync(login = true) {
             GameLock.recordLaunch(serv.rawServer.id, proc)
             const gameStartedAt = Date.now()
             const gamePid = proc.pid
+            const gameServerId = serv.rawServer.id
+            loadWatchdog = createLoadStallWatchdog(gamePid, gameServerId)
+            proc.stdout.on('data', loadWatchdog.touch)
+            proc.stderr.on('data', loadWatchdog.touch)
             proc.on('close', (code, signal) => {
+                loadWatchdog.stop()
                 CrashReporter.handleGameExit({
-                    serverId: serv.rawServer.id,
-                    gameDir: path.join(ConfigManager.getInstanceDirectory(), serv.rawServer.id),
+                    serverId: gameServerId,
+                    gameDir: path.join(ConfigManager.getInstanceDirectory(), gameServerId),
                     startedAt: gameStartedAt,
                     exitCode: code,
                     signal,
                     closedByLauncher: GameLock.wasClosedByLauncher(gamePid),
                     account: authUser,
-                    launcherVersion: remote.app.getVersion()
+                    launcherVersion: remote.app.getVersion(),
+                    // Crash détecté : fenêtre « Le jeu s'est fermé » avec le numéro du rapport.
+                    onCrash: (info) => showGameCrashNotice(info, gameServerId),
+                    onReportId: (reportId) => updateGameCrashNoticeCode(reportId)
                 })
             })
 

@@ -2109,7 +2109,28 @@ input:checked + .toggleSwitchSlider::before {
 .dl-bc-state { display: none; flex-direction: column; gap: 12px; height: 100%; }
 #dl-bc-status[data-state="loading"] #dl-bc-status-loading,
 #dl-bc-status[data-state="error"] #dl-bc-status-error,
-#dl-bc-status[data-state="ok"] #dl-bc-status-ok { display: flex; }
+#dl-bc-status[data-state="ok"] #dl-bc-status-ok,
+#dl-bc-status[data-state="closed"] #dl-bc-status-closed { display: flex; }
+
+/* État FERMÉ : hors des horaires d'ouverture (maquette patch bêta, section 5). */
+.dl-dot-closed { box-shadow: 0 0 0 4px rgba(240, 106, 106, .15); }
+.dl-bc-closed-cd { display: flex; align-items: baseline; gap: 8px; margin-top: 2px; }
+#dl-bc-closed-countdown { font: 900 40px var(--font); letter-spacing: -.02em; color: var(--ink); }
+#dl-bc-closed-when { font: 500 13px var(--font); color: var(--ink-2); }
+.dl-bc-closed-sched { margin-top: auto; }
+.dl-bc-closed-tl { position: relative; height: 8px; border-radius: 4px; background: rgba(255, 255, 255, .07); }
+.dl-bc-closed-tl i {
+    position: absolute; top: 0; bottom: 0; border-radius: 4px;
+    background: linear-gradient(90deg, var(--gold-lo), var(--gold-hi));
+}
+.dl-bc-closed-tl em {
+    position: absolute; top: -4px; width: 2px; height: 16px; margin-left: -1px;
+    background: var(--ink); font-style: normal; z-index: 1;
+}
+.dl-bc-closed-lb {
+    display: flex; justify-content: space-between; margin-top: 6px;
+    font: 600 10.5px var(--font); color: var(--ink-3); letter-spacing: .06em;
+}
 
 .dl-bc-status-badge {
     display: flex;
@@ -3226,4 +3247,83 @@ body {
 @keyframes dl-update-indeterminate {
     from { left: -35%; }
     to   { left: 100%; }
+}
+
+/*******************************************************************************
+ * FENÊTRE D'INFORMATION (#dlNoticeContent, overlay.ejs) : serveur fermé, crash,
+ * chargement bloqué. Reprend la carte du bento (maquette patch bêta, section 5).
+ ******************************************************************************/
+#dlNoticeContent { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; }
+.dl-notice-card {
+    width: 440px;
+    max-width: calc(100% - 32px);
+    box-sizing: border-box;
+    padding: 20px 22px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(212, 175, 55, .10), rgba(17, 17, 23, 0) 55%), rgba(12, 15, 24, .92);
+    border: 1px solid rgba(212, 175, 55, .28);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, .45), inset 0 1px 0 rgba(255, 255, 255, .06);
+    color: var(--ink);
+    font-family: var(--font);
+    text-align: left;
+    -webkit-user-select: text;
+}
+.dl-notice-badge {
+    display: flex; align-items: center; gap: 8px;
+    font: 700 10px var(--font); letter-spacing: .16em; color: var(--err);
+}
+.dl-notice-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--err); box-shadow: 0 0 0 4px rgba(240, 106, 106, .15);
+}
+.dl-notice-card[data-tone="gold"] .dl-notice-badge { color: var(--gold); }
+.dl-notice-card[data-tone="gold"] .dl-notice-dot { background: var(--gold); box-shadow: 0 0 0 4px rgba(227, 187, 106, .15); }
+#dlNoticeTitle { font: 900 20px var(--font); margin-top: 10px; color: var(--ink); }
+#dlNoticeDesc { font: 400 13px/1.55 var(--font); color: var(--ink-2); margin-top: 6px; }
+#dlNoticeDesc b { color: var(--gold-hi); font-weight: 700; }
+#dlNoticeCode {
+    margin-top: 12px; padding: 12px; border-radius: 14px;
+    background: rgba(0, 0, 0, .3); border: 1px dashed rgba(227, 187, 106, .5);
+    text-align: center; font: 800 20px ui-monospace, monospace; letter-spacing: .14em;
+    color: var(--ink); -webkit-user-select: all; user-select: all;
+}
+#dlNoticeActions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; }
+.dl-notice-btn {
+    padding: 9px 16px; border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, .14); background: none;
+    font: 700 11px var(--font); color: var(--ink-2); cursor: pointer;
+    transition: border-color .15s, background .15s;
+}
+.dl-notice-btn:hover, .dl-notice-btn:focus-visible { border-color: #fff; outline: none; }
+.dl-notice-btn-gold { background: rgba(212, 175, 55, .16); border-color: rgba(212, 175, 55, .5); color: var(--gold-hi); }
+.dl-notice-btn-gold:hover, .dl-notice-btn-gold:focus-visible { background: rgba(212, 175, 55, .28); border-color: rgba(212, 175, 55, .8); }
+
+/* Réglages → Aide : bouton « Ouvrir le dossier des logs ». */
+.dl-settings-action-btn {
+    height: 42px !important;
+    padding: 0 16px !important;
+    border-radius: 100px !important;
+    border: 1px solid var(--dl-border) !important;
+    background: var(--dl-surface) !important;
+    color: var(--dl-text) !important;
+    font: 700 13px var(--font) !important;
+    cursor: pointer !important;
+    white-space: nowrap !important;
+    transition: all .15s !important;
+    flex: none !important;
+}
+.dl-settings-action-btn:hover,
+.dl-settings-action-btn:focus-visible {
+    border-color: var(--dl-border-gold) !important;
+    background: var(--dl-gold-subtle) !important;
+    box-shadow: 0 0 0 4px var(--dl-gold-dim) !important;
+    outline: none !important;
+}
+
+/* Écran de connexion : précision sous le champ mot de passe. */
+.loginFieldHint {
+    display: block;
+    margin-top: 4px;
+    font: 500 11px/1.4 var(--font);
+    color: var(--dl-text-muted, #8d897d);
 }

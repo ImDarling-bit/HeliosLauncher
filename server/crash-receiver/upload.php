@@ -141,7 +141,11 @@ $code = preg_replace('/[^A-Za-z0-9_.-]/', '_', errorCode($decoded, $meta));
 $meta['errorCode'] = $code;
 
 // --- Enregistrement -----------------------------------------------------------
-$id = bin2hex(random_bytes(4));
+// Numéro court généré par le launcher (DL-XXXX-XXXX), affiché au joueur pour le
+// support : il sert d'identifiant du dossier. À défaut (ancien launcher), id aléatoire.
+$reportId = preg_match('/^DL-[A-Z0-9]{4}-[A-Z0-9]{4}$/', (string) ($meta['reportId'] ?? ''))
+    ? $meta['reportId'] : null;
+$id = $reportId ?? bin2hex(random_bytes(4));
 $dir = sprintf('%s/%s/%s/%s_%s', $storage, $code, $username, date('Y-m-d_His'), $id);
 if (!mkdir($dir, 0750, true)) {
     reply(500, ['ok' => false, 'error' => 'écriture impossible']);
@@ -187,4 +191,4 @@ if (random_int(1, 50) === 1) {
     }
 }
 
-reply(200, ['ok' => true, 'id' => "$code/$username/" . basename($dir)]);
+reply(200, ['ok' => true, 'id' => "$code/$username/" . basename($dir), 'reportId' => $reportId]);

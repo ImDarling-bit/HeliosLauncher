@@ -835,3 +835,7 @@ async function prepareSettings(first = false) {
 
 // Prepare the settings UI on startup.
 //prepareSettings(true)
+
+// Réglages → Aide : ouvre <instance>/logs du serveur sélectionné (créé s'il n'existe
+// pas encore). openGameLogsFolder est défini dans landing.js.
+document.getElementById('settingsOpenLogsButton').onclick = () => openGameLogsFolder()

@@ -57,6 +57,10 @@ accountSelectConfirm = "Sélectionner"
 accountSelectCancel = "Annuler"
 
 [ejs.settings]
+helpTitle = "Aide"
+openLogsTitle = "Dossier des logs du jeu"
+openLogsDesc = "Ouvre le dossier qui contient latest.log et debug.log. Le support peut te les demander pour comprendre un crash ou un chargement bloqué."
+openLogsButton = "Ouvrir le dossier des logs"
 sendCrashReportsTitle = "Envoyer les rapports de crash"
 sendCrashReportsDesc = "Si le jeu plante, le crash-report et les logs du jeu sont envoyés au staff DistrictLife pour l'aider à corriger le problème. Les jetons de connexion ne sont jamais envoyés."
 navHeaderText = "Paramètres"

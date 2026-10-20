@@ -67,7 +67,8 @@ function shakeLoginOptionsError(element) {
  * @param {string} value
  */
 function validateLoginOptionsEmail(value) {
-    if(value) {
+    // Les espaces en début et en fin (copier-coller) sont ignorés.
+    if(value && value.trim()) {
         loginOptionsEmailError.style.opacity = 0
         loe = true
         if(lop) loginOptionsDisabled(false)
@@ -83,7 +84,7 @@ function validateLoginOptionsEmail(value) {
  * @param {string} value
  */
 function validateLoginOptionsPassword(value) {
-    if(value) {
+    if(value && value.trim()) {
         loginOptionsPasswordError.style.opacity = 0
         lop = true
         if(loe) loginOptionsDisabled(false)
@@ -172,7 +173,8 @@ loginOptionsButton.addEventListener('click', () => {
     loginOptionsFormDisabled(true)
     loginOptionsLoading(true)
 
-    AuthManager.addAzuriomAccount(loginOptionsEmail.value, loginOptionsPassword.value)
+    // Espaces en début et en fin retirés (souvent ajoutés par un copier-coller).
+    AuthManager.addAzuriomAccount(loginOptionsEmail.value.trim(), loginOptionsPassword.value.trim())
         .then((account) => {
             // Mise à jour du compte sélectionné dans la landing
             updateSelectedAccount(account)

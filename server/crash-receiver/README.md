@@ -48,6 +48,13 @@ Le **code d'erreur** est déterminé ainsi :
 
 Il est aussi enregistré dans `meta.json` (`"errorCode"`).
 
+### Numéro de rapport
+
+Après un crash, le launcher affiche au joueur un numéro court (`DL-7F3K-29QA`) à donner au
+support. Il est envoyé dans `meta.json` (`"reportId"`) et sert de fin au nom du dossier
+(`2026-10-07_224236_DL-7F3K-29QA`) : pour retrouver un rapport, cherche ce numéro dans
+`crash-reports/` (ex. `find crash-reports -name '*DL-7F3K-29QA'`).
+
 ### Erreurs du launcher
 
 Quand le **launcher** lui-même échoue (vérification ou téléchargement des fichiers,

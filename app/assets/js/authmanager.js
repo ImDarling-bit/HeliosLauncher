@@ -420,6 +420,10 @@ async function validateSelectedMicrosoftAccount(){
  * @returns {Promise.<Object>} Resolves with the stored account object.
  */
 exports.addAzuriomAccount = async function(email, password) {
+    // Espaces en début et en fin retirés : un copier-coller en ajoute souvent un, et le
+    // site refusait alors un mot de passe pourtant correct.
+    email = String(email ?? '').trim()
+    password = String(password ?? '').trim()
     try {
         const response = await azuriomClient.login(email, password)
 

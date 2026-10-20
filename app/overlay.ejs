@@ -38,5 +38,16 @@
             </div>
         </div>
     </div>
+    <!-- Fenêtre d'information DistrictLife (serveur fermé, crash, chargement bloqué) :
+         contenu et boutons remplis par showDlNotice() (overlay.js). -->
+    <div id="dlNoticeContent" style="display: none;">
+        <div class="dl-notice-card" id="dlNoticeCard" data-tone="err">
+            <div class="dl-notice-badge"><span class="dl-notice-dot"></span><span id="dlNoticeBadge"></span></div>
+            <div id="dlNoticeTitle"></div>
+            <div id="dlNoticeDesc"></div>
+            <div id="dlNoticeCode" style="display: none;"></div>
+            <div id="dlNoticeActions"></div>
+        </div>
+    </div>
     <script src="./assets/js/scripts/overlay.js"></script>
 </div>
