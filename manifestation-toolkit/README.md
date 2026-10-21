@@ -67,15 +67,34 @@ npm run lint
 
 ## Build & release automatiques
 
-Le workflow `.github/workflows/build-and-release.yml` (à la racine du dépôt) se lance sur les tags
-`toolkit-v*` :
+### Publier dans un dépôt GitHub dédié (Windows)
+
+Double-clique sur `scripts\publier-github.bat`. Le script :
+
+1. copie l'app dans un dossier neuf (par défaut `Documents\manifestation-toolkit`), sans
+   `node_modules` ;
+2. crée le dépôt GitHub avec `gh` et pousse le code, workflow compris ;
+3. enregistre les URLs des serveurs, et en option la clé Google Maps et le keystore Android ;
+4. pousse le tag `v1.0.0`, ce qui lance le build.
+
+Prérequis : [Git for Windows](https://git-scm.com/download/win) et
+[GitHub CLI](https://cli.github.com) (`winget install GitHub.cli`).
+
+### Le workflow
+
+Deux copies existent :
+
+- `.github/workflows/build-and-release.yml` **dans ce dossier** : pour le dépôt dédié (app à la
+  racine), déclenché par les tags `v*` ;
+- `.github/workflows/build-and-release.yml` **à la racine du dépôt du launcher** : app dans
+  `manifestation-toolkit/`, déclenché par `toolkit-v*` pour ne pas croiser le `build.yml` du
+  launcher (`v*`).
 
 ```bash
-git tag toolkit-v1.0.0 && git push origin toolkit-v1.0.0
+git tag v1.0.1 && git push origin v1.0.1   # dépôt dédié
 ```
 
-Le préfixe `toolkit-` évite tout conflit avec le workflow `build.yml` du launcher, déclenché par
-`v*`.
+Étapes :
 
 1. **Ubuntu** : `expo prebuild` + `gradlew assembleRelease` → `app-release.apk`
 2. **macOS** : `expo prebuild` + `xcodebuild archive` non signé → `app-release.ipa`
