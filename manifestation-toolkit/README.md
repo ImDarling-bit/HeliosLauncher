@@ -67,15 +67,17 @@ npm run lint
 
 ## Build & release automatiques
 
-### Publier dans un dépôt GitHub dédié (Windows)
+### Publier sur GitHub (Windows)
 
-Double-clique sur `scripts\publier-github.bat`. Le script :
+Double-clique sur `publier-github.bat`, à la racine de ce dossier. Le script :
 
-1. copie l'app dans un dossier neuf (par défaut `Documents\manifestation-toolkit`), sans
-   `node_modules` ;
-2. crée le dépôt GitHub avec `gh` et pousse le code, workflow compris ;
-3. enregistre les URLs des serveurs, et en option la clé Google Maps et le keystore Android ;
-4. pousse le tag `v1.0.0`, ce qui lance le build.
+1. crée le dépôt GitHub avec `gh` (ou réutilise celui déjà configuré) et pousse tout le code,
+   GitHub Action compris ;
+2. enregistre les URLs des serveurs et, en option, la clé Google Maps et le keystore Android ;
+3. pousse un tag `vX.Y.Z`, ce qui lance le build ;
+4. suit le build en direct, puis ouvre la Release.
+
+Pour publier une mise à jour, modifie le code et relance le fichier.
 
 Prérequis : [Git for Windows](https://git-scm.com/download/win) et
 [GitHub CLI](https://cli.github.com) (`winget install GitHub.cli`).
