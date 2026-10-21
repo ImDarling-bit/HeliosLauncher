@@ -1,0 +1,242 @@
+{
+  "version": "2026-10",
+  "disclaimer": "Informations générales sur le droit français, données à titre indicatif. Elles ne remplacent pas les conseils d'un·e avocat·e. Les textes évoluent : vérifie la date de mise à jour.",
+  "articles": [
+    {
+      "id": "urgence",
+      "category": "Urgence",
+      "title": "Numéros d'urgence",
+      "summary": "112, 15, 17, 18, 114 : qui appeler et quand.",
+      "sections": [
+        {
+          "heading": "Les numéros",
+          "body": "• 112 : numéro d'urgence européen, fonctionne partout et depuis n'importe quel téléphone.\n• 15 : SAMU (urgence médicale).\n• 18 : pompiers.\n• 17 : police / gendarmerie.\n• 114 : urgence par SMS (personnes sourdes, ou si tu ne peux pas parler)."
+        },
+        {
+          "heading": "Quoi dire",
+          "body": "1. Où tu es (rue, numéro, repère visible).\n2. Ce qui se passe et combien de personnes sont touchées.\n3. L'état de la personne : consciente ? respire ? saigne ?\nNe raccroche pas avant qu'on te le dise."
+        },
+        {
+          "heading": "Avant de partir",
+          "body": "Écris au marqueur, sur ton avant-bras, le numéro d'un·e avocat·e ou de la legal team de ta ville et celui d'un proche. En garde à vue, tu n'auras plus ton téléphone."
+        }
+      ]
+    },
+    {
+      "id": "preparer",
+      "category": "Avant",
+      "title": "Préparer sa manif",
+      "summary": "Quoi emporter, quoi laisser, comment s'organiser.",
+      "sections": [
+        {
+          "heading": "À emporter",
+          "body": "• De l'eau et un en-cas.\n• Du sérum physiologique en dosettes (rinçage des yeux).\n• Tes médicaments personnels, avec l'ordonnance.\n• Une batterie externe.\n• Une pièce d'identité : pas obligatoire, mais elle évite une vérification d'identité au poste."
+        },
+        {
+          "heading": "À éviter",
+          "body": "Tout objet qui pourrait être considéré comme une arme, même s'il ne l'est pas à l'origine (outil, objet tranchant, etc.). Ne prends rien d'illégal."
+        },
+        {
+          "heading": "Téléphone",
+          "body": "• Verrouille-le avec un code plutôt qu'avec l'empreinte ou le visage.\n• Masque le contenu des notifications sur l'écran verrouillé.\n• Note les numéros importants sur papier aussi."
+        },
+        {
+          "heading": "En groupe",
+          "body": "Viens à deux minimum (binôme) et convenez d'un point de rendez-vous si vous êtes séparés, plus d'une heure limite pour se donner des nouvelles."
+        }
+      ]
+    },
+    {
+      "id": "droits-manif",
+      "category": "Pendant",
+      "title": "Manifester : tes droits",
+      "summary": "Manif déclarée, non déclarée, interdite ; filmer la police.",
+      "sections": [
+        {
+          "heading": "Le principe",
+          "body": "Manifester est une liberté protégée. Entraver la liberté de manifester par des menaces ou des violences est un délit (art. 431-1 du Code pénal)."
+        },
+        {
+          "heading": "Déclarée, non déclarée, interdite",
+          "body": "• La déclaration en préfecture est une obligation des organisateurs, pas des participant·es.\n• Participer à une manifestation non déclarée n'est pas, en soi, une infraction (Cour de cassation, chambre criminelle, 14 juin 2022).\n• Participer à une manifestation interdite par arrêté est une contravention (amende de 4e classe, art. R644-4 du Code pénal)."
+        },
+        {
+          "heading": "Filmer la police",
+          "body": "Tu as le droit de filmer et photographier les forces de l'ordre sur la voie publique. Un agent ne peut pas t'obliger à effacer tes images ni saisir ton appareil en dehors d'une procédure judiciaire. Évite de diffuser des images permettant d'identifier des manifestant·es."
+        },
+        {
+          "heading": "Visage dissimulé",
+          "body": "Dissimuler volontairement son visage dans ou aux abords d'une manifestation où des troubles à l'ordre public sont commis ou risquent de l'être est un délit, sauf motif légitime (art. 431-9-1 du Code pénal : jusqu'à 1 an de prison et 15 000 € d'amende)."
+        },
+        {
+          "heading": "Identifier un agent",
+          "body": "Les policiers et gendarmes doivent porter leur numéro d'identification individuel (RIO), sauf exceptions. Note-le si tu es témoin ou victime de violences."
+        }
+      ]
+    },
+    {
+      "id": "sommations",
+      "category": "Pendant",
+      "title": "Dispersion et sommations",
+      "summary": "Ce que veulent dire les sommations et comment réagir.",
+      "sections": [
+        {
+          "heading": "Les sommations",
+          "body": "Avant de disperser un attroupement par la force, l'autorité doit en principe annoncer sa présence et faire des sommations de se disperser (par haut-parleur, signal sonore ou lumineux). La force peut être utilisée sans sommation si les forces de l'ordre sont victimes de violences ou ne peuvent défendre autrement le terrain qu'elles occupent."
+        },
+        {
+          "heading": "Après les sommations",
+          "body": "Rester volontairement dans un attroupement après les sommations est un délit (art. 431-4 du Code pénal : jusqu'à 1 an de prison et 15 000 € d'amende, peine aggravée si le visage est dissimulé)."
+        },
+        {
+          "heading": "Comment réagir",
+          "body": "• Quitte la zone calmement par les rues dégagées.\n• Ne cours pas sauf danger immédiat : les chutes blessent.\n• Reste avec ton binôme.\n• Signale les sorties possibles sur la carte."
+        }
+      ]
+    },
+    {
+      "id": "nasse",
+      "category": "Pendant",
+      "title": "Nasse (encerclement)",
+      "summary": "Cadre légal et bons réflexes si tu es encerclé·e.",
+      "sections": [
+        {
+          "heading": "Le cadre",
+          "body": "Le Conseil d'État (10 juin 2021) a jugé que l'encerclement d'un groupe de manifestant·es ne peut être utilisé que s'il est nécessaire et proportionné, et en ménageant un point de sortie."
+        },
+        {
+          "heading": "Bons réflexes",
+          "body": "• Reste calme et groupé·e avec ton binôme.\n• Bois de l'eau, économise ta batterie.\n• Demande aux agents où se trouve la sortie.\n• Note l'heure, le lieu, les numéros RIO visibles.\n• Signale la nasse sur la carte pour prévenir les autres."
+        }
+      ]
+    },
+    {
+      "id": "controle",
+      "category": "Contrôle",
+      "title": "Contrôle d'identité et fouille",
+      "summary": "Ce qu'on peut te demander, combien de temps, et tes droits.",
+      "sections": [
+        {
+          "heading": "Le contrôle",
+          "body": "Lors d'un contrôle (art. 78-2 du Code de procédure pénale), tu dois justifier de ton identité. Tu peux le faire par tout moyen : pièce d'identité, autre document, témoin."
+        },
+        {
+          "heading": "Vérification au poste",
+          "body": "Si tu ne peux pas justifier de ton identité, tu peux être retenu·e pour vérification, au maximum 4 heures à compter du début du contrôle (art. 78-3 CPP). Tu peux faire prévenir le procureur et un proche. Ce n'est pas une garde à vue."
+        },
+        {
+          "heading": "Palpation et fouille de sac",
+          "body": "• La palpation de sécurité (par-dessus les vêtements) est possible pour la sécurité des agents.\n• Aux abords d'une manifestation, l'inspection visuelle et la fouille des sacs peuvent être autorisées sur réquisitions écrites du procureur (art. 78-2-5 CPP).\n• En dehors de ces cadres, une fouille de sac nécessite en principe ton accord."
+        },
+        {
+          "heading": "Ton téléphone",
+          "body": "Un simple contrôle d'identité ne permet pas d'exploiter le contenu de ton téléphone."
+        }
+      ]
+    },
+    {
+      "id": "gav",
+      "category": "Garde à vue",
+      "title": "Garde à vue : tes droits",
+      "summary": "Durée, avocat, silence, médecin, proche à prévenir.",
+      "sections": [
+        {
+          "heading": "Durée",
+          "body": "24 heures, renouvelables une fois 24 heures sur autorisation du procureur (48 h au total en droit commun). Plus longue pour certaines infractions graves (criminalité organisée, terrorisme)."
+        },
+        {
+          "heading": "Tes droits (art. 63-1 CPP)",
+          "body": "Dès le début, on doit t'informer, dans une langue que tu comprends :\n• de l'infraction qu'on te reproche, de sa date et de son lieu ;\n• de ton droit de garder le silence ;\n• de ton droit de faire prévenir un proche et ton employeur ;\n• de ton droit d'être examiné·e par un médecin ;\n• de ton droit d'être assisté·e par un avocat ;\n• de ton droit à un interprète si besoin."
+        },
+        {
+          "heading": "L'avocat",
+          "body": "Demande un avocat dès le début. Si tu n'en connais pas, demande un avocat commis d'office : c'est gratuit pendant la garde à vue. Vous avez un entretien confidentiel de 30 minutes, et il peut assister à tes auditions. Pour un·e mineur·e, l'avocat est obligatoire."
+        },
+        {
+          "heading": "Le silence",
+          "body": "Tu peux répondre : « Je n'ai rien à déclarer » ou « Je garderai le silence jusqu'à l'arrivée de mon avocat ». Ton silence ne peut pas être retenu comme preuve de culpabilité."
+        },
+        {
+          "heading": "Les procès-verbaux",
+          "body": "Relis tout ce qu'on te demande de signer. Tu peux faire corriger le texte ou refuser de signer."
+        },
+        {
+          "heading": "Code du téléphone, ADN, empreintes",
+          "body": "Refuser de donner le code de déverrouillage de ton téléphone peut, dans certains cas, être poursuivi (art. 434-15-2 du Code pénal ; Cour de cassation, assemblée plénière, 7 novembre 2022). Refuser certains prélèvements (empreintes, photos, ADN) peut aussi constituer un délit. Parles-en avec ton avocat avant de décider."
+        }
+      ]
+    },
+    {
+      "id": "apres",
+      "category": "Après",
+      "title": "Après la garde à vue",
+      "summary": "Les suites possibles et la comparution immédiate.",
+      "sections": [
+        {
+          "heading": "Les suites possibles",
+          "body": "• Libération sans suite.\n• Mesure alternative aux poursuites.\n• Convocation devant le tribunal à une date ultérieure.\n• Comparution immédiate : jugement le jour même."
+        },
+        {
+          "heading": "Comparution immédiate",
+          "body": "Tu peux refuser d'être jugé·e immédiatement et demander un délai pour préparer ta défense. Le tribunal peut alors te laisser libre, te placer sous contrôle judiciaire ou, dans certains cas, en détention provisoire jusqu'à l'audience. Décide avec ton avocat."
+        }
+      ]
+    },
+    {
+      "id": "violences",
+      "category": "Après",
+      "title": "Victime ou témoin de violences",
+      "summary": "Garder les preuves et porter plainte.",
+      "sections": [
+        {
+          "heading": "Tout de suite",
+          "body": "• Fais-toi soigner et demande un certificat médical décrivant tes blessures (idéalement aux urgences ou dans une unité médico-judiciaire).\n• Photographie tes blessures.\n• Note l'heure, le lieu, les numéros RIO, et les contacts des témoins.\n• Sauvegarde les vidéos hors de ton téléphone."
+        },
+        {
+          "heading": "Porter plainte",
+          "body": "Tu peux porter plainte dans n'importe quel commissariat ou gendarmerie (ils ne peuvent pas refuser), ou écrire directement au procureur de la République. Tu peux aussi signaler les faits à l'IGPN (police) ou l'IGGN (gendarmerie), et saisir le Défenseur des droits."
+        }
+      ]
+    },
+    {
+      "id": "secours-gaz",
+      "category": "Premiers secours",
+      "title": "Gaz lacrymogène",
+      "summary": "Rincer, s'éloigner, respirer.",
+      "sections": [
+        {
+          "heading": "Réflexes",
+          "body": "1. Sors du nuage, de préférence face au vent.\n2. Ne frotte pas tes yeux.\n3. Retire tes lentilles si tu en portes.\n4. Rince abondamment au sérum physiologique ou à l'eau claire, du coin intérieur de l'œil vers l'extérieur.\n5. Respire calmement : la sensation de brûlure passe en général en quelques dizaines de minutes."
+        },
+        {
+          "heading": "Appelle le 15 ou le 112 si",
+          "body": "• Difficulté à respirer qui ne s'améliore pas.\n• Personne asthmatique en crise, malaise, perte de connaissance.\n• Douleur à l'œil persistante ou baisse de la vue."
+        }
+      ]
+    },
+    {
+      "id": "secours-blessure",
+      "category": "Premiers secours",
+      "title": "Blessure ou malaise",
+      "summary": "Protéger, alerter, secourir.",
+      "sections": [
+        {
+          "heading": "Protéger, alerter, secourir",
+          "body": "1. Mets-toi et mets la victime à l'abri du danger.\n2. Appelle le 15 ou le 112.\n3. Reste avec la victime jusqu'à l'arrivée des secours. Signale-la sur la carte (Soins) pour faire venir un street medic."
+        },
+        {
+          "heading": "Saignement",
+          "body": "Appuie fortement et sans relâcher sur la plaie, avec un tissu propre ou directement avec la main."
+        },
+        {
+          "heading": "Inconscient·e",
+          "body": "• Respire : mets la personne en position latérale de sécurité (sur le côté) et surveille sa respiration.\n• Ne respire pas : commence le massage cardiaque (appuis au centre de la poitrine, 100 à 120 par minute) et fais chercher un défibrillateur."
+        },
+        {
+          "heading": "Œil ou tête",
+          "body": "• Blessure à l'œil : ne touche pas, ne rince pas un œil percé, couvre les deux yeux sans appuyer et appelle les secours.\n• Choc à la tête : va aux urgences même si la personne semble aller bien, surtout en cas de vomissements, de somnolence ou de confusion."
+        }
+      ]
+    }
+  ]
+}
