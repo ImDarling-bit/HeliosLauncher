@@ -10,8 +10,12 @@ return [
     'storage_dir' => dirname(__DIR__, 2) . '/crash-reports',
 
     // Limites anti-abus.
-    'max_reports_per_hour' => 20,  // par adresse IP
-    'max_file_mb' => 16,           // par fichier, une fois décompressé
+    'max_reports_per_hour' => 20,          // par adresse IP (envois refusés compris)
+    'max_reports_per_hour_global' => 300,  // tous joueurs confondus
+    'max_file_mb' => 16,                   // par fichier, une fois décompressé
+    'max_total_mb' => 40,                  // pour tout l'envoi
+    'max_meta_kb' => 256,                  // taille du JSON meta
+    'min_free_disk_mb' => 1024,            // en dessous, plus aucun rapport n'est écrit
 
     // Les rapports plus vieux que ça sont supprimés automatiquement (RGPD).
     'retention_days' => 90,

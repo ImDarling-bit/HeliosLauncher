@@ -71,14 +71,30 @@ envoyées, et une même erreur n'est envoyée qu'une fois toutes les 10 minutes.
 Si le dossier ne peut pas être créé (droits), mets un autre chemin dans `config.php`
 (`storage_dir`), de préférence en dehors de `httpdocs`.
 
+## Garde-fous
+
+Le receveur refuse : un envoi sans la bonne clé, plus de 20 envois par heure et par IP (300 en tout),
+un fichier vide, un fichier qui n'est pas du vrai gzip, un fichier trop gros avant ou après
+décompression, un champ de fichier inconnu, un `meta` trop gros ou mal formé, et tout envoi si
+le disque est presque plein. Un fichier binaire (octet nul) n'est pas gardé, le reste du rapport si.
+Il refuse aussi d'écrire si `storage_dir` est dans le dossier public du site. Les fichiers sont
+toujours enregistrés sous des noms fixes, jamais sous le nom envoyé.
+
+Le launcher ne renvoie pas un rapport refusé (réponse 4xx hors 429) : il le jette pour ne pas
+bloquer sa file d'attente.
+
 ## Réglages (`config.php`)
 
 | Réglage | Rôle |
 |---|---|
 | `upload_key` | Doit être identique à `UPLOAD_KEY` dans `crashreporter.js`. Ce n'est pas un vrai secret (il est dans le launcher), juste un filtre anti-spam. |
 | `storage_dir` | Dossier de stockage. |
-| `max_reports_per_hour` | Nombre max de rapports par adresse IP et par heure (20). |
+| `max_reports_per_hour` | Nombre max d'envois par adresse IP et par heure, refusés compris (20). |
+| `max_reports_per_hour_global` | Nombre max de rapports par heure, tous joueurs confondus (300). |
 | `max_file_mb` | Taille max d'un fichier une fois décompressé (16 Mo). |
+| `max_total_mb` | Taille max de tout l'envoi (40 Mo). |
+| `max_meta_kb` | Taille max du JSON `meta` (256 Ko). |
+| `min_free_disk_mb` | Espace disque minimum : en dessous, plus aucun rapport n'est écrit (1024 Mo). |
 | `retention_days` | Les rapports plus vieux sont supprimés automatiquement (90 jours). |
 
 ## Données personnelles (RGPD)

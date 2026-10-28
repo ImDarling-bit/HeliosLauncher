@@ -131,8 +131,17 @@ async function upload(meta, files){
         body: form,
         signal: AbortSignal.timeout(UPLOAD_TIMEOUT_MS)
     })
-    if(!res.ok) throw new Error(`HTTP ${res.status}`)
+    if(!res.ok) {
+        const err = new Error(`HTTP ${res.status}`)
+        err.status = res.status
+        throw err
+    }
     return res.json().catch(() => ({}))
+}
+
+/** Refus définitif du receveur (rapport invalide) : inutile de le renvoyer plus tard. */
+function isRejected(err){
+    return typeof err?.status === 'number' && err.status >= 400 && err.status < 500 && err.status !== 429
 }
 
 async function enqueue(id, meta, files){
@@ -224,8 +233,12 @@ exports.handleGameExit = async function(session){
                 notify(session.onReportId, res.reportId)
             }
         } catch(err) {
-            logger.warn('Envoi du rapport de crash impossible, il sera renvoyé au prochain démarrage.', err.message)
-            await enqueue(`${Date.now()}-${process.pid}`, meta, files)
+            if(isRejected(err)) {
+                logger.warn('Rapport de crash refusé par le receveur, il ne sera pas renvoyé.', err.message)
+            } else {
+                logger.warn('Envoi du rapport de crash impossible, il sera renvoyé au prochain démarrage.', err.message)
+                await enqueue(`${Date.now()}-${process.pid}`, meta, files)
+            }
         }
     } catch(err) {
         logger.error('Erreur pendant la préparation du rapport de crash.', err)
@@ -252,6 +265,12 @@ exports.flushQueue = async function(){
                 await fs.remove(dir)
                 logger.info('Rapport de crash en attente envoyé.', id)
             } catch(err) {
+                if(isRejected(err)) {
+                    // Refusé pour de bon : on le jette pour ne pas bloquer la file.
+                    await fs.remove(dir).catch(() => {})
+                    logger.warn('Rapport de crash en attente refusé par le receveur, supprimé.', id, err.message)
+                    continue
+                }
                 logger.warn('Rapport de crash en attente toujours pas envoyé.', id, err.message)
                 return
             }
@@ -326,8 +345,12 @@ exports.reportLauncherError = async function(report){
             const res = await upload(meta, files)
             logger.info('Erreur du launcher envoyée au serveur.', res?.id ?? '')
         } catch(err) {
-            logger.warn('Envoi de l\'erreur du launcher impossible, elle sera renvoyée au prochain démarrage.', err.message)
-            await enqueue(`${Date.now()}-${process.pid}-launcher`, meta, files)
+            if(isRejected(err)) {
+                logger.warn('Erreur du launcher refusée par le receveur, elle ne sera pas renvoyée.', err.message)
+            } else {
+                logger.warn('Envoi de l\'erreur du launcher impossible, elle sera renvoyée au prochain démarrage.', err.message)
+                await enqueue(`${Date.now()}-${process.pid}-launcher`, meta, files)
+            }
         }
     } catch(err) {
         logger.error('Erreur pendant la préparation du rapport d\'erreur du launcher.', err)
