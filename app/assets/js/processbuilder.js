@@ -9,6 +9,7 @@ const os                    = require('os')
 const path                  = require('path')
 
 const ConfigManager            = require('./configmanager')
+const Log4jPatch               = require('./log4jpatch')
 
 const logger = LoggerUtil.getLogger('ProcessBuilder')
 
@@ -23,7 +24,7 @@ const logger = LoggerUtil.getLogger('ProcessBuilder')
  */
 class ProcessBuilder {
 
-    constructor(distroServer, vanillaManifest, modManifest, authUser, launcherVersion, yggdrasilPort = null){
+    constructor(distroServer, vanillaManifest, modManifest, authUser, launcherVersion, yggdrasilPort = null, log4jOverride = null){
         this.gameDir = path.join(ConfigManager.getInstanceDirectory(), distroServer.rawServer.id)
         this.commonDir = ConfigManager.getCommonDirectory()
         this.server = distroServer
@@ -37,6 +38,8 @@ class ProcessBuilder {
         this.libPath = path.join(this.commonDir, 'libraries')
 
         this.yggdrasilPort = yggdrasilPort
+        // Chemins de log4j 2.17.1 (log4jpatch.js), ou null pour garder celui de Forge.
+        this.log4jOverride = log4jOverride
         this.usingLiteLoader = false
         this.usingFabricLoader = false
         this.llPath = null
@@ -423,6 +426,7 @@ class ProcessBuilder {
         }
 
         //args.push('-Dlog4j.configurationFile=D:\\WesterosCraft\\game\\common\\assets\\log_configs\\client-1.12.xml')
+        args = args.concat(Log4jPatch.JVM_ARGS)
 
         // Java Arguments
         if(process.platform === 'darwin'){
@@ -709,6 +713,16 @@ class ProcessBuilder {
 
         // Merge libraries. Priority (highest last): Mojang < Server distro < Forge manifest.
         const finalLibs = {...mojangLibs, ...servLibs, ...forgeManifestLibs}
+
+        // Correctif log4j : remplace la version de Forge (2.15.0) par 2.17.1, seulement pour les
+        // bibliothèques déjà présentes.
+        if(this.log4jOverride != null) {
+            for(const id of Object.keys(this.log4jOverride)) {
+                if(finalLibs[id] != null) {
+                    finalLibs[id] = this.log4jOverride[id]
+                }
+            }
+        }
         cpArgs = cpArgs.concat(Object.values(finalLibs))
 
         this._processClassPathList(cpArgs)

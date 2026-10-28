@@ -34,6 +34,7 @@ const DiscordWrapper          = require('./assets/js/discordwrapper')
 const ProcessBuilder          = require('./assets/js/processbuilder')
 const GameLock                = require('./assets/js/gamelock')
 const CrashReporter           = require('./assets/js/crashreporter')
+const Log4jPatch              = require('./assets/js/log4jpatch')
 
 // Launch Elements
 const launch_content          = document.getElementById('launch_content')
@@ -1647,11 +1648,14 @@ async function dlAsync(login = true) {
     // Download authlib-injector for Azuriom session authentication (multiplayer)
     await ensureAuthlibInjector(ConfigManager.getCommonDirectory())
 
+    // Correctif log4j 2.17.1 (null si indisponible : on garde la version de Forge)
+    const log4jOverride = await Log4jPatch.ensure(ConfigManager.getCommonDirectory(), downloadFile, loggerForgeLibs)
+
     if(login) {
         const authUser = ConfigManager.getSelectedAccount()
         loggerLaunchSuite.info(`Sending selected account (${authUser.displayName}) to ProcessBuilder.`)
         const yggPort = await startYggdrasilServer(authUser)
-        let pb = new ProcessBuilder(serv, versionData, modLoaderData, authUser, remote.app.getVersion(), yggPort)
+        let pb = new ProcessBuilder(serv, versionData, modLoaderData, authUser, remote.app.getVersion(), yggPort, log4jOverride)
         setLaunchDetails(Lang.queryJS('landing.dlAsync.launchingGame'))
 
         // const SERVER_JOINED_REGEX = /\[.+\]: \[CHAT\] [a-zA-Z0-9_]{1,16} joined the game/
