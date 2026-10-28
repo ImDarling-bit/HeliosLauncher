@@ -121,6 +121,7 @@ const DEFAULT_CONFIG = {
             resWidth: 1280,
             resHeight: 720,
             fullscreen: false,
+            lightMode: false,
             autoConnect: true,
             launchDetached: true
         },
@@ -819,6 +820,65 @@ exports.getFullscreen = function(def = false){
  */
 exports.setFullscreen = function(fullscreen){
     config.settings.game.fullscreen = fullscreen
+}
+
+/**
+ * Fichier du mode léger partagé avec le jeu (lu et écrit aussi par DistrictClient), dans le
+ * dossier du jeu de ce serveur : changer l'option d'un côté la change de l'autre.
+ *
+ * @param {string} serverid Identifiant du serveur.
+ * @returns {string} Chemin du fichier config/districtlife-light.json.
+ */
+exports.getLightModeFile = function(serverid){
+    return path.join(exports.getInstanceDirectory(), serverid, 'config', 'districtlife-light.json')
+}
+
+/**
+ * Mode léger (menus et chargements simplifiés pour les petits PC). Le fichier du jeu fait foi
+ * s'il existe (le joueur a pu changer l'option en jeu), sinon la valeur du launcher.
+ *
+ * @param {string} serverid Identifiant du serveur.
+ * @param {boolean} def Optionnel. Si vrai, renvoie la valeur par défaut.
+ * @returns {boolean} Si le mode léger est activé.
+ */
+exports.getLightMode = function(serverid, def = false){
+    if(def) return DEFAULT_CONFIG.settings.game.lightMode
+    if(serverid){
+        try {
+            const data = JSON.parse(fs.readFileSync(exports.getLightModeFile(serverid), 'UTF-8'))
+            if(typeof data.enabled === 'boolean') return data.enabled
+        } catch (_err) {
+            // Fichier absent ou illisible : valeur du launcher.
+        }
+    }
+    return config.settings.game.lightMode === true
+}
+
+/**
+ * Active ou désactive le mode léger, dans la config du launcher et dans le fichier du jeu.
+ *
+ * @param {string} serverid Identifiant du serveur.
+ * @param {boolean} enabled Si le mode léger est activé.
+ */
+exports.setLightMode = function(serverid, enabled){
+    config.settings.game.lightMode = enabled === true
+    if(serverid) exports.writeLightModeFile(serverid, enabled === true)
+}
+
+/**
+ * Écrit le fichier du mode léger lu par le jeu. Sans effet en cas d'erreur (le jeu garde sa valeur).
+ *
+ * @param {string} serverid Identifiant du serveur.
+ * @param {boolean} enabled Si le mode léger est activé.
+ */
+exports.writeLightModeFile = function(serverid, enabled){
+    try {
+        const file = exports.getLightModeFile(serverid)
+        fs.ensureDirSync(path.dirname(file))
+        fs.writeFileSync(file, JSON.stringify({ enabled: enabled === true }, null, 2), 'UTF-8')
+    } catch (err) {
+        logger.warn('Impossible d\'écrire le fichier du mode léger', err)
+    }
 }
 
 /**

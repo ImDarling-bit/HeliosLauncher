@@ -47,6 +47,8 @@ class ProcessBuilder {
      */
     build(){
         fs.ensureDirSync(this.gameDir)
+        // Mode léger : le jeu lit config/districtlife-light.json dès son démarrage.
+        ConfigManager.writeLightModeFile(this.server.rawServer.id, ConfigManager.getLightMode(this.server.rawServer.id))
         const tempNativePath = path.join(os.tmpdir(), ConfigManager.getTempNativeFolder(), crypto.pseudoRandomBytes(16).toString('hex'))
         process.throwDeprecation = true
         this.setupLiteLoader()
