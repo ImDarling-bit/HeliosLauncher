@@ -60,6 +60,19 @@
                             <span class="toggleSwitchSlider"></span>
                         </span>
                     </label>
+                    <div class="settingsCardDivider"></div>
+                    <label class="settingsCardRow">
+                        <div>
+                            <div class="settingsFieldTitle"><%- lang('settings.lightTexturesTitle') %></div>
+                            <div class="settingsFieldDesc"><%- lang('settings.lightTexturesDesc') %></div>
+                        </div>
+                        <select class="settingsSelect" cValue="LightTextures" serverDependent>
+                            <option value="normale"><%- lang('settings.lightTexturesNormal') %></option>
+                            <option value="reduite"><%- lang('settings.lightTexturesReduced') %></option>
+                            <option value="basse"><%- lang('settings.lightTexturesLow') %></option>
+                            <option value="tres_basse"><%- lang('settings.lightTexturesVeryLow') %></option>
+                        </select>
+                    </label>
                 </div>
             </section>
 

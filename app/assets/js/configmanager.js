@@ -122,6 +122,7 @@ const DEFAULT_CONFIG = {
             resHeight: 720,
             fullscreen: false,
             lightMode: false,
+            lightTextures: 'normale',
             autoConnect: true,
             launchDetached: true
         },
@@ -865,17 +866,61 @@ exports.setLightMode = function(serverid, enabled){
     if(serverid) exports.writeLightModeFile(serverid, enabled === true)
 }
 
+/** Niveaux de qualité des textures, identiques à LightMode.Textures de DistrictClient. */
+exports.LIGHT_TEXTURE_LEVELS = ['normale', 'reduite', 'basse', 'tres_basse']
+
 /**
- * Écrit le fichier du mode léger lu par le jeu. Sans effet en cas d'erreur (le jeu garde sa valeur).
+ * Qualité des textures des mods (mode léger) : le jeu réduit au chargement les textures trop
+ * grandes de l'atlas (MTS, DistrictLife…), jamais celles de Minecraft. Comme le mode léger, le
+ * fichier du jeu fait foi s'il existe.
  *
  * @param {string} serverid Identifiant du serveur.
- * @param {boolean} enabled Si le mode léger est activé.
+ * @param {boolean} def Optionnel. Si vrai, renvoie la valeur par défaut.
+ * @returns {string} 'normale', 'reduite', 'basse' ou 'tres_basse'.
  */
-exports.writeLightModeFile = function(serverid, enabled){
+exports.getLightTextures = function(serverid, def = false){
+    if(def) return DEFAULT_CONFIG.settings.game.lightTextures
+    if(serverid){
+        try {
+            const data = JSON.parse(fs.readFileSync(exports.getLightModeFile(serverid), 'UTF-8'))
+            if(exports.LIGHT_TEXTURE_LEVELS.includes(data.textures)) return data.textures
+        } catch (_err) {
+            // Fichier absent ou illisible : valeur du launcher.
+        }
+    }
+    const v = config.settings.game.lightTextures
+    return exports.LIGHT_TEXTURE_LEVELS.includes(v) ? v : 'normale'
+}
+
+/**
+ * Change la qualité des textures, dans la config du launcher et dans le fichier du jeu.
+ *
+ * @param {string} serverid Identifiant du serveur.
+ * @param {string} level 'normale', 'reduite', 'basse' ou 'tres_basse'.
+ */
+exports.setLightTextures = function(serverid, level){
+    const v = exports.LIGHT_TEXTURE_LEVELS.includes(level) ? level : 'normale'
+    config.settings.game.lightTextures = v
+    if(serverid) exports.writeLightModeFile(serverid, undefined, v)
+}
+
+/**
+ * Écrit le fichier du mode léger lu par le jeu (mode léger et qualité des textures). Une valeur
+ * non fournie reprend celle déjà connue. Sans effet en cas d'erreur (le jeu garde sa valeur).
+ *
+ * @param {string} serverid Identifiant du serveur.
+ * @param {boolean} [enabled] Si le mode léger est activé.
+ * @param {string} [textures] La qualité des textures.
+ */
+exports.writeLightModeFile = function(serverid, enabled, textures){
     try {
         const file = exports.getLightModeFile(serverid)
+        const data = {
+            enabled: typeof enabled === 'boolean' ? enabled : exports.getLightMode(serverid),
+            textures: exports.LIGHT_TEXTURE_LEVELS.includes(textures) ? textures : exports.getLightTextures(serverid)
+        }
         fs.ensureDirSync(path.dirname(file))
-        fs.writeFileSync(file, JSON.stringify({ enabled: enabled === true }, null, 2), 'UTF-8')
+        fs.writeFileSync(file, JSON.stringify(data, null, 2), 'UTF-8')
     } catch (err) {
         logger.warn('Impossible d\'écrire le fichier du mode léger', err)
     }

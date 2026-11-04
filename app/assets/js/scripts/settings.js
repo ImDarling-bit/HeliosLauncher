@@ -145,6 +145,8 @@ async function initSettingsValues(){
                 } else if(v.type === 'checkbox'){
                     v.checked = gFn.apply(null, gFnOpts)
                 }
+            } else if(v.tagName === 'SELECT'){
+                v.value = gFn.apply(null, gFnOpts)
             } else if(v.tagName === 'DIV'){
                 if(v.classList.contains('rangeSlider')){
                     // Special Conditions
@@ -204,6 +206,9 @@ function saveSettingsValues(){
                         changeAllowPrerelease(v.checked)
                     }
                 }
+            } else if(v.tagName === 'SELECT'){
+                sFnOpts.push(v.value)
+                sFn.apply(null, sFnOpts)
             } else if(v.tagName === 'DIV'){
                 if(v.classList.contains('rangeSlider')){
                     // Special Conditions
