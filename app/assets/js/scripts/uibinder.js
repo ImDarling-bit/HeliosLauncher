@@ -159,9 +159,16 @@ function showFatalStartupError(){
     setTimeout(() => {
         $('#loadingContainer').fadeOut(250, () => {
             document.getElementById('overlayContainer').style.background = 'none'
+            // Envoyé au serveur (mis en file d'attente si Internet est coupé) avec le
+            // journal complet, et numéro affiché pour le support.
+            const reportId = require('./assets/js/crashreporter').reportLauncherError({
+                title: Lang.queryJS('uibinder.startup.fatalErrorTitle'),
+                description: Lang.queryJS('uibinder.startup.fatalErrorMessage'),
+                error: new Error('Index de distribution impossible à charger au démarrage (aucune copie locale)')
+            })
             setOverlayContent(
                 Lang.queryJS('uibinder.startup.fatalErrorTitle'),
-                Lang.queryJS('uibinder.startup.fatalErrorMessage'),
+                AuthManager.withSupport(Lang.queryJS('uibinder.startup.fatalErrorMessage'), reportId),
                 Lang.queryJS('uibinder.startup.closeButton')
             )
             setOverlayHandler(() => {
@@ -381,11 +388,13 @@ async function validateSelectedAccount(){
             ConfigManager.removeAuthAccount(selectedAcc.uuid)
             ConfigManager.save()
             const accLen = Object.keys(ConfigManager.getAuthAccounts()).length
+            // Numéro du rapport envoyé pour cette session perdue (voir AuthManager).
+            const sessionReportId = AuthManager.consumeSessionReportId()
             setOverlayContent(
                 Lang.queryJS('uibinder.validateAccount.failedMessageTitle'),
-                accLen > 0
+                AuthManager.withSupport(accLen > 0
                     ? Lang.queryJS('uibinder.validateAccount.failedMessage', { 'account': selectedAcc.displayName })
-                    : Lang.queryJS('uibinder.validateAccount.failedMessageSelectAnotherAccount', { 'account': selectedAcc.displayName }),
+                    : Lang.queryJS('uibinder.validateAccount.failedMessageSelectAnotherAccount', { 'account': selectedAcc.displayName }), sessionReportId),
                 Lang.queryJS('uibinder.validateAccount.loginButton'),
                 Lang.queryJS('uibinder.validateAccount.selectAnotherAccountButton')
             )

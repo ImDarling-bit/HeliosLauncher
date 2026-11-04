@@ -1,3 +1,8 @@
+// Journal du processus principal, joint aux rapports d'erreur (voir mainlog.js). En
+// premier, pour ne rien rater du démarrage.
+const MainLog = require('./app/assets/js/mainlog')
+MainLog.install()
+
 const remoteMain = require('@electron/remote/main')
 remoteMain.initialize()
 
@@ -123,6 +128,18 @@ ipcMain.on('autoUpdateAction', (event, arg, data) => {
     }
 })
 // Redirect distribution index event from preloader to renderer.
+MainLog.attach(app)
+// La fenêtre récupère le journal du processus principal pour l'ajouter aux rapports.
+ipcMain.handle('dl-main-log', () => MainLog.getText())
+
+// Journal des mises à jour automatiques (sinon invisible dans les rapports).
+autoUpdater.logger = {
+    info:  (...a) => MainLog.log('info', '[autoUpdater]', ...a),
+    warn:  (...a) => MainLog.log('warn', '[autoUpdater]', ...a),
+    error: (...a) => MainLog.log('error', '[autoUpdater]', ...a),
+    debug: (...a) => MainLog.log('debug', '[autoUpdater]', ...a)
+}
+
 ipcMain.on('distributionIndexDone', (event, res) => {
     event.sender.send('distributionIndexDone', res)
 })

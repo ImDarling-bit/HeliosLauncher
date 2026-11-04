@@ -952,15 +952,17 @@ let serverStatusListener = setInterval(() => refreshServerStatus(true), 300000)
  * @param {string} desc The overlay description.
  */
 function showLaunchFailure(title, desc, reportError){
-    // Erreur inattendue du launcher : envoyée au serveur avec les derniers logs
-    // (crashreporter.js). Les cas « normaux » (jeu déjà lancé, disque plein…)
-    // n'ont pas de 3e argument et ne sont pas envoyés.
+    // Erreur inattendue du launcher : envoyée au serveur avec le journal complet
+    // (crashreporter.js), et le joueur reçoit le numéro du rapport pour le support.
+    // Les cas « normaux » (jeu déjà lancé, disque plein…) n'ont pas de 3e argument et
+    // ne sont pas envoyés.
     if(reportError !== undefined){
-        CrashReporter.reportLauncherError({
+        const reportId = CrashReporter.reportLauncherError({
             title, description: desc,
             error: reportError === true ? null : reportError,
             launcherVersion: remote.app.getVersion()
         })
+        desc = AuthManager.withSupport(desc, reportId)
     }
     setOverlayContent(
         title,

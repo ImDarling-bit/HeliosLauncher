@@ -68,6 +68,26 @@ chargement de la distribution, lancement du jeu…), il envoie aussi un rapport,
 Les situations normales (jeu déjà lancé, disque plein, compte non connecté…) ne sont pas
 envoyées, et une même erreur n'est envoyée qu'une fois toutes les 10 minutes.
 
+Depuis le launcher 4.3.0, chaque rapport a aussi un numéro DL-… (affiché au joueur) et
+`launcher.log` contient le journal complet : console de la fenêtre (avec les erreurs non
+gérées), journal du processus principal d'Electron (mises à jour, plantages de processus)
+et copie de la console de toutes les fenêtres. Il est joint **aussi aux crashs du jeu**.
+
+Codes ajoutés en 4.3.0 :
+
+| Dossier | Cas | Champs en plus dans `meta.json` |
+|---|---|---|
+| `Launcher_AUTH_CONNEXION_IDENTIFIANTS` | mot de passe refusé, **3 fois d'affilée** pour le même email | `accountEmail`, `consecutiveFailures`, `authResponse` |
+| `Launcher_AUTH_CONNEXION_SITE_INJOIGNABLE` | le site ne répond pas à la connexion | `accountEmail`, `authError` |
+| `Launcher_AUTH_CONNEXION_HTTP_<code>` | le site répond une erreur (500…) | `accountEmail`, `httpStatus`, `authError` |
+| `Launcher_AUTH_CONNEXION_2FA`, `…_<RAISON>` | double authentification, compte refusé par le site | `accountEmail`, `authResponse` |
+| `Launcher_AUTH_SESSION_HTTP_<code>`, `Launcher_AUTH_SESSION_PERDUE` | session refusée au démarrage, compte retiré du launcher | `accountEmail`, `accountName`, `accountUuid`, `httpStatus`, `authError` |
+| `Launcher_Fenetre_<raison>` | la fenêtre du launcher a planté (envoyé au démarrage suivant) | — |
+
+Tous ont `authKind` (`connexion` ou `session_perdue`) pour les cas de compte. Une connexion
+ratée avant d'avoir le pseudo est rangée sous le pseudo `inconnu` : l'email est dans
+`accountEmail`.
+
 Si le dossier ne peut pas être créé (droits), mets un autre chemin dans `config.php`
 (`storage_dir`), de préférence en dehors de `httpdocs`.
 

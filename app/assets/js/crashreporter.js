@@ -15,6 +15,12 @@
  * - Si l'envoi échoue (pas d'Internet…), le rapport est gardé dans
  *   <launcher>/crash-queue et renvoyé au prochain démarrage du launcher.
  *
+ * - Chaque rapport joint aussi le journal du launcher : console de la fenêtre (avec les
+ *   erreurs non gérées), journal du processus principal d'Electron et copie de la
+ *   console de toutes les fenêtres (logbuffer.js + mainlog.js).
+ * - Les erreurs de connexion au compte et les sessions perdues sont envoyées avec le
+ *   compte concerné (reportAuthError).
+ *
  * Le receveur côté serveur est dans server/crash-receiver/ (PHP).
  */
 const crypto = require('crypto')
@@ -41,7 +47,7 @@ const FILES = [
     { key: 'hs-err',       maxBytes: 2 * 1024 * 1024 },
     { key: 'latest-log',   maxBytes: 4 * 1024 * 1024 },
     { key: 'debug-log',    maxBytes: 3 * 1024 * 1024 },
-    { key: 'launcher-log', maxBytes: 2 * 1024 * 1024 }
+    { key: 'launcher-log', maxBytes: 4 * 1024 * 1024 }
 ]
 
 // Une même erreur du launcher n'est envoyée qu'une fois toutes les 10 minutes.
@@ -68,6 +74,42 @@ function notify(cb, value){
     } catch(err) {
         logger.warn('Erreur dans le callback du rapport de crash.', err)
     }
+}
+
+function launcherVersion(){
+    try {
+        return require('@electron/remote').app.getVersion()
+    } catch(_err) {
+        return null
+    }
+}
+
+/**
+ * Journal complet du launcher : console de la fenêtre, puis journal du processus
+ * principal d'Electron (récupéré par IPC, voir mainlog.js). Masqué et compressé.
+ */
+async function launcherLogGz(){
+    let windowLog = ''
+    try {
+        windowLog = require('./logbuffer').getText()
+    } catch(_err) {
+        windowLog = ''
+    }
+    let mainLog = ''
+    try {
+        const { ipcRenderer } = require('electron')
+        mainLog = await Promise.race([
+            ipcRenderer.invoke('dl-main-log'),
+            new Promise(resolve => setTimeout(() => resolve('(journal du processus principal indisponible)'), 3000))
+        ])
+    } catch(err) {
+        mainLog = `(journal du processus principal indisponible : ${err?.message ?? err})`
+    }
+    const maxBytes = FILES.find(f => f.key === 'launcher-log').maxBytes
+    const half = Math.floor(maxBytes / 2)
+    const text = '===== Console de la fenêtre du launcher =====\n' + String(windowLog).slice(-half)
+        + '\n\n' + String(mainLog ?? '').slice(-half)
+    return zlib.gzipSync(Buffer.from(redact(text), 'utf8'))
 }
 
 function queueDir(){
@@ -206,6 +248,7 @@ exports.handleGameExit = async function(session){
                 files[key] = await readTailGz(file, maxBytes)
             }
         }
+        files['launcher-log'] = await launcherLogGz()
 
         const meta = {
             reportId,
@@ -298,63 +341,169 @@ function launcherErrorCode(error, logText){
 
 /**
  * Envoie au serveur une erreur du launcher (échec du lancement, du téléchargement, de
- * la vérification des fichiers…) avec les derniers logs du launcher.
+ * la vérification des fichiers…) avec le journal complet du launcher.
  *
  * @param {Object} report
  * @param {string} report.title Le titre affiché au joueur.
  * @param {string} report.description Le message affiché au joueur.
  * @param {*} report.error L'erreur d'origine (facultatif).
- * @param {string} report.launcherVersion La version du launcher.
+ * @param {string} [report.launcherVersion] La version du launcher.
+ * @returns {string|null} Le numéro du rapport (DL-XXXX-XXXX) à montrer au joueur, ou
+ *     null si l'envoi des rapports est désactivé. Une même erreur répétée dans les
+ *     10 minutes renvoie le numéro du premier rapport, sans renvoyer.
  */
-exports.reportLauncherError = async function(report){
+exports.reportLauncherError = function(report){
     try {
-        if(!ConfigManager.getSendCrashReports()) return
-        const error = report.error instanceof Error ? report.error : (report.error != null ? new Error(String(report.error?.message ?? report.error)) : null)
-        if(report.error?.code && error && !error.code) error.code = report.error.code
-
+        if(!ConfigManager.getSendCrashReports()) return null
+        const error = toError(report.error)
         const key = `${report.title}|${error?.message ?? report.description}`
-        const last = recentLauncherErrors.get(key)
-        if(last && Date.now() - last < LAUNCHER_ERROR_COOLDOWN_MS) return
-        recentLauncherErrors.set(key, Date.now())
+        const recent = recentReport(key)
+        if(recent) return recent
 
-        const logText = require('./logbuffer').getText()
+        const reportId = generateReportId()
+        rememberReport(key, reportId)
         const serverId = ConfigManager.getSelectedServer()
         const account = ConfigManager.getSelectedAccount()
-        const meta = {
-            type: 'launcher',
-            launcherVersion: report.launcherVersion,
+        sendLauncherReport({
+            reportId,
             serverId,
             username: account?.displayName ?? null,
             uuid: account?.uuid ?? null,
-            launcherErrorCode: launcherErrorCode(error, logText),
+            launcherErrorCode: null,
             errorTitle: redact(String(report.title ?? '')),
             errorDescription: redact(String(report.description ?? '').replace(/<[^>]+>/g, ' ')),
+            javaMaxRAM: serverId ? ConfigManager.getMaxRAM(serverId) : null
+        }, error, report.launcherVersion)
+        return reportId
+    } catch(err) {
+        logger.error('Erreur pendant la préparation du rapport d\'erreur du launcher.', err)
+        return null
+    }
+}
+
+/**
+ * Envoie au serveur une erreur de connexion au compte ou une session perdue, avec le
+ * compte concerné et la réponse complète du site.
+ *
+ * @param {Object} report
+ * @param {'login'|'session'} report.kind Connexion au compte ou session perdue.
+ * @param {string} report.code Code court (ex. IDENTIFIANTS, SITE_INJOIGNABLE).
+ * @param {string} [report.email] L'adresse email du compte (en entier).
+ * @param {string} [report.username] Le pseudo, s'il est connu.
+ * @param {string} [report.uuid] L'UUID / identifiant du compte, s'il est connu.
+ * @param {string} report.title Le titre affiché au joueur.
+ * @param {string} report.description Le message affiché au joueur.
+ * @param {*} [report.error] L'erreur levée, le cas échéant.
+ * @param {*} [report.response] La réponse du site (corps), le cas échéant.
+ * @param {Object} [report.extra] Informations en plus (nombre d'échecs…).
+ * @returns {string|null} Le numéro du rapport, ou null si l'envoi est désactivé.
+ */
+exports.reportAuthError = function(report){
+    try {
+        if(!ConfigManager.getSendCrashReports()) return null
+        const error = toError(report.error)
+        const code = `AUTH_${report.kind === 'session' ? 'SESSION' : 'CONNEXION'}_${String(report.code || 'ERREUR').replace(/[^A-Za-z0-9_]/g, '_')}`
+        const key = `${code}|${report.email ?? report.uuid ?? ''}|${error?.message ?? ''}`
+        const recent = recentReport(key)
+        if(recent) return recent
+
+        const reportId = generateReportId()
+        rememberReport(key, reportId)
+        sendLauncherReport({
+            reportId,
+            serverId: ConfigManager.getSelectedServer(),
+            username: report.username ?? null,
+            uuid: report.uuid ?? null,
+            launcherErrorCode: code,
+            errorTitle: redact(String(report.title ?? '')),
+            errorDescription: redact(String(report.description ?? '').replace(/<[^>]+>/g, ' ')),
+            authKind: report.kind === 'session' ? 'session_perdue' : 'connexion',
+            accountEmail: report.email ?? null,
+            accountName: report.username ?? null,
+            accountUuid: report.uuid ?? null,
+            authResponse: report.response !== undefined ? describe(report.response) : null,
+            authError: report.error !== undefined && report.error !== null ? describe(report.error) : null,
+            ...(report.extra ?? {})
+        }, error, null)
+        return reportId
+    } catch(err) {
+        logger.error('Erreur pendant la préparation du rapport de connexion.', err)
+        return null
+    }
+}
+
+// ── Outils des rapports du launcher ─────────────────────────────────────────
+
+function toError(raw){
+    if(raw instanceof Error) return raw
+    if(raw == null) return null
+    const err = new Error(String(raw?.message ?? (typeof raw === 'object' ? JSON.stringify(raw) : raw)))
+    if(raw?.code) err.code = raw.code
+    // Pas une vraie exception : sa pile serait celle de ce fichier, sans intérêt.
+    err.stack = ''
+    return err
+}
+
+/** Décrit un objet quelconque (erreur, réponse du site) en texte lisible, borné, masqué. */
+function describe(value){
+    let text
+    try {
+        if(value instanceof Error){
+            const own = {}
+            for(const k of Object.getOwnPropertyNames(value)) own[k] = value[k]
+            if(value.cause !== undefined) own.cause = value.cause
+            text = require('util').inspect(own, { depth: 5, breakLength: 160 })
+        } else if(typeof value === 'string'){
+            text = value
+        } else {
+            text = require('util').inspect(value, { depth: 5, breakLength: 160 })
+        }
+    } catch(_err) {
+        text = String(value)
+    }
+    return redact(text).slice(0, 16000)
+}
+
+function recentReport(key){
+    const last = recentLauncherErrors.get(key)
+    if(last && Date.now() - last.at < LAUNCHER_ERROR_COOLDOWN_MS) return last.reportId
+    return null
+}
+
+function rememberReport(key, reportId){
+    recentLauncherErrors.set(key, { at: Date.now(), reportId })
+}
+
+/** Complète le rapport (logs, système) et l'envoie, en arrière-plan. */
+function sendLauncherReport(base, error, version){
+    (async () => {
+        const logText = require('./logbuffer').getText()
+        const meta = {
+            type: 'launcher',
+            launcherVersion: version ?? launcherVersion(),
+            ...base,
+            launcherErrorCode: base.launcherErrorCode ?? launcherErrorCode(error, logText),
             errorMessage: error ? redact(String(error.message)) : null,
             errorStack: error?.stack ? redact(String(error.stack)) : null,
             occurredAt: new Date().toISOString(),
             os: `${os.platform()} ${os.release()} (${os.arch()})`,
             totalMemoryGB: Math.round(os.totalmem() / 1073741824),
             freeMemoryGB: Math.round(os.freemem() / 1073741824),
-            dataDirectory: redact(ConfigManager.getDataDirectory()),
-            javaMaxRAM: serverId ? ConfigManager.getMaxRAM(serverId) : null
+            dataDirectory: redact(ConfigManager.getDataDirectory())
         }
-        const maxBytes = FILES.find(f => f.key === 'launcher-log').maxBytes
-        const files = { 'launcher-log': zlib.gzipSync(Buffer.from(redact(logText.slice(-maxBytes)), 'utf8')) }
-
+        const files = { 'launcher-log': await launcherLogGz() }
         try {
             const res = await upload(meta, files)
-            logger.info('Erreur du launcher envoyée au serveur.', res?.id ?? '')
+            logger.info('Rapport du launcher envoyé.', meta.reportId, res?.id ?? '')
         } catch(err) {
             if(isRejected(err)) {
-                logger.warn('Erreur du launcher refusée par le receveur, elle ne sera pas renvoyée.', err.message)
+                logger.warn('Rapport du launcher refusé par le receveur, il ne sera pas renvoyé.', err.message)
             } else {
-                logger.warn('Envoi de l\'erreur du launcher impossible, elle sera renvoyée au prochain démarrage.', err.message)
+                logger.warn('Envoi du rapport du launcher impossible, il sera renvoyé au prochain démarrage.', err.message)
                 await enqueue(`${Date.now()}-${process.pid}-launcher`, meta, files)
             }
         }
-    } catch(err) {
-        logger.error('Erreur pendant la préparation du rapport d\'erreur du launcher.', err)
-    }
+    })().catch(err => logger.error('Erreur pendant l\'envoi du rapport du launcher.', err))
 }
 
 exports._redact = redact

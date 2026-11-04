@@ -53,8 +53,14 @@ unreachableTitle        = "Serveur inaccessible"
 unreachableDesc         = "Impossible de contacter le serveur d’authentification. Vérifiez votre connexion internet."
 unknownTitle            = "Erreur d’authentification"
 unknownDesc             = "Une erreur inattendue s’est produite lors de la connexion. Veuillez réessayer."
+twoFactorDesc           = "Ton compte a la double authentification activée, que le launcher ne gère pas encore. Désactive-la sur le site DistrictLife pour te connecter."
 
 # ─── Onglet Compte (Settings) — section Azuriom ───────────────────────────────
 [js.settings]
 azuriomAccount    = "Compte DistrictLife (Azuriom)"
 addAzuriomAccount = "Ajouter un compte"
+
+# ─── Support (fin des messages d'erreur) ───────────────────────────────────────
+[js.support]
+reportSent = "Rapport envoyé : <b>{id}</b>. Donne ce numéro au support sur Discord."
+contact    = "Si le problème continue, contacte le support sur Discord."

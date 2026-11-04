@@ -3,7 +3,9 @@
  * compris les logs du processus de téléchargement helios-core qui y sont relayés),
  * pour les joindre aux rapports d'erreur envoyés au serveur (voir crashreporter.js).
  *
- * Installé tout au début de preloader.js. Rien n'est écrit sur le disque.
+ * Installé tout au début de preloader.js. Rien n'est écrit sur le disque. Le journal du
+ * processus principal d'Electron est tenu à part (mainlog.js) et ajouté par
+ * crashreporter.js.
  */
 const util = require('util')
 
@@ -34,6 +36,26 @@ exports.install = function(){
             }
             original(...args)
         }
+    }
+    // Erreurs JavaScript non gérées de la fenêtre : visibles d'habitude seulement dans
+    // les outils de développement, on les garde pour les rapports.
+    const win = globalThis.window
+    if(win){
+        win.addEventListener('error', (e) => {
+            push('fatal', [`Erreur non gérée : ${e.message} (${String(e.filename || '').replace(/^file:\/\/.*\/app\//, 'app/')}:${e.lineno}:${e.colno})`, e.error?.stack ?? ''])
+        })
+        win.addEventListener('unhandledrejection', (e) => {
+            push('error', ['Promesse rejetée sans gestion :', e.reason])
+        })
+    }
+}
+
+function push(level, args){
+    try {
+        lines.push(`[${new Date().toISOString()}] [${level}] ${format(args)}`)
+        if(lines.length > MAX_LINES) lines.splice(0, lines.length - MAX_LINES)
+    } catch(_err) {
+        // ignoré
     }
 }
 

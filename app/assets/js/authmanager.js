@@ -424,47 +424,93 @@ exports.addAzuriomAccount = async function(email, password) {
     // site refusait alors un mot de passe pourtant correct.
     email = String(email ?? '').trim()
     password = String(password ?? '').trim()
+    const failKey = email.toLowerCase()
+    let response
     try {
-        const response = await azuriomClient.login(email, password)
-
-        if(response.status !== 'success') {
-            return Promise.reject({
-                title: Lang.queryJS('auth.azuriom.error.invalidCredentialsTitle'),
-                desc:  Lang.queryJS('auth.azuriom.error.invalidCredentialsDesc')
-            })
-        }
-
-        const ret = ConfigManager.addAzuriomAuthAccount(
-            response.uuid,
-            response.accessToken,
-            email,
-            response.username
-        )
-        ConfigManager.save()
-        return ret
-
+        response = await azuriomClient.login(email, password)
     } catch(err) {
         log.error('Azuriom login error', err)
-
-        // HTTP 401 / 422 = mauvais identifiants
-        if(err.response && (err.response.status === 401 || err.response.status === 422)) {
-            return Promise.reject({
-                title: Lang.queryJS('auth.azuriom.error.invalidCredentialsTitle'),
-                desc:  Lang.queryJS('auth.azuriom.error.invalidCredentialsDesc')
-            })
+        // itty-fetcher lève un objet avec « status » (code HTTP) quand le site répond une
+        // erreur, et une vraie erreur réseau (TypeError « fetch failed », code système)
+        // quand le site ne répond pas.
+        const httpStatus = typeof err?.status === 'number' ? err.status : null
+        if(httpStatus === 401 || httpStatus === 422) {
+            return Promise.reject(credentialFailure(email, err, httpStatus))
         }
-        // Pas de réponse = serveur injoignable
-        if(err.code === 'ECONNREFUSED' || err.code === 'ENOTFOUND' || !err.response) {
-            return Promise.reject({
-                title: Lang.queryJS('auth.azuriom.error.unreachableTitle'),
-                desc:  Lang.queryJS('auth.azuriom.error.unreachableDesc')
-            })
-        }
-        return Promise.reject({
-            title: Lang.queryJS('auth.azuriom.error.unknownTitle'),
-            desc:  Lang.queryJS('auth.azuriom.error.unknownDesc')
+        const unreachable = httpStatus == null
+        const title = Lang.queryJS(unreachable ? 'auth.azuriom.error.unreachableTitle' : 'auth.azuriom.error.unknownTitle')
+        const desc = Lang.queryJS(unreachable ? 'auth.azuriom.error.unreachableDesc' : 'auth.azuriom.error.unknownDesc')
+        const reportId = CrashReporter().reportAuthError({
+            kind: 'login',
+            code: unreachable ? 'SITE_INJOIGNABLE' : `HTTP_${httpStatus}`,
+            email, title, description: desc, error: err,
+            extra: { httpStatus }
         })
+        return Promise.reject({ title, desc: withSupport(desc, reportId) })
     }
+
+    if(response.status !== 'success') {
+        // Mot de passe ou email refusé : rapport seulement à partir du 3e échec d'affilée.
+        if(response.reason === 'invalid_credentials' || response.status === 'error' && !response.reason) {
+            return Promise.reject(credentialFailure(email, response, null))
+        }
+        // Autre refus du site (double authentification, compte banni, email non
+        // vérifié…) : bloquant, toujours envoyé.
+        const title = Lang.queryJS('auth.azuriom.error.unknownTitle')
+        const reason = response.requires2fa ? '2FA' : String(response.reason || 'REFUS').toUpperCase()
+        const desc = response.requires2fa
+            ? Lang.queryJS('auth.azuriom.error.twoFactorDesc')
+            : (typeof response.message === 'string' && response.message ? escapeHtml(response.message) : Lang.queryJS('auth.azuriom.error.unknownDesc'))
+        const reportId = CrashReporter().reportAuthError({
+            kind: 'login', code: reason, email, title, description: desc, response
+        })
+        return Promise.reject({ title, desc: withSupport(desc, reportId) })
+    }
+
+    loginFailures.delete(failKey)
+    const ret = ConfigManager.addAzuriomAuthAccount(
+        response.uuid,
+        response.accessToken,
+        email,
+        response.username
+    )
+    ConfigManager.save()
+    return ret
+}
+
+// Échecs « mauvais identifiants » d'affilée, par email (remis à zéro à la connexion).
+const loginFailures = new Map()
+const LOGIN_FAILURES_BEFORE_REPORT = 3
+
+function credentialFailure(email, detail, httpStatus){
+    const key = email.toLowerCase()
+    const count = (loginFailures.get(key) ?? 0) + 1
+    loginFailures.set(key, count)
+    const title = Lang.queryJS('auth.azuriom.error.invalidCredentialsTitle')
+    const desc = Lang.queryJS('auth.azuriom.error.invalidCredentialsDesc')
+    if(count < LOGIN_FAILURES_BEFORE_REPORT) return { title, desc }
+    const reportId = CrashReporter().reportAuthError({
+        kind: 'login', code: 'IDENTIFIANTS', email, title, description: desc,
+        response: detail, extra: { httpStatus, consecutiveFailures: count }
+    })
+    return { title, desc: withSupport(desc, reportId) }
+}
+
+function escapeHtml(text){
+    return String(text).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', '\'': '&#39;' })[c])
+}
+
+/** Ajoute au message la ligne du support (numéro du rapport s'il y en a un). */
+function withSupport(desc, reportId){
+    return desc + '<br><br>' + (reportId
+        ? Lang.queryJS('support.reportSent', { id: reportId })
+        : Lang.queryJS('support.contact'))
+}
+exports.withSupport = withSupport
+
+// Chargé à la demande : crashreporter.js dépend de ConfigManager, déjà initialisé ici.
+function CrashReporter(){
+    return require('./crashreporter')
 }
 
 /**
@@ -513,8 +559,29 @@ async function validateSelectedAzuriomAccount() {
             return true
         }
         log.warn('Azuriom token validation failed:', err.message)
+        // Session perdue : le compte va être retiré du launcher, on envoie tout ce qu'on
+        // sait pour comprendre pourquoi (réponse du site, compte concerné).
+        lastSessionReportId = CrashReporter().reportAuthError({
+            kind: 'session',
+            code: typeof err?.status === 'number' ? `HTTP_${err.status}` : 'PERDUE',
+            email: current?.username ?? null,
+            username: current?.displayName ?? null,
+            uuid: current?.uuid ?? null,
+            title: Lang.queryJS('uibinder.validateAccount.failedMessageTitle'),
+            description: 'Session refusée par le site, le compte a été retiré du launcher.',
+            error: err,
+            extra: { httpStatus: typeof err?.status === 'number' ? err.status : null }
+        })
         return false
     }
+}
+
+let lastSessionReportId = null
+/** Numéro du rapport envoyé lors de la dernière session perdue (ou null). */
+exports.consumeSessionReportId = function(){
+    const id = lastSessionReportId
+    lastSessionReportId = null
+    return id
 }
 
 /**

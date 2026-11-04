@@ -175,7 +175,7 @@ requiredValue = "* Requis"
 
 [js.login.error.unknown]
 title = "Erreur inconnue lors de la connexion"
-desc = "Une erreur inconnue s'est produite. Consultez la console pour plus de détails."
+desc = "Une erreur inattendue s'est produite pendant la connexion. Réessaie dans quelques instants."
 
 [js.loginOptions]
 login     = "SE CONNECTER"
@@ -191,7 +191,7 @@ unknownDesc   = "Une erreur est survenue. Veuillez réessayer."
 [js.landing.launch]
 pleaseWait = "Veuillez patienter.."
 failureTitle = "Erreur lors du lancement"
-failureText = "Consultez la console (CTRL + Shift + i) pour plus de détails."
+failureText = "Le jeu n'a pas pu être lancé. Réessaie dans quelques instants."
 okay = "OK"
 
 [js.landing.selectedAccount]
@@ -214,7 +214,7 @@ installJava = "Installer Java"
 installJavaManually = "Installer manuellement"
 javaDownloadPrepare = "Préparation du téléchargement Java.."
 javaDownloadFailureTitle = "Erreur lors du téléchargement de Java"
-javaDownloadFailureText = "Consultez la console (CTRL + Shift + i) pour plus de détails."
+javaDownloadFailureText = "Java n'a pas pu être téléchargé. Vérifie ta connexion internet, puis réessaie."
 javaRequired = "Java est requis<br>pour lancer le jeu"
 javaRequiredMessage = 'Une installation x64 de Java {major} est requise.<br><br>Téléchargez Java 8 depuis <a href="https://adoptium.net/temurin/releases/?version=8">Adoptium</a> et installez-le manuellement.'
 javaRequiredDismiss = "J'ai compris"
@@ -229,10 +229,10 @@ javaInstalled = "Java installé !"
 [js.landing.dlAsync]
 loadingServerInfo = "Chargement des informations du serveur.."
 fatalError = "Erreur fatale"
-unableToLoadDistributionIndex = "Impossible de charger l'index de distribution. Consultez la console (CTRL + Shift + i) pour plus de détails."
+unableToLoadDistributionIndex = "Impossible de récupérer la liste des fichiers du serveur. Vérifie ta connexion internet, puis relance le launcher."
 pleaseWait = "Veuillez patienter.."
 errorDuringLaunchTitle = "Erreur lors du lancement"
-seeConsoleForDetails = "Consultez la console (CTRL + Shift + i) pour plus de détails."
+seeConsoleForDetails = "Une erreur est survenue pendant la préparation du jeu. Réessaie dans quelques instants."
 validatingFileIntegrity = "Vérification de l'intégrité des fichiers.."
 errorDuringFileVerificationTitle = "Erreur lors de la vérification des fichiers"
 downloadingFiles = "Téléchargement des fichiers.."
@@ -241,7 +241,7 @@ preparingToLaunch = "Préparation du lancement.."
 launchingGame = "Lancement du jeu.."
 launchWrapperNotDownloaded = "Le fichier principal LaunchWrapper n'a pas pu être téléchargé correctement. Le jeu ne peut pas démarrer.<br><br>Désactivez temporairement votre antivirus et relancez. Si le problème persiste, contactez-nous sur notre serveur Discord."
 doneEnjoyServer = "C'est parti ! Bonne session !"
-checkConsoleForDetails = "Consultez la console (CTRL + Shift + i) pour plus de détails."
+checkConsoleForDetails = "Le jeu n'a pas pu démarrer. Réessaie dans quelques instants."
 
 [js.landing.news]
 checking = "Chargement des actualités"
@@ -367,7 +367,7 @@ xblBannedDesc = "Votre compte Microsoft provient d'un pays où Xbox Live n'est p
 under18Title = "Erreur de connexion :<br>Approbation parentale requise"
 under18Desc = "Les comptes des moins de 18 ans doivent être ajoutés à une Famille par un adulte."
 unknownTitle = "Erreur inconnue lors de la connexion"
-unknownDesc = "Une erreur inconnue s'est produite. Consultez la console pour plus de détails."
+unknownDesc = "Une erreur inattendue s'est produite pendant la connexion. Réessaie dans quelques instants."
 
 [js.auth.mojang.error]
 methodNotAllowedTitle = "Erreur interne :<br>Méthode non autorisée"
@@ -391,4 +391,4 @@ unreachableDesc = "Impossible d'atteindre les serveurs d'authentification. Véri
 gameNotPurchasedTitle = "Erreur de connexion :<br>Jeu non acheté"
 gameNotPurchasedDesc = "Le compte que vous tentez d'utiliser n'a pas acheté Minecraft."
 unknownErrorTitle = "Erreur inconnue lors de la connexion"
-unknownErrorDesc = "Une erreur inconnue s'est produite. Consultez la console pour plus de détails."
+unknownErrorDesc = "Une erreur inattendue s'est produite pendant la connexion. Réessaie dans quelques instants."
